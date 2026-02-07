@@ -6,14 +6,37 @@ export default function AdminLayout({ children, header }) {
     const user = auth?.user;
     const role = auth?.role || "admin";
 
-    const navLinks = [
-        { label: "Dashboard", route: "admin.dashboard" },
-        { label: "Orders", route: "admin.orders.index" },
-        { label: "Products", route: "admin.products.index" },
-        { label: "Categories", route: "admin.categories.index" },
-        { label: "Shops", route: "admin.shops.index" },
-        { label: "Users", route: "admin.users.index" },
-    ];
+    const menuByRole = {
+        admin: [
+            { label: "Dashboard", route: "admin.dashboard" },
+            { label: "Support", route: "admin.support.index" },
+            { label: "Orders", route: "admin.orders.index" },
+            { label: "Products", route: "admin.products.index" },
+            { label: "Categories", route: "admin.categories.index" },
+            { label: "Shops", route: "admin.shops.index" },
+            { label: "Users", route: "admin.users.index" },
+        ],
+        manager: [
+            { label: "Dashboard", route: "admin.dashboard" },
+            { label: "Support", route: "admin.support.index" },
+            { label: "Orders", route: "admin.orders.index" },
+            { label: "Products", route: "admin.products.index" },
+            { label: "Categories", route: "admin.categories.index" },
+        ],
+        sales: [
+            { label: "Dashboard", route: "admin.dashboard" },
+            { label: "Support", route: "admin.support.index" },
+            { label: "Orders", route: "admin.orders.index" },
+            { label: "Products", route: "admin.products.index" },
+        ],
+        delivery: [
+            { label: "Dashboard", route: "dashboard" },
+            { label: "Orders", route: "admin.orders.index" },
+        ],
+    };
+
+    const navLinks = menuByRole[role] || menuByRole.admin;
+    const canAccessSupport = ["admin", "manager", "sales"].includes(role);
 
     // Notification State
     const [showNoti, setShowNoti] = useState(false);
@@ -35,12 +58,48 @@ export default function AdminLayout({ children, header }) {
                     setNotifications((prev) => [next, ...prev]);
                 },
             );
+
+            window.Echo.channel("admin-notifications").listen(
+                ".SupportMessageSent",
+                (e) => {
+                    // Staff side: notify only when customer sent a message.
+                    if (Number(e.sender_id) !== Number(e.customer_id)) {
+                        return;
+                    }
+
+                    const next = {
+                        id: `support-${e.id}`,
+                        message: `Support: ${e.sender_name || "Customer"} - ${e.message}`,
+                        time: "just now",
+                        isRead: false,
+                    };
+                    setNotifications((prev) => [next, ...prev]);
+                },
+            );
         }
 
         return () => {
             if (window.Echo) {
                 window.Echo.leaveChannel("admin-notifications");
             }
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleSupportSeen = () => {
+            setNotifications((prev) =>
+                prev.map((n) =>
+                    String(n.id).startsWith("support-")
+                        ? { ...n, isRead: true }
+                        : n,
+                ),
+            );
+        };
+
+        window.addEventListener("support:clear-notifications", handleSupportSeen);
+
+        return () => {
+            window.removeEventListener("support:clear-notifications", handleSupportSeen);
         };
     }, []);
 
@@ -94,6 +153,15 @@ export default function AdminLayout({ children, header }) {
                     </div>
 
                     <div className="flex items-center gap-6">
+                        {canAccessSupport && (
+                            <Link
+                                href={route("admin.support.index")}
+                                className="hidden sm:inline-flex px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-slate-200 text-slate-600 hover:bg-slate-50"
+                            >
+                                Support Inbox
+                            </Link>
+                        )}
+
                         {/* 🔔 Notification Icon Section */}
                         <div className="relative">
                             <button

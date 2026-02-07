@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\SupportChatController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -52,6 +53,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/orders/{order}/refund', [OrderController::class, 'requestRefund'])->name('orders.refund');
     Route::post('/orders/{order}/return', [OrderController::class, 'requestReturn'])->name('orders.return');
 
+    // Support Chat
+    Route::get('/support', [SupportChatController::class, 'customer'])->name('support.index');
+    Route::post('/support/messages', [SupportChatController::class, 'store'])->name('support.store');
+
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -63,7 +68,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 | Admin/Team Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified', 'role:admin|manager|sales'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery'])->prefix('admin')->name('admin.')->group(function () {
 
     // 🎯 Admin Dashboard ကို နာမည်ခွဲပေးလိုက်ပါ (Loop မပတ်အောင်)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -81,6 +86,8 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales'])->prefix('adm
     // Admin Orders
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/support', [SupportChatController::class, 'adminIndex'])->name('support.index');
+    Route::post('/support/messages', [SupportChatController::class, 'store'])->name('support.store');
 
     // Manager & Admin Only
     Route::middleware(['role:admin|manager'])->group(function () {
@@ -95,6 +102,7 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales'])->prefix('adm
     // Delivery tracking updates (admin/manager/delivery)
     Route::middleware(['role:admin|manager|delivery'])->group(function () {
         Route::patch('/orders/{order}/location', [OrderController::class, 'updateLocation'])->name('orders.updateLocation');
+        Route::post('/orders/{order}/ship-confirm', [OrderController::class, 'confirmShipment'])->name('orders.confirmShipment');
     });
 });
 

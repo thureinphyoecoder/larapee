@@ -12,6 +12,7 @@ export default function Show({ order }) {
     const customer = order?.user;
     const status = (liveOrder?.status || "pending").toString().toLowerCase();
     const [showSlip, setShowSlip] = useState(false);
+    const [deliveryProof, setDeliveryProof] = useState(null);
 
     const updateStatus = (newStatus) => {
         Swal.fire({
@@ -51,6 +52,7 @@ export default function Show({ order }) {
                 setLiveOrder((prev) => ({
                     ...prev,
                     status: e.status,
+                    delivery_proof_path: e.delivery_proof_path,
                     delivery_lat: e.delivery_lat,
                     delivery_lng: e.delivery_lng,
                     delivery_updated_at: e.delivery_updated_at,
@@ -325,6 +327,72 @@ export default function Show({ order }) {
                                 </form>
                             )}
                         </div>
+
+                        {["admin", "manager", "delivery"].includes(role) && (
+                            <div className="bg-white p-6 rounded-xl shadow-sm border">
+                                <h3 className="font-bold mb-2">Shipment Confirmation</h3>
+
+                                {liveOrder?.delivery_proof_path ? (
+                                    <a
+                                        href={`/storage/${liveOrder.delivery_proof_path}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-sm text-sky-600 font-semibold hover:underline"
+                                    >
+                                        View delivery proof image
+                                    </a>
+                                ) : (
+                                    <p className="text-sm text-slate-400">
+                                        No delivery proof uploaded yet.
+                                    </p>
+                                )}
+
+                                <div className="mt-4 space-y-3">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) =>
+                                            setDeliveryProof(e.target.files?.[0] || null)
+                                        }
+                                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
+                                    />
+
+                                    <button
+                                        type="button"
+                                        disabled={!deliveryProof}
+                                        onClick={() => {
+                                            if (!deliveryProof) return;
+                                            router.post(
+                                                route("admin.orders.confirmShipment", order.id),
+                                                { delivery_proof: deliveryProof },
+                                                {
+                                                    forceFormData: true,
+                                                    onSuccess: () => {
+                                                        setDeliveryProof(null);
+                                                        setLiveOrder((prev) => ({
+                                                            ...prev,
+                                                            status: "shipped",
+                                                        }));
+                                                        Swal.fire(
+                                                            "Uploaded",
+                                                            "Delivery proof uploaded and marked shipped.",
+                                                            "success",
+                                                        );
+                                                    },
+                                                },
+                                            );
+                                        }}
+                                        className={`w-full py-2 rounded-lg text-sm font-semibold ${
+                                            deliveryProof
+                                                ? "bg-sky-600 text-white hover:bg-sky-700"
+                                                : "bg-slate-200 text-slate-500 cursor-not-allowed"
+                                        }`}
+                                    >
+                                        Upload & Confirm Shipped
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
