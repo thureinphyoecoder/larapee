@@ -1,8 +1,11 @@
 // resources/js/Pages/Dashboard.jsx
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, usePage } from "@inertiajs/react";
 
 export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
+    const { auth } = usePage().props;
+    const userName = auth?.user?.name || "Customer";
+
     return (
         <AuthenticatedLayout>
             <Head title="Customer Dashboard" />
@@ -13,25 +16,36 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                             Customer Space
                         </p>
                         <h2 className="mt-2 text-2xl sm:text-3xl font-black">
-                            Welcome back to LaraPee
+                            Welcome back, {userName}
                         </h2>
-                        <div className="mt-4 flex flex-wrap gap-3">
-                            <Link
-                                href={route("orders.index")}
-                                className="bg-white text-orange-600 px-4 py-2 rounded-full text-sm font-bold shadow"
-                            >
-                                My Orders
-                            </Link>
-                            <Link
-                                href={route("profile.edit")}
-                                className="bg-white/20 text-white px-4 py-2 rounded-full text-sm font-bold border border-white/30"
-                            >
-                                Edit Profile
-                            </Link>
-                        </div>
+                        <p className="mt-3 text-sm text-white/90">
+                            Your account summary and latest orders are ready.
+                        </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Link
+                        href={route("home")}
+                        className="block rounded-3xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 via-amber-50 to-white p-6 sm:p-8 shadow-sm hover:shadow-md transition"
+                    >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-500">
+                                    Shop Now
+                                </p>
+                                <h3 className="mt-2 text-2xl sm:text-4xl font-black text-slate-900">
+                                    ပစ္စည်းအသစ်တွေ ဝယ်ယူရန် ဒီကိုနှိပ်ပါ
+                                </h3>
+                                <p className="mt-2 text-sm sm:text-base text-slate-600">
+                                    Popular products ကို ချက်ချင်းကြည့်ပြီး cart ထဲထည့်နိုင်ပါတယ်။
+                                </p>
+                            </div>
+                            <div className="inline-flex items-center justify-center rounded-2xl bg-orange-600 text-white px-6 py-4 text-lg font-black shadow">
+                                ဈေးဝယ်ရန် သွားမယ် →
+                            </div>
+                        </div>
+                    </Link>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
                             <p className="text-xs uppercase tracking-widest text-slate-400">
                                 Total Orders
@@ -44,44 +58,19 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                             </p>
                         </div>
                         <Link
-                            href={route("orders.index")}
+                            href={route("support.index")}
                             className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-md transition"
                         >
-                            <p className="text-xs uppercase tracking-widest text-slate-400">
-                                Orders
-                            </p>
-                            <p className="mt-2 font-semibold text-slate-800">
-                                Track & cancel pending
-                            </p>
-                            <span className="mt-3 inline-flex text-xs font-bold text-orange-600">
-                                View orders →
-                            </span>
-                        </Link>
-                        <Link
-                            href={route("profile.edit")}
-                            className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-md transition"
-                        >
-                            <p className="text-xs uppercase tracking-widest text-slate-400">
-                                Profile
-                            </p>
-                            <p className="mt-2 font-semibold text-slate-800">
-                                Name, password, location
-                            </p>
-                            <span className="mt-3 inline-flex text-xs font-bold text-orange-600">
-                                Update profile →
-                            </span>
-                        </Link>
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
                             <p className="text-xs uppercase tracking-widest text-slate-400">
                                 Support
                             </p>
                             <p className="mt-2 font-semibold text-slate-800">
-                                Need help?
+                                Need help from manager?
                             </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                                Contact support anytime
-                            </p>
-                        </div>
+                            <span className="mt-3 inline-flex text-xs font-bold text-orange-600">
+                                Open support chat →
+                            </span>
+                        </Link>
                     </div>
 
                     <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
