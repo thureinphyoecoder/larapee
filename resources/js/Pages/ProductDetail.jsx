@@ -17,6 +17,13 @@ export default function ProductDetail({ product }) {
         if (product?.image_path) return `/storage/${product.image_path}`;
         return "/images/products/product-1.svg";
     };
+    const galleryImages = [
+        getProductImage(),
+        "/images/products/angle-1.svg",
+        "/images/products/angle-2.svg",
+        "/images/products/angle-3.svg",
+    ];
+    const [selectedImage, setSelectedImage] = useState(galleryImages[0]);
 
     const handleAction = (e, type) => {
         e.preventDefault();
@@ -99,17 +106,31 @@ export default function ProductDetail({ product }) {
                     <div className="space-y-4">
                         <div className="aspect-square rounded-3xl overflow-hidden border border-slate-200 bg-slate-100">
                             <img
-                                src={getProductImage()}
+                                src={selectedImage}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                             />
                         </div>
                         <div className="grid grid-cols-3 gap-3">
-                            {[1, 2, 3].map((idx) => (
-                                <div
-                                    key={idx}
-                                    className="h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200"
-                                />
+                            {galleryImages.slice(1).map((img, idx) => (
+                                <button
+                                    key={img}
+                                    type="button"
+                                    onClick={() => setSelectedImage(img)}
+                                    className={`h-20 rounded-xl overflow-hidden border transition ${
+                                        selectedImage === img
+                                            ? "border-orange-500 ring-2 ring-orange-200"
+                                            : "border-slate-200 hover:border-orange-300"
+                                    }`}
+                                    aria-label={`View angle ${idx + 1}`}
+                                >
+                                    <img
+                                        src={img}
+                                        alt={`Angle ${idx + 1}`}
+                                        className="w-full h-full object-cover"
+                                        loading="lazy"
+                                    />
+                                </button>
                             ))}
                         </div>
                     </div>
