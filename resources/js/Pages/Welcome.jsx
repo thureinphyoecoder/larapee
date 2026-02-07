@@ -227,7 +227,7 @@ export default function Welcome({
                                         (prev) => (prev - 1 + sliderItems.length) % sliderItems.length,
                                     )
                                 }
-                                className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/75 text-slate-700 hover:bg-white transition"
+                                className="absolute z-30 left-3 sm:left-5 bottom-5 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:bg-white transition shadow"
                             >
                                 ‹
                             </button>
@@ -236,7 +236,7 @@ export default function Welcome({
                                 onClick={() =>
                                     setActiveSlide((prev) => (prev + 1) % sliderItems.length)
                                 }
-                                className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/75 text-slate-700 hover:bg-white transition"
+                                className="absolute z-30 right-3 sm:right-5 bottom-5 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:bg-white transition shadow"
                             >
                                 ›
                             </button>
