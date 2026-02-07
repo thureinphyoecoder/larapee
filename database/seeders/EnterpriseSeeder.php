@@ -76,7 +76,7 @@ class EnterpriseSeeder extends Seeder
             );
             $sales->assignRole('sales');
 
-            // ၇။ Delivery (ပစ္စည်းပို့ဝန်ထမ်း - အသစ်ထည့်လိုက်တာဗျ)
+            // ၇။ Delivery (ပစ္စည်းပို့ဝန်ထမ်း)
             $delivery = User::updateOrCreate(
                 ['email' => 'delivery.' . Str::slug($v['name']) . '@larapos.com'],
                 [
@@ -88,12 +88,12 @@ class EnterpriseSeeder extends Seeder
             );
             $delivery->assignRole('delivery');
 
-        // ပစ္စည်းများ ထည့်သွင်းခြင်း logic...
-        for ($i = 1; $i <= 3; $i++) {
-            $productName = $v['brand'] . " Item $i";
-            $product = Product::create([
-                'shop_id' => $shop->id,
-                'brand_id' => $brand->id,
+            // ပစ္စည်းများ ထည့်သွင်းခြင်း logic...
+            for ($i = 1; $i <= 3; $i++) {
+                $productName = $v['brand'] . " Item $i";
+                $product = Product::create([
+                    'shop_id' => $shop->id,
+                    'brand_id' => $brand->id,
                     'category_id' => rand(1, 3),
                     'name' => $productName,
                     'slug' => Str::slug($productName) . '-' . Str::random(5),
