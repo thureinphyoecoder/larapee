@@ -86,25 +86,24 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery'])->pr
     // 🎯 Admin Dashboard ကို နာမည်ခွဲပေးလိုက်ပါ (Loop မပတ်အောင်)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
-    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-
-    // Products Management
-    Route::resource('products', AdminProductController::class)->except(['destroy']);
-    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-    Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
-    Route::post('/inventory/transfer', [InventoryController::class, 'transfer'])->name('inventory.transfer');
-    Route::get('/search', [GlobalSearchController::class, 'index'])->name('search.index');
-
     // Admin Orders
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
-    Route::get('/support', [SupportChatController::class, 'adminIndex'])->name('support.index');
-    Route::post('/support/messages', [SupportChatController::class, 'store'])->name('support.store');
+
+    // Inventory + Product read/write for admin, manager, sales
+    Route::middleware(['role:admin|manager|sales'])->group(function () {
+        Route::resource('products', AdminProductController::class)->except(['destroy']);
+        Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+        Route::post('/inventory/transfer', [InventoryController::class, 'transfer'])->name('inventory.transfer');
+        Route::get('/search', [GlobalSearchController::class, 'index'])->name('search.index');
+        Route::get('/support', [SupportChatController::class, 'adminIndex'])->name('support.index');
+        Route::post('/support/messages', [SupportChatController::class, 'store'])->name('support.store');
+    });
 
     // Manager & Admin Only
     Route::middleware(['role:admin|manager'])->group(function () {
+        Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
@@ -116,6 +115,8 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery'])->pr
     });
 
     Route::middleware(['role:admin'])->group(function () {
+        Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::post('/inventory/share', [InventoryController::class, 'toggleShare'])->name('inventory.share');
     });

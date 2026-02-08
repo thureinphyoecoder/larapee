@@ -7,6 +7,7 @@ export default function AdminLayout({ children, header }) {
     const user = auth?.user;
     const role = auth?.role || "admin";
     const canTrackAttendance = ["admin", "manager", "sales", "delivery"].includes(role);
+    const canUseSearch = ["admin", "manager", "sales"].includes(role);
 
     const menuByRole = {
         admin: [
@@ -35,8 +36,8 @@ export default function AdminLayout({ children, header }) {
             { label: "Products", route: "admin.products.index" },
         ],
         delivery: [
-            { label: "Dashboard", route: "dashboard" },
-            { label: "Orders", route: "admin.orders.index" },
+            { label: "Rider Dashboard", route: "admin.dashboard" },
+            { label: "Delivery Orders", route: "admin.orders.index" },
         ],
     };
 
@@ -150,7 +151,7 @@ export default function AdminLayout({ children, header }) {
                         LaraPee Admin
                     </Link>
                     <p className="text-xs text-slate-400 mt-1 capitalize">
-                        {role} panel
+                        {role === "delivery" ? "rider panel" : `${role} panel`}
                     </p>
                 </div>
 
@@ -187,21 +188,23 @@ export default function AdminLayout({ children, header }) {
                         <div className="text-sm font-semibold text-slate-700">
                             {header || "Admin"}
                         </div>
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                router.get(route("admin.search.index"), { q: globalSearch || undefined });
-                            }}
-                            className="hidden xl:flex items-center"
-                        >
-                            <input
-                                type="text"
-                                className="w-80 border border-slate-200 rounded-xl px-3 py-2 text-sm"
-                                placeholder="Global search: product, variant SKU, order, user..."
-                                value={globalSearch}
-                                onChange={(e) => setGlobalSearch(e.target.value)}
-                            />
-                        </form>
+                        {canUseSearch && (
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    router.get(route("admin.search.index"), { q: globalSearch || undefined });
+                                }}
+                                className="hidden xl:flex items-center"
+                            >
+                                <input
+                                    type="text"
+                                    className="w-80 border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                                    placeholder="Global search: product, variant SKU, order, user..."
+                                    value={globalSearch}
+                                    onChange={(e) => setGlobalSearch(e.target.value)}
+                                />
+                            </form>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-6">

@@ -4,16 +4,16 @@ import { Head, Link } from "@inertiajs/react";
 
 export default function DeliveryDashboard({ stats, deliveryOrders = [], shop }) {
     return (
-        <AdminLayout header="Delivery Dashboard">
-            <Head title="Delivery Dashboard" />
+        <AdminLayout header="Rider Dashboard">
+            <Head title="Rider Dashboard" />
 
             <div className="space-y-6">
                 <div className="rounded-2xl bg-gradient-to-r from-sky-700 to-cyan-500 text-white p-6 shadow">
                     <p className="text-xs uppercase tracking-[0.2em] text-white/70">
-                        Delivery Hub
+                        Rider Hub
                     </p>
                     <h2 className="mt-2 text-2xl font-black">
-                        {shop?.name || "All Shops"} Delivery Tracking
+                        {shop?.name || "All Shops"} Rider Tracking
                     </h2>
                 </div>
 
@@ -87,4 +87,3 @@ function StatCard({ label, value }) {
         </div>
     );
 }
-
