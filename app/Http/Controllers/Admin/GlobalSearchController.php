@@ -15,10 +15,12 @@ class GlobalSearchController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery']), 403);
+        abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'sales']), 403);
 
         $q = trim((string) $request->get('q', ''));
-        if ($q === '') {
+        $normalizedQ = mb_substr($q, 0, 120);
+
+        if ($normalizedQ === '') {
             return Inertia::render('Admin/Search/Index', [
                 'q' => '',
                 'results' => [
@@ -30,29 +32,54 @@ class GlobalSearchController extends Controller
             ]);
         }
 
+        $numericId = ctype_digit($normalizedQ) ? (int) $normalizedQ : null;
+
         $productsQuery = Product::with(['shop', 'brand', 'category'])
-            ->where(function ($query) use ($q) {
-                $query->where('name', 'like', "%{$q}%")
-                    ->orWhere('sku', 'like', "%{$q}%");
+            ->where(function ($query) use ($normalizedQ) {
+                $query->where('name', 'like', "%{$normalizedQ}%")
+                    ->orWhere('sku', 'like', "%{$normalizedQ}%")
+                    ->orWhereHas('brand', fn ($brandQuery) => $brandQuery->where('name', 'like', "%{$normalizedQ}%"))
+                    ->orWhereHas('category', fn ($catQuery) => $catQuery->where('name', 'like', "%{$normalizedQ}%"))
+                    ->orWhereHas('shop', fn ($shopQuery) => $shopQuery->where('name', 'like', "%{$normalizedQ}%"));
             })
             ->latest();
 
         $variantsQuery = ProductVariant::with(['product.shop'])
-            ->where('sku', 'like', "%{$q}%")
+            ->where(function ($query) use ($normalizedQ) {
+                $query->where('sku', 'like', "%{$normalizedQ}%")
+                    ->orWhereHas('product', function ($productQuery) use ($normalizedQ) {
+                        $productQuery->where('name', 'like', "%{$normalizedQ}%")
+                            ->orWhereHas('shop', fn ($shopQuery) => $shopQuery->where('name', 'like', "%{$normalizedQ}%"));
+                    });
+            })
             ->latest();
 
         $ordersQuery = Order::with(['user', 'shop'])
-            ->where(function ($query) use ($q) {
-                $query->where('id', 'like', "%{$q}%")
-                    ->orWhere('status', 'like', "%{$q}%")
-                    ->orWhere('phone', 'like', "%{$q}%");
+            ->where(function ($query) use ($normalizedQ, $numericId) {
+                if ($numericId !== null) {
+                    $query->where('id', $numericId)
+                        ->orWhere('status', 'like', "%{$normalizedQ}%")
+                        ->orWhere('phone', 'like', "%{$normalizedQ}%");
+                } else {
+                    $query->where('status', 'like', "%{$normalizedQ}%")
+                        ->orWhere('phone', 'like', "%{$normalizedQ}%");
+                }
+
+                $query->orWhere('address', 'like', "%{$normalizedQ}%")
+                    ->orWhereHas('user', function ($userQuery) use ($normalizedQ) {
+                        $userQuery->where('name', 'like', "%{$normalizedQ}%")
+                            ->orWhere('email', 'like', "%{$normalizedQ}%");
+                    })
+                    ->orWhereHas('shop', fn ($shopQuery) => $shopQuery->where('name', 'like', "%{$normalizedQ}%"));
             })
             ->latest();
 
         $usersQuery = User::with(['roles', 'shop'])
-            ->where(function ($query) use ($q) {
-                $query->where('name', 'like', "%{$q}%")
-                    ->orWhere('email', 'like', "%{$q}%");
+            ->where(function ($query) use ($normalizedQ) {
+                $query->where('name', 'like', "%{$normalizedQ}%")
+                    ->orWhere('email', 'like', "%{$normalizedQ}%")
+                    ->orWhereHas('roles', fn ($roleQuery) => $roleQuery->where('name', 'like', "%{$normalizedQ}%"))
+                    ->orWhereHas('shop', fn ($shopQuery) => $shopQuery->where('name', 'like', "%{$normalizedQ}%"));
             })
             ->latest();
 
@@ -63,12 +90,8 @@ class GlobalSearchController extends Controller
             $usersQuery->where('shop_id', $user->shop_id);
         }
 
-        if ($user->hasRole('delivery')) {
-            $usersQuery->whereRaw('1=0');
-        }
-
         return Inertia::render('Admin/Search/Index', [
-            'q' => $q,
+            'q' => $normalizedQ,
             'results' => [
                 'products' => $productsQuery->take(12)->get(),
                 'variants' => $variantsQuery->take(12)->get(),

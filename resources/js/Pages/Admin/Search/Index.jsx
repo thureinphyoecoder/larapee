@@ -16,6 +16,12 @@ export default function SearchIndex({ q = "", results = {} }) {
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Global Search</p>
                     <h1 className="mt-2 text-2xl font-black text-slate-900">Results for: "{q || "all records"}"</h1>
                     <p className="mt-1 text-sm text-slate-500">Products, variants, orders and staff/users in one place.</p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                        <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600">Products: {products.length}</span>
+                        <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600">Variants: {variants.length}</span>
+                        <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600">Orders: {orders.length}</span>
+                        <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600">Users: {users.length}</span>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -33,6 +39,14 @@ export default function SearchIndex({ q = "", results = {} }) {
                             <div key={item.id} className="p-3 rounded-lg border border-slate-100">
                                 <p className="font-semibold text-slate-800">{item.sku}</p>
                                 <p className="text-xs text-slate-500">{item.product?.name} | {item.product?.shop?.name}</p>
+                                {item.product?.id ? (
+                                    <Link
+                                        href={route("admin.products.edit", item.product.id)}
+                                        className="mt-2 inline-flex text-xs font-bold text-orange-600 hover:underline"
+                                    >
+                                        Open product →
+                                    </Link>
+                                ) : null}
                             </div>
                         ))}
                     </ResultCard>
@@ -51,6 +65,9 @@ export default function SearchIndex({ q = "", results = {} }) {
                             <div key={item.id} className="p-3 rounded-lg border border-slate-100">
                                 <p className="font-semibold text-slate-800">{item.name}</p>
                                 <p className="text-xs text-slate-500">{item.email} | {item.shop?.name || "Shop not assigned"}</p>
+                                <p className="text-[11px] text-slate-400 mt-1">
+                                    {(item.roles || []).map((r) => r.name).join(", ") || "No role"}
+                                </p>
                             </div>
                         ))}
                     </ResultCard>

@@ -3,7 +3,8 @@ import { Link, usePage, router } from "@inertiajs/react";
 import Swal from "sweetalert2";
 
 export default function AdminLayout({ children, header }) {
-    const { auth, attendance, flash } = usePage().props;
+    const page = usePage();
+    const { auth, attendance, flash } = page.props;
     const user = auth?.user;
     const role = auth?.role || "admin";
     const canTrackAttendance = ["admin", "manager", "sales", "delivery"].includes(role);
@@ -182,6 +183,16 @@ export default function AdminLayout({ children, header }) {
         });
     }, [flash?.success, flash?.error]);
 
+    useEffect(() => {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const q = params.get("q") || "";
+            setGlobalSearch(q);
+        } catch {
+            setGlobalSearch("");
+        }
+    }, [page.url]);
+
     const submitAttendance = (type) => {
         const routeName = type === "out" ? "staff.checkout" : "staff.checkin";
         router.post(
@@ -244,6 +255,14 @@ export default function AdminLayout({ children, header }) {
                     <p className="text-xs text-slate-400 truncate">
                         {user?.email || ""}
                     </p>
+                    <Link
+                        href={route("logout")}
+                        method="post"
+                        as="button"
+                        className="mt-3 w-full rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs font-black uppercase tracking-widest text-rose-300 hover:bg-rose-500/20"
+                    >
+                        Log out
+                    </Link>
                 </div>
             </aside>
 
@@ -391,19 +410,8 @@ export default function AdminLayout({ children, header }) {
                             )}
                         </div>
 
-                        {/* Logout Section */}
-                        <div className="flex items-center gap-3 border-l border-slate-100 ps-6">
-                            <span className="text-sm font-bold text-slate-700">
-                                {user?.name || ""}
-                            </span>
-                            <Link
-                                href={route("logout")}
-                                method="post"
-                                as="button"
-                                className="text-xs font-black uppercase tracking-wider text-red-400 hover:text-red-600 transition"
-                            >
-                                Log out
-                            </Link>
+                        <div className="hidden md:block text-sm font-bold text-slate-700">
+                            {user?.name || ""}
                         </div>
                     </div>
                 </header>
