@@ -31,10 +31,13 @@ export default function Index({ products }) {
                             <tr className="text-slate-500 text-[11px] uppercase tracking-widest border-b border-slate-100">
                                 <th className="px-6 py-4 font-bold">Image</th>
                                 <th className="px-6 py-4 font-bold">Name</th>
+                                <th className="px-6 py-4 font-bold">SKU</th>
                                 <th className="px-6 py-4 font-bold">Category</th>
                                 <th className="px-6 py-4 font-bold">Shop</th>
                                 <th className="px-6 py-4 font-bold">Variants</th>
                                 <th className="px-6 py-4 font-bold">Price Range</th>
+                                <th className="px-6 py-4 font-bold">Total Stock</th>
+                                <th className="px-6 py-4 font-bold">Stock Status</th>
                                 <th className="px-6 py-4 font-bold">Action</th>
                             </tr>
                         </thead>
@@ -59,6 +62,9 @@ export default function Index({ products }) {
                                         <td className="px-6 py-4 font-semibold text-slate-700 text-sm">
                                             {product.name}
                                         </td>
+                                        <td className="px-6 py-4 text-xs font-bold text-slate-500">
+                                            {product.sku || "No SKU"}
+                                        </td>
                                         <td className="px-6 py-4 text-sm text-slate-600">
                                             {product.category?.name || "Not assigned"}
                                         </td>
@@ -77,6 +83,33 @@ export default function Index({ products }) {
                                                 const max = Math.max(...prices);
                                                 if (min === max) return `${min.toLocaleString()} MMK`;
                                                 return `${min.toLocaleString()} - ${max.toLocaleString()} MMK`;
+                                            })()}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm font-bold text-slate-800">
+                                            {Number(product.stock_level || 0).toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {(() => {
+                                                const stock = Number(product.stock_level || 0);
+                                                if (stock <= 0) {
+                                                    return (
+                                                        <span className="inline-flex rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-rose-700">
+                                                            Out of stock
+                                                        </span>
+                                                    );
+                                                }
+                                                if (stock <= 5) {
+                                                    return (
+                                                        <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-700">
+                                                            Low stock
+                                                        </span>
+                                                    );
+                                                }
+                                                return (
+                                                    <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+                                                        In stock
+                                                    </span>
+                                                );
                                             })()}
                                         </td>
                                         <td className="px-6 py-4 text-sm">
@@ -145,7 +178,7 @@ export default function Index({ products }) {
                             ) : (
                                 <tr>
                                     <td
-                                        colSpan="7"
+                                        colSpan="10"
                                         className="p-12 text-center text-slate-400 italic"
                                     >
                                         No products yet.
