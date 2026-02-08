@@ -1,7 +1,7 @@
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import NavLink from "@/Components/NavLink";
-import { Link, usePage } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
@@ -13,6 +13,50 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const [showNoti, setShowNoti] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const notificationStorageKey = user?.id
+        ? `larapos_user_notifications_${user.id}`
+        : null;
+
+    const markNotificationAsRead = (notificationId) => {
+        setNotifications((prev) =>
+            prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
+        );
+    };
+
+    const openNotification = (notification) => {
+        markNotificationAsRead(notification.id);
+        setShowNoti(false);
+
+        if (notification.url) {
+            router.get(notification.url);
+        }
+    };
+
+    useEffect(() => {
+        if (!notificationStorageKey) {
+            setNotifications([]);
+            return;
+        }
+
+        try {
+            const raw = window.localStorage.getItem(notificationStorageKey);
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                setNotifications(parsed);
+            }
+        } catch {
+            setNotifications([]);
+        }
+    }, [notificationStorageKey]);
+
+    useEffect(() => {
+        if (!notificationStorageKey) return;
+        window.localStorage.setItem(
+            notificationStorageKey,
+            JSON.stringify(notifications.slice(0, 80)),
+        );
+    }, [notifications, notificationStorageKey]);
 
     useEffect(() => {
         if (!window.Echo || !user?.id) return;
@@ -24,8 +68,9 @@ export default function AuthenticatedLayout({ header, children }) {
                 message: e.message || "Order status updated",
                 time: new Date().toLocaleString(),
                 isRead: false,
+                url: route("orders.show", e.id),
             };
-            setNotifications((prev) => [next, ...prev].slice(0, 20));
+            setNotifications((prev) => [next, ...prev].slice(0, 80));
             Swal.fire({
                 toast: true,
                 position: "top-end",
@@ -51,8 +96,9 @@ export default function AuthenticatedLayout({ header, children }) {
                 message: `Support: ${e.message || "New message"}`,
                 time: new Date().toLocaleString(),
                 isRead: false,
+                url: route("support.index"),
             };
-            setNotifications((prev) => [next, ...prev].slice(0, 20));
+            setNotifications((prev) => [next, ...prev].slice(0, 80));
             Swal.fire({
                 toast: true,
                 position: "top-end",
@@ -232,9 +278,11 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <div className="max-h-80 overflow-y-auto">
                                         {notifications.length > 0 ? (
                                             notifications.map((n) => (
-                                                <div
+                                                <button
                                                     key={n.id}
-                                                    className={`px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 ${!n.isRead ? "bg-orange-50/40" : ""}`}
+                                                    type="button"
+                                                    onClick={() => openNotification(n)}
+                                                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 ${!n.isRead ? "bg-orange-50/40" : ""}`}
                                                 >
                                                     <p className="text-sm text-slate-700 leading-snug">
                                                         {n.message}
@@ -242,7 +290,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                     <p className="text-[11px] text-slate-400 mt-1">
                                                         {n.time}
                                                     </p>
-                                                </div>
+                                                </button>
                                             ))
                                         ) : (
                                             <div className="p-8 text-center text-slate-400 text-sm">
@@ -250,6 +298,13 @@ export default function AuthenticatedLayout({ header, children }) {
                                             </div>
                                         )}
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setNotifications([])}
+                                        className="w-full py-2 text-xs font-bold text-slate-400 hover:text-orange-600 transition bg-slate-50/50 uppercase tracking-widest"
+                                    >
+                                        Clear All
+                                    </button>
                                 </div>
                             </>
                         )}
