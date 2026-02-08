@@ -11,33 +11,33 @@ export default function AdminLayout({ children, header }) {
 
     const menuByRole = {
         admin: [
-            { label: "Dashboard", route: "admin.dashboard" },
-            { label: "Inventory", route: "admin.inventory.index" },
-            { label: "Support", route: "admin.support.index" },
-            { label: "Orders", route: "admin.orders.index" },
-            { label: "Products", route: "admin.products.index" },
-            { label: "Categories", route: "admin.categories.index" },
-            { label: "Shops", route: "admin.shops.index" },
-            { label: "Users", route: "admin.users.index" },
+            { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
+            { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
+            { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
+            { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
+            { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
+            { label: "Categories", route: "admin.categories.index", activePatterns: ["admin.categories.*"] },
+            { label: "Shops", route: "admin.shops.index", activePatterns: ["admin.shops.*"] },
+            { label: "Users", route: "admin.users.index", activePatterns: ["admin.users.*"] },
         ],
         manager: [
-            { label: "Dashboard", route: "admin.dashboard" },
-            { label: "Inventory", route: "admin.inventory.index" },
-            { label: "Support", route: "admin.support.index" },
-            { label: "Orders", route: "admin.orders.index" },
-            { label: "Products", route: "admin.products.index" },
-            { label: "Categories", route: "admin.categories.index" },
+            { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
+            { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
+            { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
+            { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
+            { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
+            { label: "Categories", route: "admin.categories.index", activePatterns: ["admin.categories.*"] },
         ],
         sales: [
-            { label: "Dashboard", route: "admin.dashboard" },
-            { label: "Inventory", route: "admin.inventory.index" },
-            { label: "Support", route: "admin.support.index" },
-            { label: "Orders", route: "admin.orders.index" },
-            { label: "Products", route: "admin.products.index" },
+            { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
+            { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
+            { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
+            { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
+            { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
         ],
         delivery: [
-            { label: "Rider Dashboard", route: "admin.dashboard" },
-            { label: "Delivery Orders", route: "admin.orders.index" },
+            { label: "Rider Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
+            { label: "Delivery Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
         ],
     };
 
@@ -195,6 +195,13 @@ export default function AdminLayout({ children, header }) {
         );
     };
 
+    const isLinkActive = (link) => {
+        const patterns = link.activePatterns?.length
+            ? link.activePatterns
+            : [link.route];
+        return patterns.some((pattern) => route().current(pattern));
+    };
+
     return (
         <div
             className="min-h-screen bg-slate-100/80 flex"
@@ -220,7 +227,7 @@ export default function AdminLayout({ children, header }) {
                             key={link.route}
                             href={route(link.route)}
                             className={`block px-3 py-2.5 rounded-xl text-sm font-bold transition ${
-                                route().current(link.route)
+                                isLinkActive(link)
                                     ? "bg-orange-500/15 text-orange-300 border border-orange-500/30"
                                     : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
                             }`}

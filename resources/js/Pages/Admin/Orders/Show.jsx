@@ -1,44 +1,57 @@
 import AdminLayout from "@/Layouts/AdminLayout";
-import { router, usePage } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import Swal from "sweetalert2";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+const statusTone = {
+    pending: "bg-amber-100 text-amber-700",
+    confirmed: "bg-sky-100 text-sky-700",
+    shipped: "bg-indigo-100 text-indigo-700",
+    delivered: "bg-emerald-100 text-emerald-700",
+    cancelled: "bg-rose-100 text-rose-700",
+    refund_requested: "bg-violet-100 text-violet-700",
+    refunded: "bg-fuchsia-100 text-fuchsia-700",
+    return_requested: "bg-orange-100 text-orange-700",
+    returned: "bg-slate-200 text-slate-700",
+};
+
+function formatMoney(amount) {
+    return `${Number(amount || 0).toLocaleString()} MMK`;
+}
 
 export default function Show({ order }) {
     const { auth } = usePage().props;
     const role = auth?.role || "user";
     const [liveOrder, setLiveOrder] = useState(order);
-
-    const items = order?.items || [];
-    const customer = order?.user;
-    const status = (liveOrder?.status || "pending").toString().toLowerCase();
     const [showSlip, setShowSlip] = useState(false);
     const [deliveryProof, setDeliveryProof] = useState(null);
 
-    const updateStatus = (newStatus) => {
+    const items = liveOrder?.items || [];
+    const customer = liveOrder?.user;
+    const status = (liveOrder?.status || "pending").toLowerCase();
+
+    const orderTotal = useMemo(
+        () => items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0),
+        [items],
+    );
+
+    const confirmAndRun = (newStatus) => {
         Swal.fire({
-            title: "Confirm",
+            title: "Confirm status change",
             text: `Change order status to ${newStatus}?`,
             icon: "warning",
             showCancelButton: true,
-            confirmButtonText: "Yes",
+            confirmButtonText: "Yes, update",
         }).then((result) => {
             if (!result.isConfirmed) return;
             router.patch(
                 route("admin.orders.updateStatus", order.id),
+                { status: newStatus },
                 {
-                    status: newStatus,
-                },
-                {
+                    preserveScroll: true,
                     onSuccess: () => {
-                        setLiveOrder((prev) => ({
-                            ...prev,
-                            status: newStatus,
-                        }));
-                        Swal.fire(
-                            "Success",
-                            `Order is now ${newStatus}`,
-                            "success",
-                        );
+                        setLiveOrder((prev) => ({ ...prev, status: newStatus }));
+                        Swal.fire("Updated", `Order marked as ${newStatus}.`, "success");
                     },
                 },
             );
@@ -46,252 +59,140 @@ export default function Show({ order }) {
     };
 
     useEffect(() => {
-        if (window.Echo && order?.id) {
-            const channel = `order.${order.id}`;
-            window.Echo.channel(channel).listen(".OrderStatusUpdated", (e) => {
-                setLiveOrder((prev) => ({
-                    ...prev,
-                    status: e.status,
-                    delivery_proof_path: e.delivery_proof_path,
-                    delivery_lat: e.delivery_lat,
-                    delivery_lng: e.delivery_lng,
-                    delivery_updated_at: e.delivery_updated_at,
-                }));
-            });
-            return () => {
-                window.Echo.leaveChannel(channel);
-            };
-        }
+        if (!window.Echo || !order?.id) return;
+
+        const channel = `order.${order.id}`;
+        window.Echo.channel(channel).listen(".OrderStatusUpdated", (e) => {
+            setLiveOrder((prev) => ({
+                ...prev,
+                status: e.status,
+                delivery_proof_path: e.delivery_proof_path,
+                delivery_lat: e.delivery_lat,
+                delivery_lng: e.delivery_lng,
+                delivery_updated_at: e.delivery_updated_at,
+            }));
+        });
+
+        return () => {
+            window.Echo.leaveChannel(channel);
+        };
     }, [order?.id]);
 
     return (
-        <AdminLayout>
-            <div className="max-w-5xl mx-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">
-                        Order #{order?.id} အသေးစိတ်
-                    </h2>
-                    <div className="space-x-2">
-                        {/* Status ပြောင်းတဲ့ ခလုတ်များ */}
-                        {status === "pending" && (
-                            <button
-                                onClick={() => updateStatus("confirmed")}
-                                className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold"
+        <AdminLayout header={`Order #${order?.id || ""}`}>
+            <Head title={`Order #${order?.id || ""}`} />
+
+            <div className="mx-auto max-w-7xl space-y-6">
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-slate-400">Order Overview</p>
+                            <h1 className="mt-2 text-2xl font-black text-slate-900">Order #{order?.id}</h1>
+                            <p className="mt-1 text-sm text-slate-500">
+                                Created {order?.created_at ? new Date(order.created_at).toLocaleString() : "Unknown time"}
+                            </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${statusTone[status] || "bg-slate-100 text-slate-600"}`}>
+                                {status}
+                            </span>
+                            <Link
+                                href={route("admin.orders.index")}
+                                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
                             >
-                                Confirm Order
-                            </button>
+                                Back to Orders
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap gap-2">
+                        {status === "pending" && (
+                            <ActionButton tone="green" onClick={() => confirmAndRun("confirmed")} label="Confirm Order" />
                         )}
                         {status === "confirmed" && (
-                            <button
-                                onClick={() => updateStatus("shipped")}
-                                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold"
-                            >
-                                Mark Shipped
-                            </button>
+                            <ActionButton tone="blue" onClick={() => confirmAndRun("shipped")} label="Mark Shipped" />
                         )}
                         {status === "shipped" && (
-                            <button
-                                onClick={() => updateStatus("delivered")}
-                                className="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold"
-                            >
-                                Mark Delivered
-                            </button>
+                            <ActionButton tone="indigo" onClick={() => confirmAndRun("delivered")} label="Mark Delivered" />
                         )}
                         {status === "refund_requested" && (
-                            <button
-                                onClick={() => updateStatus("refunded")}
-                                className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold"
-                            >
-                                Mark Refunded
-                            </button>
+                            <ActionButton tone="violet" onClick={() => confirmAndRun("refunded")} label="Mark Refunded" />
                         )}
                         {status === "return_requested" && (
-                            <button
-                                onClick={() => updateStatus("returned")}
-                                className="bg-amber-600 text-white px-4 py-2 rounded-lg font-bold"
-                            >
-                                Mark Returned
-                            </button>
+                            <ActionButton tone="amber" onClick={() => confirmAndRun("returned")} label="Mark Returned" />
                         )}
-                        <button
-                            onClick={() => updateStatus("cancelled")}
-                            className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold"
-                        >
-                            Cancel
-                        </button>
+                        {!['cancelled', 'returned', 'refunded', 'delivered'].includes(status) && (
+                            <ActionButton tone="red" onClick={() => confirmAndRun("cancelled")} label="Cancel Order" />
+                        )}
                     </div>
-                </div>
+                </section>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* ဘယ်ဘက်ခြမ်း: ပစ္စည်းစာရင်း */}
-                    <div className="md:col-span-2 space-y-6">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border">
-                            <h3 className="font-bold border-b pb-3 mb-4">
-                                Ordered Items
-                            </h3>
-                            <table className="w-full">
-                                <tbody>
-                                    {items.length > 0 ? (
-                                        items.map((item) => (
-                                            <tr
-                                                key={item.id}
-                                                className="border-b last:border-0"
-                                            >
-                                                <td className="py-4 font-medium">
-                                                    {item.product?.name ||
-                                                        "Unknown Product"}
-                                                </td>
-                                                <td className="py-4 text-gray-500">
-                                                    x {item.quantity}
-                                                </td>
-                                                <td className="py-4 text-right font-bold">
-                                                    {(
-                                                        item.price *
-                                                        item.quantity
-                                                    ).toLocaleString()}{" "}
-                                                    Ks
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td className="py-6 text-sm text-slate-400">
-                                                No items found.
-                                            </td>
+                <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                    <div className="xl:col-span-2 space-y-6">
+                        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                            <div className="border-b border-slate-100 px-5 py-4">
+                                <h3 className="text-lg font-black text-slate-900">Ordered Items</h3>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50">
+                                        <tr className="text-[11px] uppercase tracking-widest text-slate-500">
+                                            <th className="px-5 py-3 font-bold">Product</th>
+                                            <th className="px-5 py-3 font-bold">Qty</th>
+                                            <th className="px-5 py-3 font-bold">Unit Price</th>
+                                            <th className="px-5 py-3 font-bold text-right">Subtotal</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* ညာဘက်ခြမ်း: ငွေလွှဲဖြတ်ပိုင်း (Slip) နှင့် ဝယ်သူအချက်အလက် */}
-                    <div className="space-y-6">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border">
-                            <h3 className="font-bold mb-4">Payment Slip</h3>
-                            <a
-                                href={`/storage/${order.payment_slip}`}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                {order?.payment_slip ? (
-                                    <img
-                                        src={`/storage/${order.payment_slip}`}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            setShowSlip(true);
-                                        }}
-                                        className="w-full h-auto rounded-lg border hover:opacity-90 transition cursor-zoom-in"
-                                        alt="Payment Slip"
-                                    />
-                                ) : (
-                                    <div className="h-40 w-full rounded-lg border bg-slate-50 flex items-center justify-center text-slate-400 text-sm">
-                                        No slip uploaded
-                                    </div>
-                                )}
-                            </a>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {items.length ? (
+                                            items.map((item) => (
+                                                <tr key={item.id}>
+                                                    <td className="px-5 py-4 font-semibold text-slate-800">{item.product?.name || "Product not available"}</td>
+                                                    <td className="px-5 py-4 text-slate-600">x {item.quantity}</td>
+                                                    <td className="px-5 py-4 text-slate-600">{formatMoney(item.price)}</td>
+                                                    <td className="px-5 py-4 text-right font-bold text-slate-900">{formatMoney(Number(item.price || 0) * Number(item.quantity || 0))}</td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="4" className="p-8 text-center text-slate-400">No items found.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="border-t border-slate-100 px-5 py-4 flex items-center justify-between text-sm">
+                                <span className="font-semibold text-slate-600">Calculated Total</span>
+                                <span className="text-lg font-black text-orange-600">{formatMoney(orderTotal)}</span>
+                            </div>
                         </div>
 
-                        <div className="bg-white p-6 rounded-xl shadow-sm border">
-                            <h3 className="font-bold mb-2">Customer Info</h3>
-                            <p className="text-sm">
-                                <b>Name:</b> {customer?.name || "Unknown"}
-                            </p>
-                            <p className="text-sm">
-                                <b>Phone:</b> {order?.phone || "N/A"}
-                            </p>
-                            <p className="text-sm">
-                                <b>Address:</b> {order?.address || "N/A"}
-                            </p>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl shadow-sm border">
-                            <h3 className="font-bold mb-2">Slip Verification</h3>
-                            <p className="text-sm text-slate-600">
-                                Verdict:{" "}
-                                <span className="font-semibold">
-                                    {order?.slip_verdict || "not_checked"}
-                                </span>
-                            </p>
-                            <p className="text-sm text-slate-600">
-                                Score:{" "}
-                                <span className="font-semibold">
-                                    {order?.slip_score ?? "-"}
-                                </span>
-                            </p>
-                            <p className="text-xs text-slate-400 mt-1">
-                                Checked:{" "}
-                                {order?.slip_checked_at
-                                    ? new Date(
-                                          order.slip_checked_at,
-                                      ).toLocaleString()
-                                    : "N/A"}
-                            </p>
-
-                            <button
-                                className="mt-4 bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-semibold"
-                                onClick={() =>
-                                    Swal.fire({
-                                        title: "Verify slip?",
-                                        text: "This will run OCR/heuristics.",
-                                        icon: "warning",
-                                        showCancelButton: true,
-                                        confirmButtonText: "Run",
-                                    }).then((result) => {
-                                        if (!result.isConfirmed) return;
-                                        router.post(
-                                            route("admin.orders.verifySlip", order.id),
-                                            {},
-                                            {
-                                                onSuccess: () =>
-                                                    Swal.fire(
-                                                        "Done",
-                                                        "Slip verification completed.",
-                                                        "success",
-                                                    ),
-                                            },
-                                        );
-                                    })
-                                }
-                                disabled={!order?.payment_slip}
-                            >
-                                Verify Slip
-                            </button>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl shadow-sm border">
-                            <h3 className="font-bold mb-2">Delivery Tracking</h3>
+                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <h3 className="text-lg font-black text-slate-900">Delivery Tracking</h3>
                             {liveOrder?.delivery_lat && liveOrder?.delivery_lng ? (
                                 <>
-                                    <p className="text-sm text-slate-600">
-                                        Location: {liveOrder.delivery_lat},{" "}
-                                        {liveOrder.delivery_lng}
+                                    <p className="mt-2 text-sm text-slate-600">
+                                        Current location: {liveOrder.delivery_lat}, {liveOrder.delivery_lng}
                                     </p>
                                     <p className="text-xs text-slate-400 mt-1">
-                                        Updated:{" "}
-                                        {liveOrder.delivery_updated_at
-                                            ? new Date(
-                                                  liveOrder.delivery_updated_at,
-                                              ).toLocaleString()
-                                            : "N/A"}
+                                        Last update: {liveOrder.delivery_updated_at ? new Date(liveOrder.delivery_updated_at).toLocaleString() : "Not available"}
                                     </p>
                                     <div className="mt-3">
                                         <iframe
                                             title="delivery-map"
-                                            className="w-full h-48 rounded border"
+                                            className="h-56 w-full rounded-xl border"
                                             src={`https://www.openstreetmap.org/?mlat=${liveOrder.delivery_lat}&mlon=${liveOrder.delivery_lng}#map=14/${liveOrder.delivery_lat}/${liveOrder.delivery_lng}`}
                                         />
                                     </div>
                                 </>
                             ) : (
-                                <p className="text-sm text-slate-400">
-                                    No location update yet.
-                                </p>
+                                <p className="mt-2 text-sm text-slate-400">No location update yet.</p>
                             )}
 
                             {["admin", "manager", "delivery"].includes(role) && (
                                 <form
-                                    className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2"
+                                    className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-3"
                                     onSubmit={(e) => {
                                         e.preventDefault();
                                         const form = new FormData(e.currentTarget);
@@ -301,62 +202,106 @@ export default function Show({ order }) {
                                             route("admin.orders.updateLocation", order.id),
                                             { delivery_lat, delivery_lng },
                                             {
-                                                onSuccess: () =>
-                                                    Swal.fire(
-                                                        "Updated",
-                                                        "Location saved.",
-                                                        "success",
-                                                    ),
+                                                preserveScroll: true,
+                                                onSuccess: () => Swal.fire("Updated", "Delivery location saved.", "success"),
                                             },
                                         );
                                     }}
                                 >
-                                    <input
-                                        name="delivery_lat"
-                                        placeholder="Latitude"
-                                        className="border rounded-lg px-3 py-2 text-sm"
-                                    />
-                                    <input
-                                        name="delivery_lng"
-                                        placeholder="Longitude"
-                                        className="border rounded-lg px-3 py-2 text-sm"
-                                    />
-                                    <button className="bg-slate-800 text-white rounded-lg px-3 py-2 text-sm">
-                                        Update Location
-                                    </button>
+                                    <input name="delivery_lat" placeholder="Latitude" className="rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                                    <input name="delivery_lng" placeholder="Longitude" className="rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                                    <button className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white">Update Location</button>
                                 </form>
                             )}
                         </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <h3 className="text-lg font-black text-slate-900">Customer Info</h3>
+                            <div className="mt-3 space-y-2 text-sm text-slate-700">
+                                <p><span className="font-semibold">Name:</span> {customer?.name || "Customer not set"}</p>
+                                <p><span className="font-semibold">Phone:</span> {liveOrder?.phone || "Not provided"}</p>
+                                <p><span className="font-semibold">Address:</span> {liveOrder?.address || "Not provided"}</p>
+                            </div>
+                        </div>
+
+                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <h3 className="text-lg font-black text-slate-900">Payment Slip</h3>
+                            {liveOrder?.payment_slip ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSlip(true)}
+                                    className="mt-3 block w-full"
+                                >
+                                    <img
+                                        src={`/storage/${liveOrder.payment_slip}`}
+                                        className="w-full rounded-xl border hover:opacity-90 transition"
+                                        alt="Payment Slip"
+                                    />
+                                </button>
+                            ) : (
+                                <div className="mt-3 h-40 rounded-xl border bg-slate-50 flex items-center justify-center text-sm text-slate-400">
+                                    No slip uploaded
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <h3 className="text-lg font-black text-slate-900">Slip Verification</h3>
+                            <div className="mt-3 space-y-2 text-sm text-slate-700">
+                                <p><span className="font-semibold">Verdict:</span> {liveOrder?.slip_verdict || "Not checked"}</p>
+                                <p><span className="font-semibold">Score:</span> {liveOrder?.slip_score ?? "-"}</p>
+                                <p className="text-xs text-slate-400">
+                                    Checked at: {liveOrder?.slip_checked_at ? new Date(liveOrder.slip_checked_at).toLocaleString() : "Not available"}
+                                </p>
+                            </div>
+                            <button
+                                className="mt-4 rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white hover:bg-orange-700 disabled:opacity-50"
+                                disabled={!liveOrder?.payment_slip}
+                                onClick={() =>
+                                    Swal.fire({
+                                        title: "Verify slip?",
+                                        text: "This will run OCR and rules.",
+                                        icon: "warning",
+                                        showCancelButton: true,
+                                        confirmButtonText: "Run verify",
+                                    }).then((result) => {
+                                        if (!result.isConfirmed) return;
+                                        router.post(route("admin.orders.verifySlip", order.id), {}, {
+                                            preserveScroll: true,
+                                            onSuccess: () => Swal.fire("Done", "Slip verification completed.", "success"),
+                                        });
+                                    })
+                                }
+                            >
+                                Verify Slip
+                            </button>
+                        </div>
 
                         {["admin", "manager", "delivery"].includes(role) && (
-                            <div className="bg-white p-6 rounded-xl shadow-sm border">
-                                <h3 className="font-bold mb-2">Shipment Confirmation</h3>
-
+                            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <h3 className="text-lg font-black text-slate-900">Shipment Confirmation</h3>
                                 {liveOrder?.delivery_proof_path ? (
                                     <a
                                         href={`/storage/${liveOrder.delivery_proof_path}`}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="text-sm text-sky-600 font-semibold hover:underline"
+                                        className="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:underline"
                                     >
-                                        View delivery proof image
+                                        View uploaded proof image
                                     </a>
                                 ) : (
-                                    <p className="text-sm text-slate-400">
-                                        No delivery proof uploaded yet.
-                                    </p>
+                                    <p className="mt-3 text-sm text-slate-400">No proof uploaded yet.</p>
                                 )}
 
                                 <div className="mt-4 space-y-3">
                                     <input
                                         type="file"
                                         accept="image/*"
-                                        onChange={(e) =>
-                                            setDeliveryProof(e.target.files?.[0] || null)
-                                        }
-                                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
+                                        onChange={(e) => setDeliveryProof(e.target.files?.[0] || null)}
+                                        className="block w-full text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-sky-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-sky-700 hover:file:bg-sky-100"
                                     />
-
                                     <button
                                         type="button"
                                         disabled={!deliveryProof}
@@ -367,26 +312,16 @@ export default function Show({ order }) {
                                                 { delivery_proof: deliveryProof },
                                                 {
                                                     forceFormData: true,
+                                                    preserveScroll: true,
                                                     onSuccess: () => {
                                                         setDeliveryProof(null);
-                                                        setLiveOrder((prev) => ({
-                                                            ...prev,
-                                                            status: "shipped",
-                                                        }));
-                                                        Swal.fire(
-                                                            "Uploaded",
-                                                            "Delivery proof uploaded and marked shipped.",
-                                                            "success",
-                                                        );
+                                                        setLiveOrder((prev) => ({ ...prev, status: "shipped" }));
+                                                        Swal.fire("Uploaded", "Delivery proof uploaded and order marked shipped.", "success");
                                                     },
                                                 },
                                             );
                                         }}
-                                        className={`w-full py-2 rounded-lg text-sm font-semibold ${
-                                            deliveryProof
-                                                ? "bg-sky-600 text-white hover:bg-sky-700"
-                                                : "bg-slate-200 text-slate-500 cursor-not-allowed"
-                                        }`}
+                                        className={`w-full rounded-xl py-2 text-sm font-bold ${deliveryProof ? "bg-sky-600 text-white hover:bg-sky-700" : "bg-slate-200 text-slate-500 cursor-not-allowed"}`}
                                     >
                                         Upload & Confirm Shipped
                                     </button>
@@ -394,37 +329,41 @@ export default function Show({ order }) {
                             </div>
                         )}
                     </div>
-                </div>
+                </section>
             </div>
 
-            {showSlip && order?.payment_slip && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-                    onClick={() => setShowSlip(false)}
-                >
-                    <div
-                        className="max-w-3xl w-full bg-white rounded-2xl p-4 shadow-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex justify-between items-center mb-3">
-                            <h4 className="font-bold text-slate-800">
-                                Payment Slip
-                            </h4>
-                            <button
-                                className="text-slate-500 hover:text-slate-800"
-                                onClick={() => setShowSlip(false)}
-                            >
-                                Close
-                            </button>
+            {showSlip && liveOrder?.payment_slip && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setShowSlip(false)}>
+                    <div className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="mb-3 flex items-center justify-between">
+                            <h4 className="font-bold text-slate-800">Payment Slip</h4>
+                            <button className="text-slate-500 hover:text-slate-800" onClick={() => setShowSlip(false)}>Close</button>
                         </div>
-                        <img
-                            src={`/storage/${order.payment_slip}`}
-                            className="w-full h-auto rounded-lg border"
-                            alt="Payment Slip"
-                        />
+                        <img src={`/storage/${liveOrder.payment_slip}`} className="w-full rounded-lg border" alt="Payment Slip" />
                     </div>
                 </div>
             )}
         </AdminLayout>
+    );
+}
+
+function ActionButton({ tone = "green", label, onClick }) {
+    const toneClass = {
+        green: "bg-emerald-600 hover:bg-emerald-700",
+        blue: "bg-sky-600 hover:bg-sky-700",
+        indigo: "bg-indigo-600 hover:bg-indigo-700",
+        violet: "bg-violet-600 hover:bg-violet-700",
+        amber: "bg-amber-600 hover:bg-amber-700",
+        red: "bg-rose-600 hover:bg-rose-700",
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`rounded-xl px-4 py-2 text-sm font-bold text-white transition ${toneClass[tone] || toneClass.green}`}
+        >
+            {label}
+        </button>
     );
 }
