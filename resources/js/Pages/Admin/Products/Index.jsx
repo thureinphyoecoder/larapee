@@ -11,12 +11,15 @@ export default function Index({ products }) {
         <AdminLayout header="Products">
             <Head title="Admin Products" />
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                    <h3 className="font-bold text-slate-800">Products</h3>
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-orange-50">
+                    <div>
+                        <h3 className="font-black text-slate-900 text-lg">Products</h3>
+                        <p className="text-xs text-slate-500 mt-1">Manage catalog, pricing and visibility</p>
+                    </div>
                     <Link
                         href={route("admin.products.create")}
-                        className="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                        className="bg-orange-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow hover:bg-orange-700 transition"
                     >
                         Add Product
                     </Link>
@@ -24,8 +27,8 @@ export default function Index({ products }) {
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="text-slate-400 text-[11px] uppercase tracking-widest border-b border-slate-50">
+                        <thead className="bg-slate-50">
+                            <tr className="text-slate-500 text-[11px] uppercase tracking-widest border-b border-slate-100">
                                 <th className="px-6 py-4 font-bold">Image</th>
                                 <th className="px-6 py-4 font-bold">Name</th>
                                 <th className="px-6 py-4 font-bold">Category</th>
@@ -40,7 +43,7 @@ export default function Index({ products }) {
                                 products.map((product) => (
                                     <tr
                                         key={product.id}
-                                        className="hover:bg-slate-50/80 transition"
+                                        className="hover:bg-orange-50/30 transition"
                                     >
                                         <td className="px-6 py-4">
                                             {product.image_path ? (

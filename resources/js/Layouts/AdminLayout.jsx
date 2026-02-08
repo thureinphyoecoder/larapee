@@ -140,30 +140,33 @@ export default function AdminLayout({ children, header }) {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex">
+        <div
+            className="min-h-screen bg-slate-100/80 flex"
+            style={{ fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif' }}
+        >
             {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-slate-100 hidden md:flex flex-col fixed h-full">
-                <div className="p-6 border-b border-slate-100">
+            <aside className="w-64 bg-slate-950 text-slate-100 hidden md:flex flex-col fixed h-full border-r border-slate-800 shadow-xl">
+                <div className="p-6 border-b border-slate-800">
                     <Link
                         href="/"
-                        className="text-xl font-black text-orange-600"
+                        className="text-2xl font-black tracking-tight text-orange-400"
                     >
                         LaraPee Admin
                     </Link>
-                    <p className="text-xs text-slate-400 mt-1 capitalize">
+                    <p className="text-xs text-slate-400 mt-1 uppercase tracking-[0.2em]">
                         {role === "delivery" ? "rider panel" : `${role} panel`}
                     </p>
                 </div>
 
-                <nav className="flex-1 px-4 py-4 space-y-1">
+                <nav className="flex-1 px-4 py-5 space-y-1">
                     {navLinks.map((link) => (
                         <Link
                             key={link.route}
                             href={route(link.route)}
-                            className={`block px-3 py-2 rounded-lg text-sm font-semibold transition ${
+                            className={`block px-3 py-2.5 rounded-xl text-sm font-bold transition ${
                                 route().current(link.route)
-                                    ? "bg-orange-50 text-orange-600"
-                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                    ? "bg-orange-500/15 text-orange-300 border border-orange-500/30"
+                                    : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
                             }`}
                         >
                             {link.label}
@@ -171,8 +174,8 @@ export default function AdminLayout({ children, header }) {
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-slate-100 bg-slate-50">
-                    <p className="text-sm font-semibold text-slate-700 truncate">
+                <div className="p-4 border-t border-slate-800 bg-slate-900">
+                    <p className="text-sm font-semibold text-slate-100 truncate">
                         {user?.name || "Unknown User"}
                     </p>
                     <p className="text-xs text-slate-400 truncate">
@@ -183,9 +186,9 @@ export default function AdminLayout({ children, header }) {
 
             {/* Main Content */}
             <div className="flex-1 md:ms-64 flex flex-col min-h-screen">
-                <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-50">
+                <header className="h-20 bg-white/90 backdrop-blur border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-50">
                     <div className="flex items-center gap-4">
-                        <div className="text-sm font-semibold text-slate-700">
+                        <div className="text-lg font-black text-slate-900">
                             {header || "Admin"}
                         </div>
                         {canUseSearch && (
@@ -198,7 +201,7 @@ export default function AdminLayout({ children, header }) {
                             >
                                 <input
                                     type="text"
-                                    className="w-80 border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                                    className="w-96 border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white"
                                     placeholder="Global search: product, variant SKU, order, user..."
                                     value={globalSearch}
                                     onChange={(e) => setGlobalSearch(e.target.value)}
@@ -209,7 +212,7 @@ export default function AdminLayout({ children, header }) {
 
                     <div className="flex items-center gap-6">
                         {canTrackAttendance && (
-                            <div className="hidden lg:flex items-center gap-2 border border-slate-200 rounded-xl px-2 py-1 bg-slate-50">
+                            <div className="hidden lg:flex items-center gap-2 border border-slate-200 rounded-xl px-2 py-1 bg-white shadow-sm">
                                 {attendance?.is_checked_in ? (
                                     <button
                                         onClick={() => submitAttendance("out")}
@@ -238,7 +241,7 @@ export default function AdminLayout({ children, header }) {
                         {canAccessSupport && (
                             <Link
                                 href={route("admin.support.index")}
-                                className="hidden sm:inline-flex px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-slate-200 text-slate-600 hover:bg-slate-50"
+                                className="hidden sm:inline-flex px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-slate-200 text-slate-600 hover:bg-slate-100"
                             >
                                 Support Inbox
                             </Link>
@@ -321,7 +324,7 @@ export default function AdminLayout({ children, header }) {
 
                         {/* Logout Section */}
                         <div className="flex items-center gap-3 border-l border-slate-100 ps-6">
-                            <span className="text-sm font-bold text-slate-600">
+                            <span className="text-sm font-bold text-slate-700">
                                 {user?.name || ""}
                             </span>
                             <Link
@@ -336,7 +339,7 @@ export default function AdminLayout({ children, header }) {
                     </div>
                 </header>
 
-                <main className="flex-1 p-6">{children}</main>
+                <main className="flex-1 p-6 md:p-8">{children}</main>
             </div>
         </div>
     );
