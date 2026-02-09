@@ -9,8 +9,8 @@ type OrderResponse = {
 
 export const orderService = {
   createOrder: async (payload: {
-    phone: string;
-    address: string;
+    phone?: string | null;
+    address?: string | null;
     shop_id?: number;
     items: OrderItemInput[];
   }) => {

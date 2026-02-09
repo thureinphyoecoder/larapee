@@ -17,8 +17,8 @@ class CreateOrderFromCartAction
 
     public function execute(
         User $user,
-        string $phone,
-        string $address,
+        ?string $phone = null,
+        ?string $address = null,
         ?int $shopId = null,
         ?UploadedFile $paymentSlip = null,
     ): Order {

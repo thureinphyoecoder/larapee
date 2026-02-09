@@ -32,8 +32,8 @@ class CreateOrderFromItemsAction
     public function execute(
         User $user,
         array $items,
-        string $phone,
-        string $address,
+        ?string $phone = null,
+        ?string $address = null,
         ?string $customerName = null,
         ?int $customerId = null,
         ?int $forcedShopId = null,
@@ -67,6 +67,9 @@ class CreateOrderFromItemsAction
 
         return DB::transaction(function () use ($user, $normalized, $phone, $address, $customerName, $customerId, $forcedShopId, $paymentSlip): Order {
             $variantIds = $normalized->pluck('variant_id')->all();
+            $normalizedPhone = trim((string) $phone);
+            $normalizedAddress = trim((string) $address);
+            $normalizedCustomerName = trim((string) $customerName);
 
             $variants = ProductVariant::query()
                 ->with('product:id,shop_id')
@@ -134,18 +137,26 @@ class CreateOrderFromItemsAction
                 ? $paymentSlip->storePublicly('slips', 'public')
                 : null;
 
-            $resolvedCustomer = $customerId
-                ? Customer::query()->find($customerId)
-                : Customer::query()->firstOrCreate(
+            $resolvedCustomer = null;
+            if ($customerId) {
+                $resolvedCustomer = Customer::query()->find($customerId);
+                if (! $resolvedCustomer) {
+                    throw ValidationException::withMessages([
+                        'customer_id' => 'Customer not found.',
+                    ]);
+                }
+            } elseif ($normalizedPhone !== '') {
+                $resolvedCustomer = Customer::query()->firstOrCreate(
                     [
-                        'phone' => $phone,
-                        'name' => $customerName ?: 'POS Customer',
+                        'phone' => $normalizedPhone,
+                        'name' => $normalizedCustomerName !== '' ? $normalizedCustomerName : 'POS Customer',
                     ],
                     [
-                        'address' => $address,
+                        'address' => $normalizedAddress !== '' ? $normalizedAddress : null,
                         'created_by' => $user->id,
                     ],
                 );
+            }
 
             $shopId = (int) $shopIds->first();
             $order = Order::query()->create([
@@ -158,8 +169,8 @@ class CreateOrderFromItemsAction
                 'total_amount' => $total,
                 'payment_slip' => $paymentSlipPath,
                 'status' => 'pending',
-                'phone' => $phone,
-                'address' => $address,
+                'phone' => $normalizedPhone !== '' ? $normalizedPhone : null,
+                'address' => $normalizedAddress !== '' ? $normalizedAddress : null,
             ]);
 
             $now = now();

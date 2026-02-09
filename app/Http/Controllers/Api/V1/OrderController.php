@@ -69,8 +69,8 @@ class OrderController extends Controller
             ? $this->createOrderFromItemsAction->execute(
                 user: $user,
                 items: $request->input('items', []),
-                phone: $request->string('phone')->toString(),
-                address: $request->string('address')->toString(),
+                phone: $request->input('phone'),
+                address: $request->input('address'),
                 customerName: $request->string('customer_name')->toString() ?: null,
                 customerId: $request->integer('customer_id') ?: null,
                 forcedShopId: $request->integer('shop_id') ?: null,
@@ -78,8 +78,8 @@ class OrderController extends Controller
             )
             : $this->createOrderFromCartAction->execute(
                 user: $user,
-                phone: $request->string('phone')->toString(),
-                address: $request->string('address')->toString(),
+                phone: $request->input('phone'),
+                address: $request->input('address'),
                 shopId: $request->integer('shop_id') ?: null,
                 paymentSlip: $request->file('payment_slip'),
             );

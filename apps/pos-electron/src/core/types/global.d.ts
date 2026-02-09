@@ -15,8 +15,8 @@ declare global {
       offlineCacheOrders: (orders: Order[]) => Promise<void>;
       offlineGetOrders: () => Promise<Order[]>;
       offlineQueueOrder: (payload: {
-        phone: string;
-        address: string;
+        phone?: string | null;
+        address?: string | null;
         shop_id?: number;
         items: OrderItemInput[];
       }) => Promise<Order>;

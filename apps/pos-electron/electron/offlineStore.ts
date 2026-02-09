@@ -17,8 +17,8 @@ type ProductPayload = {
 };
 
 type OrderPayload = {
-  phone: string;
-  address: string;
+  phone?: string | null;
+  address?: string | null;
   shop_id?: number;
   items: Array<{ variant_id: number; quantity: number }>;
 };
@@ -27,8 +27,8 @@ type CachedOrder = {
   id: number;
   status: string;
   total_amount: number;
-  phone: string;
-  address: string;
+  phone: string | null;
+  address: string | null;
   created_at: string;
 };
 
@@ -178,8 +178,8 @@ export class OfflineStore {
       id: Number(inserted[0].id) * -1,
       status: "pending_sync",
       total_amount: total,
-      phone: payload.phone,
-      address: payload.address,
+      phone: payload.phone ?? null,
+      address: payload.address ?? null,
       created_at: now,
     };
   }
@@ -198,8 +198,8 @@ export class OfflineStore {
         id: Number(row.id) * -1,
         status: "pending_sync",
         total_amount: this.computeTotal(payload),
-        phone: payload.phone,
-        address: payload.address,
+        phone: payload.phone ?? null,
+        address: payload.address ?? null,
         created_at: row.created_at,
       };
     });
@@ -246,8 +246,8 @@ export class OfflineStore {
             ...(payload.client_ref ? { "X-Idempotency-Key": payload.client_ref } : {}),
           },
           body: JSON.stringify({
-            phone: payload.phone,
-            address: payload.address,
+            phone: payload.phone ?? null,
+            address: payload.address ?? null,
             shop_id: payload.shop_id,
             items: payload.items,
           }),

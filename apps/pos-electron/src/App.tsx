@@ -479,13 +479,11 @@ export default function App() {
       return;
     }
 
-    if (phone.trim().length < 7) {
-      setError("Valid customer phone is required.");
-      return;
-    }
+    const normalizedPhone = phone.trim();
+    const normalizedAddress = address.trim();
 
-    if (address.trim().length < 5) {
-      setError("Valid delivery address is required.");
+    if (normalizedPhone.length > 0 && normalizedPhone.length < 7) {
+      setError("Customer phone must be at least 7 characters or left blank for walk-in.");
       return;
     }
 
@@ -502,8 +500,8 @@ export default function App() {
       setError("");
       setNotice("");
       const result = await orderService.createOrder({
-        phone: phone.trim(),
-        address: address.trim(),
+        phone: normalizedPhone !== "" ? normalizedPhone : null,
+        address: normalizedAddress !== "" ? normalizedAddress : null,
         items: cart.map((line) => ({ variant_id: line.variantId, quantity: line.qty })),
       });
       if (result.data.status === "pending_sync") {
@@ -666,16 +664,17 @@ export default function App() {
 
         <article className="card panel-checkout">
           <h2>Checkout</h2>
+          <p className="tiny muted">Walk-in checkout: customer details are optional.</p>
           <label>
-            Customer Phone
+            Customer Phone (optional)
             <input
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
-              placeholder="09xxxxxxxxx"
+              placeholder="09xxxxxxxxx (leave empty for walk-in)"
             />
           </label>
           <label>
-            Delivery Address
+            Delivery Address (optional)
             <input
               value={address}
               onChange={(event) => setAddress(event.target.value)}
