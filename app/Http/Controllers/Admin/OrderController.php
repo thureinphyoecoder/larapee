@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Orders\RefreshProductStockAction;
+use App\Actions\Orders\RestockOrderItemsAction;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\CartItem;
-use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB; // Transaction အတွက်
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +18,12 @@ use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
+    public function __construct(
+        private readonly RefreshProductStockAction $refreshProductStockAction,
+        private readonly RestockOrderItemsAction $restockOrderItemsAction,
+    ) {
+    }
+
     public function index()
     {
         return Inertia::render('Admin/Orders/Index', [
@@ -230,7 +237,7 @@ class OrderController extends Controller
                 $affectedProductIds[] = (int) $item->product_id;
             }
 
-            $this->refreshProductsStock($affectedProductIds);
+            $this->refreshProductStockAction->execute($affectedProductIds);
 
             // ခြင်းတောင်း ရှင်း
             CartItem::where('user_id', $user->id)->delete();
@@ -430,52 +437,6 @@ class OrderController extends Controller
 
     private function restockOrderItems(Order $order): void
     {
-        DB::transaction(function () use ($order): void {
-            $items = $order->items()->get(['product_id', 'product_variant_id', 'quantity']);
-            if ($items->isEmpty()) {
-                return;
-            }
-
-            $variants = ProductVariant::whereIn('id', $items->pluck('product_variant_id'))
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('id');
-
-            $affectedProductIds = [];
-            foreach ($items as $item) {
-                $variant = $variants->get($item->product_variant_id);
-                if (!$variant) {
-                    continue;
-                }
-
-                $variant->increment('stock_level', (int) $item->quantity);
-                $affectedProductIds[] = (int) $item->product_id;
-            }
-
-            $this->refreshProductsStock($affectedProductIds);
-        });
-    }
-
-    private function refreshProductsStock(array $productIds): void
-    {
-        $ids = collect($productIds)->filter()->unique()->values();
-        if ($ids->isEmpty()) {
-            return;
-        }
-
-        $summaries = ProductVariant::whereIn('product_id', $ids)
-            ->where('is_active', true)
-            ->groupBy('product_id')
-            ->selectRaw('product_id, COALESCE(SUM(stock_level),0) as stock_sum, COALESCE(MIN(price),0) as min_price')
-            ->get()
-            ->keyBy('product_id');
-
-        foreach ($ids as $productId) {
-            $row = $summaries->get($productId);
-            Product::where('id', $productId)->update([
-                'stock_level' => (int) ($row->stock_sum ?? 0),
-                'price' => (float) ($row->min_price ?? 0),
-            ]);
-        }
+        $this->restockOrderItemsAction->execute($order);
     }
 }

@@ -18,6 +18,21 @@ class AddSecurityHeaders
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        // Keep local development compatible with Vite dev server/HMR.
+        if (app()->isProduction()) {
+            $response->headers->set(
+                'Content-Security-Policy',
+                "default-src 'self'; ".
+                "base-uri 'self'; ".
+                "frame-ancestors 'self'; ".
+                "form-action 'self'; ".
+                "img-src 'self' data: blob: https:; ".
+                "font-src 'self' data: https://fonts.bunny.net; ".
+                "style-src 'self' 'unsafe-inline' https://fonts.bunny.net; ".
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; ".
+                "connect-src 'self' ws: wss:;"
+            );
+        }
 
         return $response;
     }

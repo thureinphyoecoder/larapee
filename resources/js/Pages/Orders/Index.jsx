@@ -1,6 +1,7 @@
 import { Head, Link, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import Swal from "sweetalert2";
+import { sanitizePaginationLabel } from "@/utils/sanitizePaginationLabel";
 
 export default function Index({ orders }) {
     const rows = orders?.data || [];
@@ -137,8 +138,9 @@ export default function Index({ orders }) {
                                         ? "bg-orange-600 text-white border-orange-600"
                                         : "bg-white text-gray-600 border-gray-200"
                                 } ${!link.url ? "opacity-50 pointer-events-none" : ""}`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
+                            >
+                                {sanitizePaginationLabel(link.label)}
+                            </Link>
                         ))}
                     </div>
                 )}

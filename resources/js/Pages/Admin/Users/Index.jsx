@@ -2,6 +2,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { useState } from "react";
 import Swal from "sweetalert2";
+import { sanitizePaginationLabel } from "@/utils/sanitizePaginationLabel";
 
 export default function Index({ users, roles, shops, type = "staff", search = "" }) {
     const { auth } = usePage().props;
@@ -334,8 +335,9 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                                     ? "bg-orange-600 text-white border-orange-600"
                                     : "bg-white text-slate-600 border-slate-200"
                             } ${!link.url ? "opacity-50 pointer-events-none" : ""}`}
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
+                        >
+                            {sanitizePaginationLabel(link.label)}
+                        </Link>
                     ))}
                 </div>
             )}

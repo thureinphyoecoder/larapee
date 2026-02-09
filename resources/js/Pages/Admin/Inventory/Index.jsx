@@ -2,6 +2,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, Link, router, useForm } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 import Swal from "sweetalert2";
+import { sanitizePaginationLabel } from "@/utils/sanitizePaginationLabel";
 
 export default function InventoryIndex({
     variants,
@@ -398,8 +399,9 @@ export default function InventoryIndex({
                                     key={`${link.label}-${idx}`}
                                     href={link.url || "#"}
                                     className={`px-3 py-1 rounded border text-sm ${link.active ? "bg-orange-600 text-white border-orange-600" : "bg-white text-slate-600 border-slate-200"} ${!link.url ? "opacity-50 pointer-events-none" : ""}`}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                />
+                                >
+                                    {sanitizePaginationLabel(link.label)}
+                                </Link>
                             ))}
                         </div>
                     )}
