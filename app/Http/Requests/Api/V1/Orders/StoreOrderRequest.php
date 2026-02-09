@@ -15,6 +15,8 @@ class StoreOrderRequest extends FormRequest
     {
         return [
             'shop_id' => ['nullable', 'integer', 'exists:shops,id'],
+            'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
+            'customer_name' => ['nullable', 'string', 'max:255'],
             'phone' => ['required', 'string', 'min:7', 'max:20'],
             'address' => ['required', 'string', 'min:5', 'max:500'],
             'payment_slip' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],

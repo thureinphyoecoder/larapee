@@ -13,6 +13,7 @@ class Order extends Model
         'receipt_no',
         'job_no',
         'user_id',
+        'customer_id',
         'shop_id',
         'total_amount',
         'payment_slip',
@@ -74,6 +75,11 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function shop()
     {
         return $this->belongsTo(Shop::class);
@@ -84,6 +90,21 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function discounts()
+    {
+        return $this->hasMany(OrderDiscount::class);
+    }
+
+    public function taxes()
+    {
+        return $this->hasMany(OrderTax::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function approvalRequests()
     {
         return $this->hasMany(ApprovalRequest::class);
@@ -92,5 +113,30 @@ class Order extends Model
     public function financialAdjustments()
     {
         return $this->hasMany(FinancialAdjustment::class);
+    }
+
+    public function derivedSubtotal(): float
+    {
+        return (float) $this->items->sum(fn (OrderItem $item) => ((float) ($item->unit_price ?? $item->price)) * ((int) ($item->qty ?? $item->quantity)));
+    }
+
+    public function derivedDiscount(): float
+    {
+        return (float) $this->discounts->sum('amount');
+    }
+
+    public function derivedTax(): float
+    {
+        return (float) $this->taxes->sum('amount');
+    }
+
+    public function derivedTotal(): float
+    {
+        return max(0, $this->derivedSubtotal() - $this->derivedDiscount() + $this->derivedTax());
+    }
+
+    public function paidTotal(): float
+    {
+        return (float) $this->payments->sum('amount');
     }
 }

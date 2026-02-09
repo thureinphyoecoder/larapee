@@ -2,7 +2,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 
-export default function PaymentsIndex({ orders, approvals, adjustments, filters = {} }) {
+export default function PaymentsIndex({ orders, payments, approvals, adjustments, filters = {} }) {
     const [q, setQ] = useState(filters?.q || "");
     const [status, setStatus] = useState(filters?.status || "");
 
@@ -24,6 +24,7 @@ export default function PaymentsIndex({ orders, approvals, adjustments, filters 
     const rows = orders?.data || [];
     const approvalRows = approvals?.data || [];
     const adjustmentRows = adjustments?.data || [];
+    const paymentRows = payments?.data || [];
 
     const totals = useMemo(() => {
         return rows.reduce(
@@ -224,6 +225,39 @@ export default function PaymentsIndex({ orders, approvals, adjustments, filters 
                     </div>
                 </div>
 
+                <div className="bg-white border border-slate-200 rounded-2xl p-5">
+                    <h3 className="font-black text-slate-900">Payment Ledger Events (Append-Only)</h3>
+                    <p className="text-xs text-slate-500 mt-1">Verify / Reject / Refund create new rows only.</p>
+                    <div className="mt-4 overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead className="text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                                <tr>
+                                    <th className="py-2 text-left">Time</th>
+                                    <th className="py-2 text-left">Order</th>
+                                    <th className="py-2 text-left">Event</th>
+                                    <th className="py-2 text-left">Amount</th>
+                                    <th className="py-2 text-left">Status</th>
+                                    <th className="py-2 text-left">Actor</th>
+                                    <th className="py-2 text-left">Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {paymentRows.map((row) => (
+                                    <tr key={row.id} className="border-b border-slate-100">
+                                        <td className="py-2">{new Date(row.created_at).toLocaleString()}</td>
+                                        <td className="py-2">{row.order?.invoice_no || row.order_id}</td>
+                                        <td className="py-2 uppercase text-xs font-bold">{row.event_type}</td>
+                                        <td className="py-2">{Number(row.amount).toLocaleString()} {row.currency || "MMK"}</td>
+                                        <td className="py-2">{row.status}</td>
+                                        <td className="py-2">{row.actor?.name || "system"}</td>
+                                        <td className="py-2">{row.note || "-"}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <div className="bg-white border border-slate-200 rounded-2xl p-5">
                         <h3 className="font-black text-slate-900">Approval Requests</h3>
@@ -285,6 +319,27 @@ export default function PaymentsIndex({ orders, approvals, adjustments, filters 
                         </div>
                     </div>
                 </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <QuickEventCard
+                        title="Verify Payment"
+                        actionRoute="admin.payments.orders.verify"
+                        orders={rows}
+                        buttonClass="bg-emerald-600"
+                    />
+                    <QuickEventCard
+                        title="Reject Payment"
+                        actionRoute="admin.payments.orders.reject"
+                        orders={rows}
+                        buttonClass="bg-rose-600"
+                    />
+                    <QuickEventCard
+                        title="Refund Payment"
+                        actionRoute="admin.payments.orders.refund"
+                        orders={rows}
+                        buttonClass="bg-orange-600"
+                    />
+                </div>
             </div>
         </AdminLayout>
     );
@@ -301,6 +356,68 @@ function MetricCard({ label, value, tone = "slate" }) {
         <div className={`bg-white border rounded-2xl p-4 ${toneStyles[tone] || toneStyles.slate}`}>
             <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
             <p className="mt-2 text-xl font-black">{value}</p>
+        </div>
+    );
+}
+
+function QuickEventCard({ title, actionRoute, orders, buttonClass }) {
+    const form = useForm({
+        order_id: "",
+        amount: "",
+        reference_no: "",
+        note: "",
+    });
+
+    return (
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+            <h4 className="font-black text-slate-900">{title}</h4>
+            <form
+                className="mt-3 space-y-2"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!form.data.order_id) return;
+                    form.post(route(actionRoute, form.data.order_id), { preserveScroll: true });
+                }}
+            >
+                <select
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2"
+                    value={form.data.order_id}
+                    onChange={(e) => form.setData("order_id", e.target.value)}
+                    required
+                >
+                    <option value="">Select order</option>
+                    {orders.map((order) => (
+                        <option key={order.id} value={order.id}>
+                            {order.invoice_no || `#${order.id}`} - {order.user?.name}
+                        </option>
+                    ))}
+                </select>
+                <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2"
+                    placeholder="Amount"
+                    value={form.data.amount}
+                    onChange={(e) => form.setData("amount", e.target.value)}
+                />
+                <input
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2"
+                    placeholder="Reference No (optional)"
+                    value={form.data.reference_no}
+                    onChange={(e) => form.setData("reference_no", e.target.value)}
+                />
+                <input
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2"
+                    placeholder="Note"
+                    value={form.data.note}
+                    onChange={(e) => form.setData("note", e.target.value)}
+                    required={actionRoute !== "admin.payments.orders.verify"}
+                />
+                <button className={`w-full text-white rounded-xl py-2 font-bold ${buttonClass}`}>
+                    Save Event
+                </button>
+            </form>
         </div>
     );
 }

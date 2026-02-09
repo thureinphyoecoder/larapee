@@ -125,6 +125,9 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery|accoun
         Route::post('/payments/approval-requests/{approvalRequest}/approve', [PaymentController::class, 'approve'])->name('payments.approvals.approve');
         Route::post('/payments/approval-requests/{approvalRequest}/reject', [PaymentController::class, 'reject'])->name('payments.approvals.reject');
         Route::post('/payments/adjustments', [PaymentController::class, 'createAdjustment'])->name('payments.adjustments.store');
+        Route::post('/payments/orders/{order}/verify', [PaymentController::class, 'verify'])->name('payments.orders.verify');
+        Route::post('/payments/orders/{order}/reject', [PaymentController::class, 'rejectPayment'])->name('payments.orders.reject');
+        Route::post('/payments/orders/{order}/refund', [PaymentController::class, 'refund'])->name('payments.orders.refund');
 
         Route::get('/stock-movements', [StockMovementLogController::class, 'index'])->name('stock-movements.index');
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');

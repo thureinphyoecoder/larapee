@@ -2,8 +2,10 @@
 
 namespace App\Actions\Orders;
 
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
 use App\Models\ProductVariant;
 use App\Models\User;
 use App\Services\Governance\AuditLogger;
@@ -32,6 +34,8 @@ class CreateOrderFromItemsAction
         array $items,
         string $phone,
         string $address,
+        ?string $customerName = null,
+        ?int $customerId = null,
         ?int $forcedShopId = null,
         ?UploadedFile $paymentSlip = null,
     ): Order {
@@ -60,7 +64,7 @@ class CreateOrderFromItemsAction
             ]);
         }
 
-        return DB::transaction(function () use ($user, $normalized, $phone, $address, $forcedShopId, $paymentSlip): Order {
+        return DB::transaction(function () use ($user, $normalized, $phone, $address, $customerName, $customerId, $forcedShopId, $paymentSlip): Order {
             $variantIds = $normalized->pluck('variant_id')->all();
 
             $variants = ProductVariant::query()
@@ -134,12 +138,26 @@ class CreateOrderFromItemsAction
                 ? $paymentSlip->storePublicly('slips', 'public')
                 : null;
 
+            $resolvedCustomer = $customerId
+                ? Customer::query()->find($customerId)
+                : Customer::query()->firstOrCreate(
+                    [
+                        'phone' => $phone,
+                        'name' => $customerName ?: 'POS Customer',
+                    ],
+                    [
+                        'address' => $address,
+                        'created_by' => $user->id,
+                    ],
+                );
+
             $shopId = (int) $shopIds->first();
             $order = Order::query()->create([
                 'invoice_no' => $this->documentNumberService->next('invoice', $shopId),
                 'receipt_no' => $this->documentNumberService->next('receipt', $shopId),
                 'job_no' => $this->documentNumberService->next('job', $shopId),
                 'user_id' => $user->id,
+                'customer_id' => $resolvedCustomer?->id,
                 'shop_id' => $shopId,
                 'total_amount' => $total,
                 'payment_slip' => $paymentSlipPath,
@@ -154,6 +172,8 @@ class CreateOrderFromItemsAction
                     'order_id' => $order->id,
                     'product_id' => $row['product_id'],
                     'product_variant_id' => $row['product_variant_id'],
+                    'qty' => $row['quantity'],
+                    'unit_price' => $row['price'],
                     'quantity' => $row['quantity'],
                     'price' => $row['price'],
                     'created_at' => $now,
@@ -168,6 +188,18 @@ class CreateOrderFromItemsAction
             DB::update(
                 "UPDATE product_variants SET stock_level = stock_level - CASE id {$stockCaseSql} ELSE 0 END WHERE id IN ({$variantIdList})"
             );
+
+            if ($paymentSlipPath) {
+                Payment::query()->create([
+                    'order_id' => $order->id,
+                    'event_type' => 'deposit',
+                    'amount' => $total,
+                    'status' => 'pending_verification',
+                    'note' => 'Deposit created from uploaded payment slip',
+                    'actor_id' => $user->id,
+                    'meta' => ['payment_slip' => $paymentSlipPath],
+                ]);
+            }
 
             foreach ($itemRows as $row) {
                 $this->stockMovementLogger->log(

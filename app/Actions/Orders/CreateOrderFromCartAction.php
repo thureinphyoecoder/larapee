@@ -45,6 +45,8 @@ class CreateOrderFromCartAction
             items: $items,
             phone: $phone,
             address: $address,
+            customerName: null,
+            customerId: null,
             forcedShopId: $shopId,
             paymentSlip: $paymentSlip,
         );

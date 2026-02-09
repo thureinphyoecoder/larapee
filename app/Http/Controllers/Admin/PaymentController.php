@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApprovalRequest;
 use App\Models\FinancialAdjustment;
 use App\Models\Order;
+use App\Models\Payment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -39,6 +40,11 @@ class PaymentController extends Controller
         }
 
         $orders = $orderQuery->paginate(20)->withQueryString();
+        $payments = Payment::query()
+            ->with(['order:id,invoice_no,status,total_amount', 'actor:id,name', 'approver:id,name'])
+            ->latest('id')
+            ->paginate(40, ['*'], 'payment_page')
+            ->withQueryString();
 
         $approvals = ApprovalRequest::query()
             ->with(['order:id,invoice_no,status,total_amount', 'requester:id,name', 'approver:id,name'])
@@ -54,6 +60,7 @@ class PaymentController extends Controller
 
         return Inertia::render('Admin/Payments/Index', [
             'orders' => $orders,
+            'payments' => $payments,
             'approvals' => $approvals,
             'adjustments' => $adjustments,
             'filters' => [
@@ -157,6 +164,95 @@ class PaymentController extends Controller
             'approval_request_id' => $validated['approval_request_id'] ?? null,
         ]);
 
+        Payment::query()->create([
+            'order_id' => (int) $validated['order_id'],
+            'event_type' => 'adjustment',
+            'amount' => (float) $validated['amount'],
+            'status' => 'recorded',
+            'note' => $validated['reason'],
+            'actor_id' => $user->id,
+            'approved_by' => $user->id,
+            'approved_at' => now(),
+            'meta' => ['adjustment_type' => $validated['adjustment_type']],
+        ]);
+
         return back()->with('success', 'Financial adjustment recorded.');
+    }
+
+    public function verify(Request $request, Order $order): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'accountant']), 403);
+
+        $validated = $request->validate([
+            'amount' => ['nullable', 'numeric', 'min:0'],
+            'reference_no' => ['nullable', 'string', 'max:120'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        Payment::query()->create([
+            'order_id' => $order->id,
+            'event_type' => 'verify',
+            'amount' => (float) ($validated['amount'] ?? 0),
+            'status' => 'approved',
+            'reference_no' => $validated['reference_no'] ?? null,
+            'note' => $validated['note'] ?? 'Payment verified',
+            'actor_id' => $user->id,
+            'approved_by' => $user->id,
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Payment verification event recorded.');
+    }
+
+    public function rejectPayment(Request $request, Order $order): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'accountant']), 403);
+
+        $validated = $request->validate([
+            'reference_no' => ['nullable', 'string', 'max:120'],
+            'note' => ['required', 'string', 'max:1000'],
+        ]);
+
+        Payment::query()->create([
+            'order_id' => $order->id,
+            'event_type' => 'reject',
+            'amount' => 0,
+            'status' => 'rejected',
+            'reference_no' => $validated['reference_no'] ?? null,
+            'note' => $validated['note'],
+            'actor_id' => $user->id,
+            'approved_by' => $user->id,
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Payment rejection event recorded.');
+    }
+
+    public function refund(Request $request, Order $order): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'accountant']), 403);
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'reference_no' => ['nullable', 'string', 'max:120'],
+            'note' => ['required', 'string', 'max:1000'],
+        ]);
+
+        Payment::query()->create([
+            'order_id' => $order->id,
+            'event_type' => 'refund',
+            'amount' => -1 * abs((float) $validated['amount']),
+            'status' => 'approved',
+            'reference_no' => $validated['reference_no'] ?? null,
+            'note' => $validated['note'],
+            'actor_id' => $user->id,
+            'approved_by' => $user->id,
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Refund event recorded.');
     }
 }

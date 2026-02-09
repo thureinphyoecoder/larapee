@@ -30,7 +30,7 @@ class OrderController extends Controller
         $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']);
 
         $orders = Order::query()
-            ->with(['user.roles', 'shop', 'items.product', 'items.variant'])
+            ->with(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])
             ->when(! $isStaff, fn ($q) => $q->where('user_id', $user->id))
             ->latest('id')
             ->paginate((int) request('per_page', 20))
@@ -57,7 +57,7 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'data' => new OrderResource($order->load(['user.roles', 'shop', 'items.product', 'items.variant'])),
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
         ]);
     }
 
@@ -71,6 +71,8 @@ class OrderController extends Controller
                 items: $request->input('items', []),
                 phone: $request->string('phone')->toString(),
                 address: $request->string('address')->toString(),
+                customerName: $request->string('customer_name')->toString() ?: null,
+                customerId: $request->integer('customer_id') ?: null,
                 forcedShopId: $request->integer('shop_id') ?: null,
                 paymentSlip: $request->file('payment_slip'),
             )
@@ -153,7 +155,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Order status updated.',
-            'data' => new OrderResource($order->load(['user.roles', 'shop', 'items.product', 'items.variant'])),
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
         ]);
     }
 }
