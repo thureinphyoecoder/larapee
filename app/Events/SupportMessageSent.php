@@ -9,6 +9,7 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class SupportMessageSent implements ShouldBroadcastNow
 {
@@ -54,6 +55,9 @@ class SupportMessageSent implements ShouldBroadcastNow
             'staff_id' => $this->supportMessage->staff_id,
             'sender_id' => $this->supportMessage->sender_id,
             'sender_name' => $this->supportMessage->sender?->name,
+            'attachment_url' => $this->supportMessage->attachment_path
+                ? Storage::disk('public')->url($this->supportMessage->attachment_path)
+                : null,
             'created_at' => $this->supportMessage->created_at?->toISOString(),
         ];
     }

@@ -2,7 +2,11 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm, usePage, router } from "@inertiajs/react";
 import { useEffect, useRef, useState } from "react";
 
-export default function SupportChat({ messages = [], assignedStaff = null }) {
+export default function SupportChat({
+    messages = [],
+    messagePagination = { current_page: 1, last_page: 1 },
+    assignedStaff = null,
+}) {
     const { auth } = usePage().props;
     const userId = auth?.user?.id;
     const listRef = useRef(null);
@@ -10,6 +14,7 @@ export default function SupportChat({ messages = [], assignedStaff = null }) {
     const [showJumpToLatest, setShowJumpToLatest] = useState(false);
     const { data, setData, post, processing, reset } = useForm({
         message: "",
+        image: null,
     });
 
     const scrollToBottom = (behavior = "smooth") => {
@@ -21,6 +26,18 @@ export default function SupportChat({ messages = [], assignedStaff = null }) {
         setShowJumpToLatest(false);
     };
 
+    const goToMessagePage = (page) => {
+        router.get(
+            route("support.index", { message_page: page }),
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                only: ["messages", "messagePagination", "assignedStaff"],
+            },
+        );
+    };
+
     useEffect(() => {
         if (!window.Echo || !userId) return;
 
@@ -30,11 +47,11 @@ export default function SupportChat({ messages = [], assignedStaff = null }) {
                 return;
             }
 
-            router.reload({ only: ["messages", "assignedStaff"] });
+            router.reload({ only: ["messages", "messagePagination", "assignedStaff"] });
         });
 
         window.Echo.private(channel).listen(".SupportMessageSeen", () => {
-            router.reload({ only: ["messages"] });
+            router.reload({ only: ["messages", "messagePagination"] });
         });
 
         return () => window.Echo.leaveChannel(channel);
@@ -74,11 +91,19 @@ export default function SupportChat({ messages = [], assignedStaff = null }) {
         setShowJumpToLatest(distanceFromBottom > 96);
     };
 
+    const hasContent = data.message.trim().length > 0 || data.image !== null;
+
     const handleSubmit = (e) => {
         e.preventDefault();
         post(route("support.store"), {
             preserveScroll: true,
-            onSuccess: () => reset("message"),
+            forceFormData: true,
+            onSuccess: () => {
+                reset("message", "image");
+                if (Number(messagePagination?.current_page || 1) !== 1) {
+                    goToMessagePage(1);
+                }
+            },
         });
     };
 
@@ -88,46 +113,65 @@ export default function SupportChat({ messages = [], assignedStaff = null }) {
 
             <div className="max-w-4xl mx-auto space-y-4">
                 <div className="bg-white border border-slate-100 rounded-2xl p-5">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                        Support
-                    </p>
-                    <h2 className="mt-1 text-2xl font-black text-slate-800">
-                        Need help? Chat with manager
-                    </h2>
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Support</p>
+                    <h2 className="mt-1 text-2xl font-black text-slate-800">Need help? Chat with manager</h2>
                     <p className="mt-2 text-sm text-slate-600">
-                        {assignedStaff
-                            ? `Assigned to ${assignedStaff.name}`
-                            : "A support staff will reply soon."}
+                        {assignedStaff ? `Assigned to ${assignedStaff.name}` : "A support staff will reply soon."}
                     </p>
                 </div>
 
-                <div className="bg-white border border-slate-100 rounded-2xl p-4 h-[520px] flex flex-col relative">
-                    <div
-                        ref={listRef}
-                        onScroll={handleListScroll}
-                        className="flex-1 overflow-y-auto space-y-3 p-2"
-                    >
+                <div className="bg-white border border-slate-100 rounded-2xl p-4 h-[560px] flex flex-col relative">
+                    <div className="pb-2 border-b border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                        <span>
+                            Page {messagePagination?.current_page || 1} / {messagePagination?.last_page || 1}
+                        </span>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => goToMessagePage(Number(messagePagination.current_page) + 1)}
+                                disabled={Number(messagePagination.current_page) >= Number(messagePagination.last_page)}
+                                className="px-2 py-1 rounded border border-slate-200 disabled:opacity-40"
+                            >
+                                Older
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => goToMessagePage(Math.max(1, Number(messagePagination.current_page) - 1))}
+                                disabled={Number(messagePagination.current_page) <= 1}
+                                className="px-2 py-1 rounded border border-slate-200 disabled:opacity-40"
+                            >
+                                Newer
+                            </button>
+                        </div>
+                    </div>
+
+                    <div ref={listRef} onScroll={handleListScroll} className="flex-1 overflow-y-auto space-y-3 p-2 mt-2">
                         {messages.length ? (
                             messages.map((m) => {
-                                const mine = m.sender_id === userId;
+                                const mine = Number(m.sender_id) === Number(userId);
                                 return (
-                                    <div
-                                        key={m.id}
-                                        className={`flex ${mine ? "justify-end" : "justify-start"}`}
-                                    >
+                                    <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                                         <div
                                             className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-                                                mine
-                                                    ? "bg-orange-500 text-white"
-                                                    : "bg-slate-100 text-slate-700"
+                                                mine ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-700"
                                             }`}
                                         >
-                                            <p>{m.message}</p>
-                                            <p
-                                                className={`mt-1 text-[10px] ${
-                                                    mine ? "text-white/80" : "text-slate-400"
-                                                }`}
-                                            >
+                                            {m.message ? <p>{m.message}</p> : null}
+                                            {m.attachment_url ? (
+                                                <a
+                                                    href={m.attachment_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="mt-2 block"
+                                                >
+                                                    <img
+                                                        src={m.attachment_url}
+                                                        alt={m.attachment_name || "attachment"}
+                                                        className="max-h-56 rounded-lg border border-black/10"
+                                                    />
+                                                </a>
+                                            ) : null}
+                                            <p className={`mt-1 text-[10px] ${mine ? "text-white/80" : "text-slate-400"}`}>
                                                 {new Date(m.created_at).toLocaleString()}
                                                 {mine ? ` • ${m.seen_at ? "Seen" : "Sent"}` : ""}
                                             </p>
@@ -146,13 +190,13 @@ export default function SupportChat({ messages = [], assignedStaff = null }) {
                         <button
                             type="button"
                             onClick={() => scrollToBottom("smooth")}
-                            className="absolute bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-900 text-white text-xs font-semibold shadow-lg"
+                            className="absolute bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-900 text-white text-xs font-semibold shadow-lg"
                         >
                             New messages ↓
                         </button>
                     )}
 
-                    <form onSubmit={handleSubmit} className="pt-3 border-t border-slate-100">
+                    <form onSubmit={handleSubmit} className="pt-3 border-t border-slate-100" encType="multipart/form-data">
                         <div className="flex gap-3">
                             <input
                                 type="text"
@@ -161,11 +205,20 @@ export default function SupportChat({ messages = [], assignedStaff = null }) {
                                 className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
                                 placeholder="Type your message..."
                             />
+                            <label className="px-3 py-3 border border-slate-200 rounded-xl text-xs font-semibold cursor-pointer hover:bg-slate-50">
+                                Image
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    className="hidden"
+                                    onChange={(e) => setData("image", e.target.files?.[0] || null)}
+                                />
+                            </label>
                             <button
                                 type="submit"
-                                disabled={processing || !data.message.trim()}
+                                disabled={processing || !hasContent}
                                 className={`px-5 rounded-xl text-sm font-bold ${
-                                    processing || !data.message.trim()
+                                    processing || !hasContent
                                         ? "bg-slate-300 text-slate-500"
                                         : "bg-orange-600 text-white hover:bg-orange-700"
                                 }`}
@@ -173,6 +226,18 @@ export default function SupportChat({ messages = [], assignedStaff = null }) {
                                 Send
                             </button>
                         </div>
+                        {data.image ? (
+                            <div className="mt-2 text-xs text-slate-500 flex items-center gap-2">
+                                <span className="truncate">{data.image.name}</span>
+                                <button
+                                    type="button"
+                                    className="text-rose-600"
+                                    onClick={() => setData("image", null)}
+                                >
+                                    Remove
+                                </button>
+                            </div>
+                        ) : null}
                     </form>
                 </div>
             </div>

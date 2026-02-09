@@ -12,11 +12,16 @@ class SupportMessage extends Model
         'staff_id',
         'sender_id',
         'message',
+        'attachment_path',
+        'attachment_name',
+        'attachment_mime',
+        'attachment_size',
         'seen_at',
     ];
 
     protected $casts = [
         'seen_at' => 'datetime',
+        'attachment_size' => 'integer',
     ];
 
     public function customer(): BelongsTo

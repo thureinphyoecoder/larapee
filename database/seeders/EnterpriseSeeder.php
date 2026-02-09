@@ -12,18 +12,25 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
 use App\Models\ProductReview;
-use App\Models\ShopStockShare;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class EnterpriseSeeder extends Seeder
 {
     public function run(): void
     {
+        $now = now();
+
         // ၁။ Roles သတ်မှတ်ခြင်း (Delivery role ပါ ထည့်လိုက်ပြီ)
         $roles = ['admin', 'manager', 'sales', 'delivery', 'customer'];
-        foreach ($roles as $roleName) {
+        $existingRoles = Role::query()
+            ->where('guard_name', 'web')
+            ->whereIn('name', $roles)
+            ->pluck('name')
+            ->all();
+        foreach (array_diff($roles, $existingRoles) as $roleName) {
             Role::findOrCreate($roleName, 'web');
         }
 
@@ -40,21 +47,39 @@ class EnterpriseSeeder extends Seeder
 
         // ၃။ Categories
         $categories = ['Electronics', 'Fashion', 'Home & Living'];
-        foreach ($categories as $cat) {
-            Category::updateOrCreate(['name' => $cat]);
+        $existingCategories = Category::query()
+            ->whereIn('name', $categories)
+            ->pluck('name')
+            ->all();
+        foreach (array_diff($categories, $existingCategories) as $cat) {
+            Category::create(['name' => $cat]);
         }
+        $categoryIds = Category::query()->whereIn('name', $categories)->pluck('id')->all();
 
         // ၄။ Vendors & Shops
         $vendors = [
             ['name' => 'Apple Store', 'email' => 'apple@vendor.com', 'brand' => 'Apple'],
             ['name' => 'Samsung Global', 'email' => 'samsung@vendor.com', 'brand' => 'Samsung'],
         ];
+        $vendorNames = array_column($vendors, 'name');
+        $brandNames = array_column($vendors, 'brand');
+
+        $shopsByName = Shop::query()->whereIn('name', $vendorNames)->get()->keyBy('name');
+        foreach (array_diff($vendorNames, $shopsByName->keys()->all()) as $shopName) {
+            $shopsByName->put($shopName, Shop::create(['name' => $shopName]));
+        }
+
+        $brandsByName = Brand::query()->whereIn('name', $brandNames)->get()->keyBy('name');
+        foreach (array_diff($brandNames, $brandsByName->keys()->all()) as $brandName) {
+            $brandsByName->put($brandName, Brand::create(['name' => $brandName]));
+        }
+
         $createdShopIds = [];
 
         foreach ($vendors as $v) {
-            $shop = Shop::firstOrCreate(['name' => $v['name']]);
+            $shop = $shopsByName[$v['name']];
             $createdShopIds[] = $shop->id;
-            $brand = Brand::firstOrCreate(['name' => $v['brand']]);
+            $brand = $brandsByName[$v['brand']];
 
             // ၅။ Manager (Verify ပါပြီးသား)
             $manager = User::updateOrCreate(
@@ -93,6 +118,8 @@ class EnterpriseSeeder extends Seeder
             $delivery->assignRole('delivery');
 
             // ပစ္စည်းများ ထည့်သွင်းခြင်း logic...
+            $vendorProductIds = [];
+            $variantRows = [];
             for ($i = 1; $i <= 3; $i++) {
                 $productName = $v['brand'] . " Item $i";
                 $detailDescription = implode("\n", [
@@ -133,13 +160,14 @@ class EnterpriseSeeder extends Seeder
                 $product = Product::create([
                     'shop_id' => $shop->id,
                     'brand_id' => $brand->id,
-                    'category_id' => rand(1, 3),
+                    'category_id' => $categoryIds[array_rand($categoryIds)],
                     'name' => $productName,
                     'slug' => Str::slug($productName) . '-' . Str::random(5),
                     'sku' => strtoupper(substr($v['brand'], 0, 3)) . "-00" . rand(100, 999),
                     'price' => 0,
                     'description' => $detailDescription,
                 ]);
+                $vendorProductIds[] = $product->id;
 
                 $variantProfiles = [
                     ['label' => 'REG', 'price' => rand(50000, 500000), 'stock' => rand(5, 40)],
@@ -155,40 +183,68 @@ class EnterpriseSeeder extends Seeder
                 $variantCount = rand(3, 4);
                 $selected = array_slice($variantProfiles, 0, $variantCount);
                 foreach ($selected as $profile) {
-                    $product->variants()->create([
+                    $variantRows[] = [
+                        'product_id' => $product->id,
                         'sku' => $product->sku . '-' . $profile['label'],
                         'price' => $profile['price'],
                         'stock_level' => $profile['stock'],
                         'is_active' => true,
-                    ]);
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
                 }
-
-                $product->update([
-                    'price' => min(array_column($selected, 'price')),
-                    'stock_level' => array_sum(array_column($selected, 'stock')),
-                ]);
             }
+
+            ProductVariant::insert($variantRows);
+
+            Product::query()
+                ->whereIn('id', $vendorProductIds)
+                ->update([
+                    'price' => DB::raw('(select min(product_variants.price) from product_variants where product_variants.product_id = products.id)'),
+                    'stock_level' => DB::raw('(select coalesce(sum(product_variants.stock_level), 0) from product_variants where product_variants.product_id = products.id)'),
+                    'updated_at' => $now,
+                ]);
         }
 
         $createdShopIds = array_values(array_unique($createdShopIds));
-        foreach ($createdShopIds as $fromShopId) {
-            foreach ($createdShopIds as $toShopId) {
-                if ($fromShopId === $toShopId) {
-                    continue;
-                }
+        if ($createdShopIds !== []) {
+            DB::table('shop_stock_shares')
+                ->whereIn('from_shop_id', $createdShopIds)
+                ->whereIn('to_shop_id', $createdShopIds)
+                ->whereColumn('from_shop_id', '!=', 'to_shop_id')
+                ->update([
+                    'is_enabled' => true,
+                    'updated_by' => $admin->id,
+                    'updated_at' => $now,
+                ]);
 
-                ShopStockShare::updateOrCreate(
-                    ['from_shop_id' => $fromShopId, 'to_shop_id' => $toShopId],
-                    ['is_enabled' => true, 'updated_by' => $admin->id]
-                );
-            }
+            $newSharePairs = DB::table('shops as source')
+                ->join('shops as target', fn ($join) => $join->whereColumn('source.id', '!=', 'target.id'))
+                ->leftJoin('shop_stock_shares as shares', function ($join) {
+                    $join->on('shares.from_shop_id', '=', 'source.id')
+                        ->on('shares.to_shop_id', '=', 'target.id');
+                })
+                ->whereIn('source.id', $createdShopIds)
+                ->whereIn('target.id', $createdShopIds)
+                ->whereNull('shares.id')
+                ->selectRaw('source.id as from_shop_id, target.id as to_shop_id, ? as is_enabled, ? as updated_by, ? as created_at, ? as updated_at', [
+                    true,
+                    $admin->id,
+                    $now,
+                    $now,
+                ]);
+
+            DB::table('shop_stock_shares')->insertUsing(
+                ['from_shop_id', 'to_shop_id', 'is_enabled', 'updated_by', 'created_at', 'updated_at'],
+                $newSharePairs
+            );
         }
 
         // ၈။ Customer Users (seed for orders)
         $customer = User::updateOrCreate(
-            ['email' => 'customer.' . Str::slug($v['name']) . '@larapos.com'],
+            ['email' => 'customer@larapos.com'],
             [
-                'name' => $v['name'] . ' Customer',
+                'name' => 'Sample Customer',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]
@@ -196,11 +252,18 @@ class EnterpriseSeeder extends Seeder
         $customer->assignRole('customer');
 
         // ၉။ Sample Orders + Items
-        $variants = ProductVariant::with('product')->inRandomOrder()->take(3)->get();
-        if ($variants->isNotEmpty()) {
+        $orderShopId = $createdShopIds[array_rand($createdShopIds)] ?? null;
+        $variants = ProductVariant::query()
+            ->select('product_variants.id', 'product_variants.product_id', 'product_variants.price')
+            ->join('products', 'products.id', '=', 'product_variants.product_id')
+            ->where('products.shop_id', $orderShopId)
+            ->inRandomOrder()
+            ->limit(3)
+            ->get();
+        if ($orderShopId && $variants->isNotEmpty()) {
             $order = Order::create([
                 'user_id' => $customer->id,
-                'shop_id' => $shop->id,
+                'shop_id' => $orderShopId,
                 'total_amount' => 0,
                 'payment_slip' => 'slips/sample.jpg',
                 'status' => 'pending',
@@ -208,21 +271,26 @@ class EnterpriseSeeder extends Seeder
                 'address' => 'Yangon, Sample Address',
             ]);
 
-            $total = 0;
+            $itemRows = [];
             foreach ($variants as $variant) {
                 $qty = rand(1, 3);
-                $price = $variant->price;
-                $total += $price * $qty;
-
-                $order->items()->create([
+                $itemRows[] = [
+                    'order_id' => $order->id,
                     'product_id' => $variant->product_id,
                     'product_variant_id' => $variant->id,
                     'quantity' => $qty,
-                    'price' => $price,
-                ]);
+                    'price' => $variant->price,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
 
-            $order->update(['total_amount' => $total]);
+            OrderItem::insert($itemRows);
+
+            Order::query()->whereKey($order->id)->update([
+                'total_amount' => DB::raw('(select coalesce(sum(order_items.price * order_items.quantity), 0) from order_items where order_items.order_id = orders.id)'),
+                'updated_at' => $now,
+            ]);
         }
 
         // ၁၀။ Product Reviews (dummy comments + ratings)

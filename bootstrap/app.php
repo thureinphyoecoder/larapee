@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // 🎯 ဒီအပိုင်းက Props တွေ ရောက်ဖို့အတွက် အဓိကပါ
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\AddSecurityHeaders::class,
         ]);
 
         $middleware->alias([
