@@ -14,6 +14,7 @@ export default function AdminLayout({ children, header }) {
         manager: "Manager",
         sales: "Sales Staff",
         delivery: "Rider",
+        accountant: "Accountant",
     };
     const primaryIdentity = user?.name || "Unknown User";
     const normalizedRole = (roleLabelMap[role] || "Admin Account").toLowerCase().trim();
@@ -26,6 +27,10 @@ export default function AdminLayout({ children, header }) {
         admin: [
             { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
             { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
+            { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
+            { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
+            { label: "Audit Logs", route: "admin.audit-logs.index", activePatterns: ["admin.audit-logs.*"] },
+            { label: "Service Jobs", route: "admin.service-jobs.index", activePatterns: ["admin.service-jobs.*"] },
             { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
             { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
             { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
@@ -36,10 +41,21 @@ export default function AdminLayout({ children, header }) {
         manager: [
             { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
             { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
+            { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
+            { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
+            { label: "Audit Logs", route: "admin.audit-logs.index", activePatterns: ["admin.audit-logs.*"] },
+            { label: "Service Jobs", route: "admin.service-jobs.index", activePatterns: ["admin.service-jobs.*"] },
             { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
             { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
             { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
             { label: "Categories", route: "admin.categories.index", activePatterns: ["admin.categories.*"] },
+        ],
+        accountant: [
+            { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
+            { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
+            { label: "Audit Logs", route: "admin.audit-logs.index", activePatterns: ["admin.audit-logs.*"] },
+            { label: "Service Jobs", route: "admin.service-jobs.index", activePatterns: ["admin.service-jobs.*"] },
+            { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
         ],
         sales: [
             { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },

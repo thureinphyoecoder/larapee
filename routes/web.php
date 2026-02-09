@@ -14,6 +14,10 @@ use App\Http\Controllers\Admin\ShopController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\StaffAttendanceController;
 use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\StockMovementLogController;
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\ServiceJobController;
 use App\Http\Controllers\Admin\GlobalSearchController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -81,7 +85,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 | Admin/Team Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery|accountant'])->prefix('admin')->name('admin.')->group(function () {
 
     // 🎯 Admin Dashboard ကို နာမည်ခွဲပေးလိုက်ပါ (Loop မပတ်အောင်)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -112,6 +116,20 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery'])->pr
         Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
         Route::patch('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
         Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+        Route::post('/service-jobs/retry-failed', [ServiceJobController::class, 'retryFailed'])->name('service-jobs.retry-failed');
+    });
+
+    Route::middleware(['role:admin|manager|accountant'])->group(function () {
+        Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::post('/payments/approval-requests', [PaymentController::class, 'requestApproval'])->name('payments.approvals.store');
+        Route::post('/payments/approval-requests/{approvalRequest}/approve', [PaymentController::class, 'approve'])->name('payments.approvals.approve');
+        Route::post('/payments/approval-requests/{approvalRequest}/reject', [PaymentController::class, 'reject'])->name('payments.approvals.reject');
+        Route::post('/payments/adjustments', [PaymentController::class, 'createAdjustment'])->name('payments.adjustments.store');
+
+        Route::get('/stock-movements', [StockMovementLogController::class, 'index'])->name('stock-movements.index');
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('/service-jobs', [ServiceJobController::class, 'index'])->name('service-jobs.index');
+        Route::post('/service-jobs/daily-close', [ServiceJobController::class, 'runDailyClose'])->name('service-jobs.daily-close');
     });
 
     Route::middleware(['role:admin'])->group(function () {
