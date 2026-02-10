@@ -26,6 +26,10 @@ declare global {
         pending: number;
         lastSyncAt: string | null;
       }>;
+      receiptPrint: (payload: { text: string; silent?: boolean; simulate?: boolean }) => Promise<{
+        ok: boolean;
+        message?: string;
+      }>;
     };
   }
 }

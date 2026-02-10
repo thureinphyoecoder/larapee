@@ -10,4 +10,5 @@ contextBridge.exposeInMainWorld("desktopBridge", {
   offlineGetOrders: async () => ipcRenderer.invoke("offline:get-orders"),
   offlineQueueOrder: async (payload) => ipcRenderer.invoke("offline:queue-order", payload),
   offlineSyncNow: async (payload) => ipcRenderer.invoke("offline:sync-now", payload),
+  receiptPrint: async (payload) => ipcRenderer.invoke("receipt:print", payload),
 });

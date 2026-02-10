@@ -1,6 +1,7 @@
 import { HttpError, httpClient } from "../../core/api/httpClient";
 import { POS_CONFIG } from "../../core/env/config";
 import type { Order, OrderItemInput } from "../../core/types/contracts";
+import { sanitizeOrder, sanitizeOrders } from "../../core/validation/guards";
 
 type OrderResponse = {
   data: Order;
@@ -16,14 +17,25 @@ export const orderService = {
   }) => {
     try {
       const response = await httpClient.post<OrderResponse>("/orders", payload);
-      await window.desktopBridge.offlineCacheOrders([response.data]);
-      return response;
+      const order = sanitizeOrder(response.data);
+      if (!order) {
+        throw new Error("Invalid order response.");
+      }
+
+      await window.desktopBridge.offlineCacheOrders([order]);
+      return {
+        ...response,
+        data: order,
+      };
     } catch (error) {
       if (!(error instanceof HttpError) || ![0, 408].includes(error.status)) {
         throw error;
       }
 
-      const queued = await window.desktopBridge.offlineQueueOrder(payload);
+      const queued = sanitizeOrder(await window.desktopBridge.offlineQueueOrder(payload));
+      if (!queued) {
+        throw new Error("Invalid queued order response.");
+      }
       return {
         data: queued,
         message: "Order queued for sync (offline mode).",
@@ -34,10 +46,11 @@ export const orderService = {
   listOrders: async () => {
     try {
       const response = await httpClient.get<{ data: Order[]; meta: Record<string, number> }>("/orders?per_page=30");
-      await window.desktopBridge.offlineCacheOrders(response.data);
-      const queued = await window.desktopBridge.offlineGetOrders();
+      const remote = sanitizeOrders(response.data);
+      await window.desktopBridge.offlineCacheOrders(remote);
+      const queued = sanitizeOrders(await window.desktopBridge.offlineGetOrders());
       return {
-        data: mergeOrders(response.data, queued),
+        data: mergeOrders(remote, queued),
         meta: response.meta,
       };
     } catch (error) {
@@ -45,7 +58,7 @@ export const orderService = {
         throw error;
       }
 
-      const offline = await window.desktopBridge.offlineGetOrders();
+      const offline = sanitizeOrders(await window.desktopBridge.offlineGetOrders());
       return {
         data: offline,
         meta: {
