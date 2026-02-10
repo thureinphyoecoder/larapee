@@ -4,7 +4,13 @@ import { useState } from "react";
 import Swal from "sweetalert2";
 import { sanitizePaginationLabel } from "@/utils/sanitizePaginationLabel";
 
-export default function Index({ users, roles, shops, type = "staff", search = "" }) {
+export default function Index({
+    users,
+    roles,
+    shops,
+    type = "staff",
+    search = "",
+}) {
     const { auth } = usePage().props;
     const role = auth?.role || "admin";
     const canManageUsers = ["admin", "manager"].includes(role);
@@ -253,6 +259,47 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-sm text-slate-500">
+                                                        <div className="flex items-center gap-2">
+                                                            <Link
+                                                                href={route("admin.users.show", user.id)}
+                                                                className="inline-flex items-center rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                                            >
+                                                                View
+                                                            </Link>
+                                                            {canDeleteUsers ? (
+                                                                <button
+                                                                    onClick={() => deleteUser(user.id)}
+                                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
+                                                                    title="Delete user"
+                                                                    aria-label="Delete user"
+                                                                >
+                                                                    <svg
+                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                        className="h-4 w-4"
+                                                                        viewBox="0 0 20 20"
+                                                                        fill="currentColor"
+                                                                    >
+                                                                        <path
+                                                                            fillRule="evenodd"
+                                                                            d="M6 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6-1a1 1 0 10-2 0v7a1 1 0 102 0V7zm-7-3a2 2 0 012-2h6a2 2 0 012 2v1h2a1 1 0 110 2h-1v9a2 2 0 01-2 2H6a2 2 0 01-2-2V7H3a1 1 0 010-2h2V4z"
+                                                                            clipRule="evenodd"
+                                                                        />
+                                                                    </svg>
+                                                                </button>
+                                                            ) : null}
+                                                        </div>
+                                                    </td>
+                                                </>
+                                            )}
+                                            {type !== "staff" && (
+                                                <td className="px-6 py-4 text-sm text-slate-500">
+                                                    <div className="flex items-center gap-2">
+                                                        <Link
+                                                            href={route("admin.users.show", user.id)}
+                                                            className="inline-flex items-center rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                                        >
+                                                            View
+                                                        </Link>
                                                         {canDeleteUsers ? (
                                                             <button
                                                                 onClick={() => deleteUser(user.id)}
@@ -273,37 +320,8 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                                                                     />
                                                                 </svg>
                                                             </button>
-                                                        ) : (
-                                                            <span className="text-slate-400">No permission</span>
-                                                        )}
-                                                    </td>
-                                                </>
-                                            )}
-                                            {type !== "staff" && (
-                                                <td className="px-6 py-4 text-sm text-slate-500">
-                                                    {canDeleteUsers ? (
-                                                        <button
-                                                            onClick={() => deleteUser(user.id)}
-                                                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
-                                                            title="Delete user"
-                                                            aria-label="Delete user"
-                                                        >
-                                                            <svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                className="h-4 w-4"
-                                                                viewBox="0 0 20 20"
-                                                                fill="currentColor"
-                                                            >
-                                                                <path
-                                                                    fillRule="evenodd"
-                                                                    d="M6 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6-1a1 1 0 10-2 0v7a1 1 0 102 0V7zm-7-3a2 2 0 012-2h6a2 2 0 012 2v1h2a1 1 0 110 2h-1v9a2 2 0 01-2 2H6a2 2 0 01-2-2V7H3a1 1 0 010-2h2V4z"
-                                                                    clipRule="evenodd"
-                                                                />
-                                                            </svg>
-                                                        </button>
-                                                    ) : (
-                                                        <span className="text-slate-400">No permission</span>
-                                                    )}
+                                                        ) : null}
+                                                    </div>
                                                 </td>
                                             )}
                                         </tr>

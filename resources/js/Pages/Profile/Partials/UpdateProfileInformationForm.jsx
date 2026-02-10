@@ -21,16 +21,18 @@ export default function UpdateProfileInformation({
             name: user?.name || "",
             email: user?.email || "",
             phone_number: userProfile?.phone_number || "",
+            nrc_number: userProfile?.nrc_number || "",
             address_line_1: userProfile?.address_line_1 || "",
             city: userProfile?.city || "",
             state: userProfile?.state || "",
             postal_code: userProfile?.postal_code || "",
+            photo: null,
         });
 
     const submit = (e) => {
         e.preventDefault();
 
-        patch(route("profile.update"));
+        patch(route("profile.update"), { forceFormData: true });
     };
 
     return (
@@ -46,6 +48,25 @@ export default function UpdateProfileInformation({
             </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
+                <div>
+                    <InputLabel htmlFor="photo" value="Profile Photo" />
+                    {userProfile?.photo_path ? (
+                        <img
+                            src={`/storage/${userProfile.photo_path}`}
+                            alt="Profile"
+                            className="mt-2 h-16 w-16 rounded-full object-cover border border-slate-200"
+                        />
+                    ) : null}
+                    <input
+                        id="photo"
+                        type="file"
+                        accept="image/*"
+                        className="mt-2 block w-full text-sm text-slate-600"
+                        onChange={(e) => setData("photo", e.target.files?.[0] || null)}
+                    />
+                    <InputError className="mt-2" message={errors.photo} />
+                </div>
+
                 <div>
                     <InputLabel htmlFor="name" value="Name" />
 
@@ -92,6 +113,20 @@ export default function UpdateProfileInformation({
                     />
 
                     <InputError className="mt-2" message={errors.phone_number} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="nrc_number" value="NRC / National ID" />
+
+                    <TextInput
+                        id="nrc_number"
+                        className="mt-1 block w-full"
+                        value={data.nrc_number}
+                        onChange={(e) => setData("nrc_number", e.target.value)}
+                        required
+                    />
+
+                    <InputError className="mt-2" message={errors.nrc_number} />
                 </div>
 
                 <div>

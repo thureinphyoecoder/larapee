@@ -37,6 +37,21 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(UserProfile::class);
     }
 
+    public function payrollProfile()
+    {
+        return $this->hasOne(PayrollProfile::class);
+    }
+
+    public function payrollAdjustments()
+    {
+        return $this->hasMany(PayrollAdjustment::class);
+    }
+
+    public function payrollPayouts()
+    {
+        return $this->hasMany(PayrollPayout::class);
+    }
+
     public function shop()
     {
         return $this->belongsTo(Shop::class);

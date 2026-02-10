@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -42,12 +43,31 @@ class ProfileController extends Controller
             ['user_id' => $request->user()->id],
             [
                 'phone_number' => $request->input('phone_number'),
+                'nrc_number' => $request->input('nrc_number'),
                 'address_line_1' => $request->input('address_line_1'),
                 'city' => $request->input('city'),
                 'state' => $request->input('state'),
                 'postal_code' => $request->input('postal_code'),
             ]
         );
+
+        if ($request->hasFile('photo')) {
+            $profile = $request->user()->profile()->firstOrCreate(
+                ['user_id' => $request->user()->id],
+                [
+                    'nrc_number' => 'Pending NRC',
+                    'address_line_1' => 'Address not provided',
+                    'city' => 'Unknown',
+                    'state' => 'Unknown',
+                ]
+            );
+            if (!empty($profile->photo_path)) {
+                Storage::disk('public')->delete($profile->photo_path);
+            }
+            $profile->update([
+                'photo_path' => $request->file('photo')->store('profiles', 'public'),
+            ]);
+        }
 
         return Redirect::route('profile.edit');
     }

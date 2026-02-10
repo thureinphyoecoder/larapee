@@ -10,8 +10,11 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PayrollProfile;
 use App\Models\ProductVariant;
 use App\Models\ProductReview;
+use App\Models\StaffAttendance;
+use App\Models\UserProfile;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -52,7 +55,10 @@ class EnterpriseSeeder extends Seeder
             ->pluck('name')
             ->all();
         foreach (array_diff($categories, $existingCategories) as $cat) {
-            Category::create(['name' => $cat]);
+            Category::create([
+                'name' => $cat,
+                'slug' => Str::slug($cat),
+            ]);
         }
         $categoryIds = Category::query()->whereIn('name', $categories)->pluck('id')->all();
 
@@ -75,6 +81,7 @@ class EnterpriseSeeder extends Seeder
         }
 
         $createdShopIds = [];
+        $staffSeedUsers = [];
 
         foreach ($vendors as $v) {
             $shop = $shopsByName[$v['name']];
@@ -92,6 +99,7 @@ class EnterpriseSeeder extends Seeder
                 ]
             );
             $manager->assignRole('manager');
+            $staffSeedUsers[] = ['user' => $manager, 'role' => 'manager', 'shop_name' => $shop->name];
 
             // ၆။ Sales (အရောင်းဝန်ထမ်း)
             $sales = User::updateOrCreate(
@@ -104,6 +112,7 @@ class EnterpriseSeeder extends Seeder
                 ]
             );
             $sales->syncRoles(['sales', 'cashier']);
+            $staffSeedUsers[] = ['user' => $sales, 'role' => 'sales', 'shop_name' => $shop->name];
 
             $accountant = User::updateOrCreate(
                 ['email' => 'accountant.' . Str::slug($v['name']) . '@larapos.com'],
@@ -115,6 +124,7 @@ class EnterpriseSeeder extends Seeder
                 ]
             );
             $accountant->syncRoles(['accountant']);
+            $staffSeedUsers[] = ['user' => $accountant, 'role' => 'accountant', 'shop_name' => $shop->name];
 
             $technician = User::updateOrCreate(
                 ['email' => 'technician.' . Str::slug($v['name']) . '@larapos.com'],
@@ -126,6 +136,7 @@ class EnterpriseSeeder extends Seeder
                 ]
             );
             $technician->syncRoles(['technician']);
+            $staffSeedUsers[] = ['user' => $technician, 'role' => 'technician', 'shop_name' => $shop->name];
 
             // ၇။ Delivery (ပစ္စည်းပို့ဝန်ထမ်း)
             $delivery = User::updateOrCreate(
@@ -138,6 +149,7 @@ class EnterpriseSeeder extends Seeder
                 ]
             );
             $delivery->assignRole('delivery');
+            $staffSeedUsers[] = ['user' => $delivery, 'role' => 'delivery', 'shop_name' => $shop->name];
 
             // ပစ္စည်းများ ထည့်သွင်းခြင်း logic...
             $vendorProductIds = [];
@@ -272,6 +284,100 @@ class EnterpriseSeeder extends Seeder
             ]
         );
         $customer->assignRole('customer');
+        UserProfile::updateOrCreate(
+            ['user_id' => $customer->id],
+            [
+                'phone_number' => '09123456789',
+                'nrc_number' => '12/YGN(N)123456',
+                'address_line_1' => 'Hlaing Township, Yangon',
+                'city' => 'Yangon',
+                'state' => 'Yangon',
+                'postal_code' => '11051',
+            ]
+        );
+
+        $salaryMap = [
+            'manager' => 900000,
+            'accountant' => 800000,
+            'technician' => 700000,
+            'sales' => 550000,
+            'delivery' => 500000,
+        ];
+
+        foreach ($staffSeedUsers as $entry) {
+            /** @var \App\Models\User $staffUser */
+            $staffUser = $entry['user'];
+            $roleName = $entry['role'];
+            $shopName = $entry['shop_name'];
+
+            UserProfile::updateOrCreate(
+                ['user_id' => $staffUser->id],
+                [
+                    'phone_number' => '09' . str_pad((string) ($staffUser->id + 10000000), 8, '0', STR_PAD_LEFT),
+                    'nrc_number' => '12/EMP(N)' . str_pad((string) $staffUser->id, 6, '0', STR_PAD_LEFT),
+                    'address_line_1' => "{$shopName} Branch Staff Housing, Yangon",
+                    'city' => 'Yangon',
+                    'state' => 'Yangon',
+                    'postal_code' => '11181',
+                ]
+            );
+
+            PayrollProfile::updateOrCreate(
+                ['user_id' => $staffUser->id],
+                [
+                    'base_salary' => $salaryMap[$roleName] ?? 450000,
+                    'allowance' => 50000,
+                    'attendance_bonus_per_day' => 4000,
+                    'absence_deduction_per_day' => 10000,
+                    'performance_bonus' => 50000,
+                    'overtime_rate_per_hour' => 4500,
+                    'effective_from' => $now->copy()->startOfMonth()->toDateString(),
+                ]
+            );
+        }
+
+        $staffUserIds = collect($staffSeedUsers)->map(fn ($entry) => $entry['user']->id)->filter()->values();
+        if ($staffUserIds->isNotEmpty()) {
+            $monthStart = $now->copy()->startOfMonth();
+            $monthEnd = $now->copy()->endOfMonth();
+            $hasAttendanceForMonth = StaffAttendance::query()
+                ->whereIn('user_id', $staffUserIds)
+                ->whereBetween('check_in_at', [$monthStart, $monthEnd])
+                ->exists();
+
+            if (!$hasAttendanceForMonth) {
+                foreach ($staffSeedUsers as $entry) {
+                    /** @var \App\Models\User $staffUser */
+                    $staffUser = $entry['user'];
+                    $cursor = $monthStart->copy();
+                    $created = 0;
+                    while ($cursor->lte($now) && $created < 12) {
+                        if ($cursor->isSunday()) {
+                            $cursor->addDay();
+                            continue;
+                        }
+
+                        $checkIn = $cursor->copy()->setTime(9, rand(0, 20));
+                        $checkOut = $cursor->copy()->setTime(18 + rand(0, 2), rand(0, 40));
+                        $workedMinutes = max(0, $checkIn->diffInMinutes($checkOut));
+
+                        StaffAttendance::create([
+                            'user_id' => $staffUser->id,
+                            'check_in_at' => $checkIn,
+                            'check_out_at' => $checkOut,
+                            'worked_minutes' => $workedMinutes,
+                            'check_in_ip' => '127.0.0.1',
+                            'check_out_ip' => '127.0.0.1',
+                            'created_at' => $checkIn,
+                            'updated_at' => $checkOut,
+                        ]);
+
+                        $created++;
+                        $cursor->addDay();
+                    }
+                }
+            }
+        }
 
         // ၉။ Sample Orders + Items
         $orderShopId = $createdShopIds[array_rand($createdShopIds)] ?? null;

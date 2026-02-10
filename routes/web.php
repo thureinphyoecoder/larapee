@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\StockMovementLogController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ServiceJobController;
 use App\Http\Controllers\Admin\GlobalSearchController;
+use App\Http\Controllers\Admin\PayrollController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -139,12 +140,21 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery|accoun
         Route::post('/service-jobs/daily-close', [ServiceJobController::class, 'runDailyClose'])->name('service-jobs.daily-close');
     });
 
+    Route::middleware(['role:admin|accountant'])->group(function () {
+        Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
+        Route::post('/payroll/users/{user}/profile', [PayrollController::class, 'upsertProfile'])->name('payroll.profile');
+        Route::post('/payroll/users/{user}/adjustments', [PayrollController::class, 'storeAdjustment'])->name('payroll.adjustments.store');
+        Route::post('/payroll/users/{user}/payout', [PayrollController::class, 'payout'])->name('payroll.payout');
+    });
+
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
         Route::post('/shops', [ShopController::class, 'store'])->name('shops.store');
         Route::patch('/shops/{shop}', [ShopController::class, 'update'])->name('shops.update');
         Route::delete('/shops/{shop}', [ShopController::class, 'destroy'])->name('shops.destroy');
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::post('/users/{user}/photo', [UserController::class, 'updatePhoto'])->name('users.photo.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::post('/inventory/share', [InventoryController::class, 'toggleShare'])->name('inventory.share');
     });

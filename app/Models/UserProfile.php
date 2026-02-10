@@ -9,9 +9,11 @@ class UserProfile extends Model
     protected $fillable = [
         'user_id',
         'phone_number',
+        'nrc_number',
         'address_line_1',
         'city',
         'state',
         'postal_code',
+        'photo_path',
     ];
 }
