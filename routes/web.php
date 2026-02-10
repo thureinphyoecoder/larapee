@@ -67,6 +67,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Support Chat
     Route::get('/support', [SupportChatController::class, 'customer'])->name('support.index');
     Route::post('/support/messages', [SupportChatController::class, 'store'])->name('support.store');
+    Route::patch('/support/messages/{message}', [SupportChatController::class, 'update'])->name('support.update');
+    Route::delete('/support/messages/{message}', [SupportChatController::class, 'destroy'])->name('support.destroy');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -103,6 +105,8 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery|accoun
         Route::get('/search', [GlobalSearchController::class, 'index'])->name('search.index');
         Route::get('/support', [SupportChatController::class, 'adminIndex'])->name('support.index');
         Route::post('/support/messages', [SupportChatController::class, 'store'])->name('support.store');
+        Route::patch('/support/messages/{message}', [SupportChatController::class, 'update'])->name('support.update');
+        Route::delete('/support/messages/{message}', [SupportChatController::class, 'destroy'])->name('support.destroy');
     });
 
     // Manager & Admin Only

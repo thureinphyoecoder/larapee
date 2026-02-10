@@ -79,12 +79,28 @@ export default function AdminLayout({ children, header }) {
         const remain = minutes % 60;
         return `${hours}h ${remain}m`;
     };
+    const formatRelativeTime = (value) => {
+        if (!value) return "just now";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return String(value);
+        }
+
+        const diffMs = date.getTime() - Date.now();
+        const absMs = Math.abs(diffMs);
+        const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+        if (absMs < 60 * 1000) return rtf.format(Math.round(diffMs / 1000), "second");
+        if (absMs < 60 * 60 * 1000) return rtf.format(Math.round(diffMs / (60 * 1000)), "minute");
+        if (absMs < 24 * 60 * 60 * 1000) return rtf.format(Math.round(diffMs / (60 * 60 * 1000)), "hour");
+        return rtf.format(Math.round(diffMs / (24 * 60 * 60 * 1000)), "day");
+    };
 
     // Notification State
     const [showNoti, setShowNoti] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [globalSearch, setGlobalSearch] = useState("");
     const [attendanceLoading, setAttendanceLoading] = useState(false);
+    const [, setTimeTick] = useState(0);
 
     const unreadCount = notifications.filter((n) => !n.isRead).length;
     const notificationStorageKey = user?.id
@@ -118,7 +134,20 @@ export default function AdminLayout({ children, header }) {
 
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) {
-                setNotifications(parsed);
+                const migrated = parsed
+                    .map((n) => ({
+                        ...n,
+                        createdAt: normalizeTimestamp(n.createdAt || n.created_at || null),
+                    }))
+                    .filter((n) => n.createdAt);
+
+                setNotifications(
+                    migrated,
+                );
+
+                if (migrated.length !== parsed.length) {
+                    window.localStorage.setItem(notificationStorageKey, JSON.stringify(migrated.slice(0, 80)));
+                }
             }
         } catch {
             setNotifications([]);
@@ -133,6 +162,22 @@ export default function AdminLayout({ children, header }) {
         );
     }, [notifications, notificationStorageKey]);
 
+    const normalizeTimestamp = (value) => {
+        if (!value) return null;
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    };
+
+    useEffect(() => {
+        const timer = window.setInterval(() => {
+            setTimeTick((prev) => prev + 1);
+        }, 30000);
+
+        return () => {
+            window.clearInterval(timer);
+        };
+    }, []);
+
     useEffect(() => {
         if (window.Echo) {
             window.Echo.channel("admin-notifications").listen(
@@ -142,7 +187,7 @@ export default function AdminLayout({ children, header }) {
                         id: `order-${e.id}-${Date.now()}`,
                         type: "order",
                         message: e.message,
-                        time: e.time,
+                        createdAt: e.created_at || new Date().toISOString(),
                         isRead: false,
                         url: route("admin.orders.show", e.id),
                     };
@@ -162,7 +207,7 @@ export default function AdminLayout({ children, header }) {
                         id: `support-${e.id}`,
                         type: "support",
                         message: `Support: ${e.sender_name || "Customer"} - ${e.message}`,
-                        time: "just now",
+                        createdAt: e.created_at || new Date().toISOString(),
                         isRead: false,
                         url: route("admin.support.index", { customer: e.customer_id }),
                     };
@@ -439,7 +484,7 @@ export default function AdminLayout({ children, header }) {
                                                             {n.message}
                                                         </p>
                                                         <p className="text-[11px] text-slate-400 mt-1">
-                                                            {n.time}
+                                                            {formatRelativeTime(n.createdAt)}
                                                         </p>
                                                     </button>
                                                 ))
