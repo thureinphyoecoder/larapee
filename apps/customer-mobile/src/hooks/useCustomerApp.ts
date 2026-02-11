@@ -79,7 +79,7 @@ export function useCustomerApp() {
   const dark = theme === "dark";
 
   const hydratePublicCatalog = useCallback(
-    async (search = query, categoryId = activeCategoryId) => {
+    async (search = "", categoryId: number | null = null) => {
       const [nextCategories, nextProducts] = await Promise.all([
         fetchCategories(API_BASE_URL),
         fetchProducts(API_BASE_URL, search, categoryId),
@@ -88,7 +88,7 @@ export function useCustomerApp() {
       setCategories(nextCategories);
       setProducts(nextProducts);
     },
-    [query, activeCategoryId],
+    [],
   );
 
   const hydratePrivateData = useCallback(async (token: string) => {
