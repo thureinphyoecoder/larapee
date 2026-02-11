@@ -150,16 +150,18 @@ export default function App() {
             phone={app.cart.checkoutPhone}
             address={app.cart.checkoutAddress}
             paymentSlipUri={app.cart.checkoutSlipUri}
-            qrData={app.cart.checkoutQrData}
-            busy={app.cart.checkoutBusy}
-            error={app.cart.checkoutError}
-            onPhoneChange={app.cart.setCheckoutPhone}
-            onAddressChange={app.cart.setCheckoutAddress}
-            onSlipUriChange={app.cart.setCheckoutSlipUri}
-            onQrDataChange={app.cart.setCheckoutQrData}
-            onBack={app.detail.close}
-            onConfirm={() => void app.cart.confirmCheckout()}
-          />
+          qrData={app.cart.checkoutQrData}
+          busy={app.cart.checkoutBusy}
+          error={app.cart.checkoutError}
+          removingItemId={app.cart.removingItemId}
+          onPhoneChange={app.cart.setCheckoutPhone}
+          onAddressChange={app.cart.setCheckoutAddress}
+          onSlipUriChange={app.cart.setCheckoutSlipUri}
+          onQrDataChange={app.cart.setCheckoutQrData}
+          onRemoveItem={(cartItemId) => void app.cart.removeItem(cartItemId)}
+          onBack={app.detail.close}
+          onConfirm={() => void app.cart.confirmCheckout()}
+        />
         </SafeAreaView>
       </SafeAreaProvider>
     );
