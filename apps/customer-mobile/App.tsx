@@ -2,7 +2,7 @@ import "./global.css";
 
 import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
-import { BackHandler, Keyboard, LogBox } from "react-native";
+import { BackHandler, Keyboard, LogBox, Pressable, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import { BottomTabs } from "./src/components/BottomTabs";
@@ -15,6 +15,7 @@ import { HomeScreen } from "./src/screens/HomeScreen";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { OrderDetailScreen } from "./src/screens/OrderDetailScreen";
 import { OrdersScreen } from "./src/screens/OrdersScreen";
+import { NotificationsCenterScreen } from "./src/screens/NotificationsCenterScreen";
 import { ProductDetailScreen } from "./src/screens/ProductDetailScreen";
 import { SupportScreen } from "./src/screens/SupportScreen";
 
@@ -23,6 +24,7 @@ LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
 export default function App() {
   const app = useCustomerApp();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false);
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
@@ -44,6 +46,11 @@ export default function App() {
         return true;
       }
 
+      if (notificationCenterOpen) {
+        setNotificationCenterOpen(false);
+        return true;
+      }
+
       if (app.activeTab !== "home") {
         app.setActiveTab("home");
         return true;
@@ -53,7 +60,7 @@ export default function App() {
     });
 
     return () => subscription.remove();
-  }, [app]);
+  }, [app, notificationCenterOpen]);
 
   if (app.booting) {
     return (
@@ -190,7 +197,21 @@ export default function App() {
       <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`} edges={["top", "left", "right"]}>
         <StatusBar style={app.dark ? "light" : "dark"} />
 
-      {app.activeTab === "home" ? (
+      {notificationCenterOpen ? (
+        <NotificationsCenterScreen
+          locale={app.locale}
+          dark={app.dark}
+          notifications={app.notifications.list}
+          onClose={() => setNotificationCenterOpen(false)}
+          onMarkAllRead={app.notifications.markAllRead}
+          onOpenNotification={(notification) => {
+            setNotificationCenterOpen(false);
+            void app.notifications.open(notification);
+          }}
+        />
+      ) : null}
+
+      {!notificationCenterOpen && app.activeTab === "home" ? (
         <HomeScreen
           locale={app.locale}
           dark={app.dark}
@@ -207,11 +228,11 @@ export default function App() {
           onOpenProduct={(product) => void app.catalog.openProductDetail(product)}
           onRefresh={() => void app.refreshAll()}
           notificationsUnreadCount={app.allNotificationsCount}
-          onOpenNotifications={() => app.setActiveTab("orders")}
+          onOpenNotifications={() => setNotificationCenterOpen(true)}
         />
       ) : null}
 
-      {app.activeTab === "orders" ? (
+      {!notificationCenterOpen && app.activeTab === "orders" ? (
         <OrdersScreen
           locale={app.locale}
           dark={app.dark}
@@ -222,7 +243,7 @@ export default function App() {
         />
       ) : null}
 
-      {app.activeTab === "cart" ? (
+      {!notificationCenterOpen && app.activeTab === "cart" ? (
         <CartScreen
           locale={app.locale}
           dark={app.dark}
@@ -235,7 +256,7 @@ export default function App() {
         />
       ) : null}
 
-      {app.activeTab === "support" ? (
+      {!notificationCenterOpen && app.activeTab === "support" ? (
         <SupportScreen
           locale={app.locale}
           dark={app.dark}
@@ -261,7 +282,7 @@ export default function App() {
         />
       ) : null}
 
-      {app.activeTab === "account" ? (
+      {!notificationCenterOpen && app.activeTab === "account" ? (
         <AccountScreen
           locale={app.locale}
           dark={app.dark}
@@ -302,7 +323,7 @@ export default function App() {
         />
       ) : null}
 
-        {!keyboardVisible ? (
+        {!keyboardVisible && !notificationCenterOpen ? (
           <BottomTabs
             activeTab={app.activeTab}
             onChange={app.setActiveTab}
@@ -310,6 +331,22 @@ export default function App() {
             dark={app.dark}
             badges={{ cart: app.cartCount, orders: app.notificationsUnreadCount, support: app.supportUnreadCount }}
           />
+        ) : null}
+
+        {!notificationCenterOpen && app.notifications.banner ? (
+          <Pressable
+            onPress={() => {
+              app.notifications.closeBanner();
+              setNotificationCenterOpen(true);
+            }}
+            className={`absolute left-4 right-4 top-3 rounded-2xl border px-4 py-3 ${
+              app.dark ? "border-orange-500/50 bg-slate-900" : "border-orange-300 bg-white"
+            }`}
+          >
+            <Text className={`text-[11px] font-black uppercase ${app.dark ? "text-orange-300" : "text-orange-600"}`}>Notification</Text>
+            <Text className={`mt-1 text-sm font-bold ${app.dark ? "text-slate-100" : "text-slate-900"}`}>{app.notifications.banner.title}</Text>
+            <Text className={`text-sm ${app.dark ? "text-slate-300" : "text-slate-700"}`}>{app.notifications.banner.message}</Text>
+          </Pressable>
         ) : null}
       </SafeAreaView>
     </SafeAreaProvider>

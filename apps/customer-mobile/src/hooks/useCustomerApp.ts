@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, AppState, type AppStateStatus } from "react-native";
+import { AppState, type AppStateStatus } from "react-native";
 import { API_BASE_URL } from "../config/server";
 import { tr } from "../i18n/strings";
 import { ApiError } from "../lib/http";
@@ -20,7 +20,7 @@ import {
 } from "../services/authService";
 import { cancelOrder, fetchOrderDetail, fetchOrders, placeOrderFromCart, requestRefund, requestReturn } from "../services/orderService";
 import { deleteSupportMessage, fetchSupportMessages, sendSupportMessage, updateSupportMessage } from "../services/supportService";
-import type { CartItem, Category, CustomerOrder, CustomerTab, Locale, MePayload, Product, SupportMessage, ThemeMode } from "../types/domain";
+import type { AppNotification, CartItem, Category, CustomerOrder, CustomerTab, Locale, MePayload, Product, SupportMessage, ThemeMode } from "../types/domain";
 
 type DetailView = "none" | "product" | "order" | "checkout";
 
@@ -97,11 +97,77 @@ export function useCustomerApp() {
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const [notificationsUnreadCount, setNotificationsUnreadCount] = useState(0);
   const [supportUnreadCount, setSupportUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notificationBanner, setNotificationBanner] = useState<AppNotification | null>(null);
   const orderSnapshotRef = useRef<Map<number, string>>(new Map());
   const flashSaleSnapshotRef = useRef("");
   const supportLatestIdRef = useRef(0);
+  const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dark = theme === "dark";
+
+  useEffect(() => {
+    return () => {
+      if (notificationTimerRef.current) {
+        clearTimeout(notificationTimerRef.current);
+      }
+    };
+  }, []);
+
+  const addNotification = useCallback(
+    (channel: "order" | "support" | "flash", title: string, message: string, orderId?: number | null) => {
+      const item: AppNotification = {
+        id: `${Date.now()}-${Math.random()}`,
+        title,
+        message,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        channel,
+        orderId: orderId ?? null,
+      };
+
+      setNotifications((prev) => [item, ...prev].slice(0, 80));
+      if (channel === "support") {
+        setSupportUnreadCount((current) => current + 1);
+      } else {
+        setNotificationsUnreadCount((current) => current + 1);
+      }
+
+      setNotificationBanner(item);
+      if (notificationTimerRef.current) {
+        clearTimeout(notificationTimerRef.current);
+      }
+      notificationTimerRef.current = setTimeout(() => {
+        setNotificationBanner(null);
+      }, 4500);
+    },
+    [],
+  );
+
+  const markOrderNotificationsRead = useCallback(() => {
+    setNotificationsUnreadCount(0);
+    setNotifications((prev) =>
+      prev.map((item) =>
+        item.channel === "order" || item.channel === "flash"
+          ? { ...item, isRead: true }
+          : item,
+      ),
+    );
+  }, []);
+
+  const markSupportNotificationsRead = useCallback(() => {
+    setSupportUnreadCount(0);
+    setNotifications((prev) =>
+      prev.map((item) => (item.channel === "support" ? { ...item, isRead: true } : item)),
+    );
+  }, []);
+
+  const markAllNotificationsRead = useCallback(() => {
+    setNotificationsUnreadCount(0);
+    setSupportUnreadCount(0);
+    setNotifications((prev) => prev.map((item) => (item.isRead ? item : { ...item, isRead: true })));
+    setNotificationBanner(null);
+  }, []);
 
   const hydratePublicCatalog = useCallback(
     async (search = "", categoryId: number | null = null) => {
@@ -128,11 +194,12 @@ export function useCustomerApp() {
       flashSaleSnapshotRef.current = snapshot;
 
       if (session?.token && previousSnapshot && snapshot && previousSnapshot !== snapshot) {
-        setNotificationsUnreadCount((current) => current + 1);
-        Alert.alert("Flash Sale", `${activeFlashIds.length} flash sale deal(s) are live now.`);
+        const message = `${activeFlashIds.length} flash sale deal(s) are live now.`;
+        addNotification("flash", "Flash Sale", message);
+        void showLocalNotification("Flash Sale", message);
       }
     },
-    [session?.token],
+    [addNotification, session?.token],
   );
 
   const hydratePrivateData = useCallback(async (token: string) => {
@@ -160,12 +227,11 @@ export function useCustomerApp() {
       }
 
       if (changed.length > 0) {
-        setNotificationsUnreadCount((current) => current + changed.length);
-        const latest = changed[changed.length - 1];
-        Alert.alert(
-          tr(locale, "notificationTitle"),
-          `${tr(locale, "notificationMsg")} (#${latest.id}: ${String(latest.status || "").toUpperCase()})`,
-        );
+        changed.forEach((order) => {
+          const text = `${tr(locale, "notificationMsg")} (#${order.id}: ${String(order.status || "").toUpperCase()})`;
+          addNotification("order", tr(locale, "notificationTitle"), text, order.id);
+          void showLocalNotification(tr(locale, "notificationTitle"), text);
+        });
       }
     }
 
@@ -176,7 +242,7 @@ export function useCustomerApp() {
       const matched = nextOrders.find((item) => item.id === current.id);
       return matched ? { ...current, ...matched } : current;
     });
-  }, [locale]);
+  }, [addNotification, locale]);
 
   const loadSupport = useCallback(
     async (token: string, options?: { page?: number; mode?: "replace" | "append" | "merge_latest"; markSeen?: boolean }) => {
@@ -205,12 +271,11 @@ export function useCustomerApp() {
             );
 
             if (incoming.length > 0 && activeTab !== "support") {
-              setSupportUnreadCount((current) => current + incoming.length);
               const latestIncoming = incoming[incoming.length - 1];
               const senderName = latestIncoming.sender?.name || tr(locale, "supportAgent");
               const preview = String(latestIncoming.message || "").trim() || "Sent an image";
 
-              Alert.alert(tr(locale, "supportTitle"), `${senderName}: ${preview}`);
+              addNotification("support", `${senderName} • ${tr(locale, "supportTitle")}`, preview);
               void showLocalNotification(`${senderName} • ${tr(locale, "supportTitle")}`, preview);
             }
           }
@@ -259,7 +324,7 @@ export function useCustomerApp() {
         }
       }
     },
-    [activeTab, locale, session?.user?.id],
+    [activeTab, addNotification, locale, session?.user?.id],
   );
 
   const applyMePayload = useCallback(async (token: string, payload: MePayload) => {
@@ -397,15 +462,15 @@ export function useCustomerApp() {
 
   useEffect(() => {
     if (activeTab === "orders") {
-      setNotificationsUnreadCount(0);
+      markOrderNotificationsRead();
     }
-  }, [activeTab]);
+  }, [activeTab, markOrderNotificationsRead]);
 
   useEffect(() => {
     if (activeTab === "support") {
-      setSupportUnreadCount(0);
+      markSupportNotificationsRead();
     }
-  }, [activeTab]);
+  }, [activeTab, markSupportNotificationsRead]);
 
   const refreshAll = useCallback(async () => {
     setRefreshing(true);
@@ -1095,9 +1160,15 @@ export function useCustomerApp() {
     setCheckoutQrData("");
     setNotificationsUnreadCount(0);
     setSupportUnreadCount(0);
+    setNotifications([]);
+    setNotificationBanner(null);
     orderSnapshotRef.current.clear();
     flashSaleSnapshotRef.current = "";
     supportLatestIdRef.current = 0;
+    if (notificationTimerRef.current) {
+      clearTimeout(notificationTimerRef.current);
+      notificationTimerRef.current = null;
+    }
   }, [session?.token]);
 
   const toggleLocale = useCallback(async () => {
@@ -1129,6 +1200,27 @@ export function useCustomerApp() {
   );
   const totalNotificationCount = notificationsUnreadCount + supportUnreadCount;
 
+  const openNotification = useCallback(
+    async (notification: AppNotification) => {
+      if (!notification.isRead) {
+        setNotifications((prev) =>
+          prev.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item)),
+        );
+        if (notification.channel === "support") {
+          setSupportUnreadCount((current) => Math.max(0, current - 1));
+        } else {
+          setNotificationsUnreadCount((current) => Math.max(0, current - 1));
+        }
+      }
+
+      setNotificationBanner(null);
+      if (notification.orderId) {
+        await openOrderDetail(notification.orderId);
+      }
+    },
+    [openOrderDetail],
+  );
+
   return {
     booting,
     dark,
@@ -1141,6 +1233,13 @@ export function useCustomerApp() {
     notificationsUnreadCount,
     supportUnreadCount,
     allNotificationsCount: totalNotificationCount,
+    notifications: {
+      list: notifications,
+      banner: notificationBanner,
+      markAllRead: markAllNotificationsRead,
+      open: openNotification,
+      closeBanner: () => setNotificationBanner(null),
+    },
     setActiveTab,
     login: {
       registerName,

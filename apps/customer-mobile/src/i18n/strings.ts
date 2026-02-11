@@ -95,6 +95,11 @@ type I18nKey =
   | "pullToRefresh"
   | "notificationTitle"
   | "notificationMsg"
+  | "notificationsCenterTitle"
+  | "notificationsEmpty"
+  | "notificationsAll"
+  | "notificationsUnread"
+  | "markAllRead"
   | "pending"
   | "confirmed"
   | "shipped"
@@ -227,6 +232,11 @@ const en: Dictionary = {
   pullToRefresh: "Pull down to refresh",
   notificationTitle: "Order update",
   notificationMsg: "New status updates are available.",
+  notificationsCenterTitle: "Notifications",
+  notificationsEmpty: "No notifications yet.",
+  notificationsAll: "All",
+  notificationsUnread: "Unread",
+  markAllRead: "Mark all read",
   pending: "Pending",
   confirmed: "Confirmed",
   shipped: "Shipped",
@@ -358,6 +368,11 @@ const mm: Dictionary = {
   pullToRefresh: "အသစ်ပြန်ကြည့်ရန် အောက်သို့ဆွဲချပါ",
   notificationTitle: "အော်ဒါ အခြေအနေ",
   notificationMsg: "အော်ဒါ အခြေအနေ ပြောင်းလဲမှုရှိပါသည်။",
+  notificationsCenterTitle: "အသိပေးချက်များ",
+  notificationsEmpty: "အသိပေးချက် မရှိသေးပါ။",
+  notificationsAll: "အားလုံး",
+  notificationsUnread: "မဖတ်ရသေး",
+  markAllRead: "အားလုံး ဖတ်ပြီး",
   pending: "စောင့်ဆိုင်းဆဲ",
   confirmed: "အတည်ပြုပြီး",
   shipped: "ပို့ဆောင်နေပြီ",

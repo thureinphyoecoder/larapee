@@ -151,6 +151,8 @@ export type AppNotification = {
   message: string;
   createdAt: string;
   isRead: boolean;
+  channel?: "order" | "support" | "flash";
+  orderId?: number | null;
 };
 
 export type ApiListResponse<T> = {
