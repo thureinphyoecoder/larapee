@@ -1,13 +1,13 @@
 import "./global.css";
 
 import { StatusBar } from "expo-status-bar";
-import * as Notifications from "expo-notifications";
 import { Platform, Pressable, SafeAreaView, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 
 import { LoadingView } from "./src/components/LoadingView";
 import { useDeliveryApp } from "./src/hooks/useDeliveryApp";
 import { tr } from "./src/i18n/strings";
+import { configureNotificationHandler } from "./src/lib/push";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { NotificationsScreen } from "./src/screens/NotificationsScreen";
 import { OrderDetailScreen } from "./src/screens/OrderDetailScreen";
@@ -18,19 +18,14 @@ const APP_RELEASE = "v0.5.1";
 
 type TabKey = "home" | "notifications" | "profile";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
-
 export default function App() {
   const app = useDeliveryApp();
   const dark = app.theme === "dark";
   const [activeTab, setActiveTab] = useState<TabKey>("home");
+
+  useEffect(() => {
+    configureNotificationHandler();
+  }, []);
 
   useEffect(() => {
     if (activeTab === "notifications") {

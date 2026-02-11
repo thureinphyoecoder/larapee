@@ -1,13 +1,12 @@
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
-import * as Notifications from "expo-notifications";
 import { Alert, BackHandler } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { API_BASE_URL } from "../config/server";
 import { type Locale, tr } from "../i18n/strings";
 import { ApiError } from "../lib/http";
-import { registerForRemotePushAsync } from "../lib/push";
+import { ensureNotificationPermission, registerForRemotePushAsync, scheduleLocalNotification } from "../lib/push";
 import { clearStoredToken, getStoredLanguage, getStoredTheme, getStoredToken, setStoredLanguage, setStoredTheme, setStoredToken } from "../lib/storage";
 import { authService } from "../services/authService";
 import { orderService } from "../services/orderService";
@@ -318,10 +317,7 @@ export function useDeliveryApp() {
 
   async function requestRequiredPermissionsOnLaunch() {
     try {
-      const notificationPermission = await Notifications.getPermissionsAsync();
-      if (notificationPermission.status !== "granted") {
-        await Notifications.requestPermissionsAsync();
-      }
+      await ensureNotificationPermission();
 
       const locationPermission = await Location.getForegroundPermissionsAsync();
       if (locationPermission.status !== "granted") {
@@ -393,19 +389,7 @@ export function useDeliveryApp() {
 
   async function pushLocalNotification(title: string, body: string) {
     try {
-      const permission = await Notifications.getPermissionsAsync();
-      if (permission.status !== "granted") {
-        return;
-      }
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          sound: true,
-        },
-        trigger: null,
-      });
+      await scheduleLocalNotification(title, body);
     } catch {
       // keep polling alive even when local notification fails
     }
