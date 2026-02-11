@@ -387,6 +387,7 @@ class OrderController extends Controller
             $proofRows = [];
             foreach ($paths as $index => $path) {
                 $proofRows[] = [
+                    'order_id' => $order->id,
                     'path' => $path,
                     'sort_order' => $existingCount + $index,
                     'created_at' => now(),
