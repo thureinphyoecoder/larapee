@@ -195,6 +195,8 @@ export default function App() {
           onSelectCategory={app.catalog.setActiveCategoryId}
           onAddToCart={(product) => void app.catalog.addToCart(product)}
           onOpenProduct={(product) => void app.catalog.openProductDetail(product)}
+          onOpenOrders={() => app.setActiveTab("orders")}
+          onOpenSupport={() => app.setActiveTab("support")}
           onRefresh={() => void app.refreshAll()}
         />
       ) : null}

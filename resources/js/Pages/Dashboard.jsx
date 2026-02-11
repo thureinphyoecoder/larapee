@@ -177,23 +177,6 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                             </div>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setActiveSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)
-                            }
-                            className="absolute bottom-5 left-4 z-20 h-11 w-11 rounded-full border border-white/40 bg-white/90 text-lg font-black text-slate-700 shadow transition hover:bg-white sm:opacity-0 sm:pointer-events-none sm:group-hover:pointer-events-auto sm:group-hover:opacity-100"
-                        >
-                            ‹
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveSlide((prev) => (prev + 1) % heroSlides.length)}
-                            className="absolute bottom-5 right-4 z-20 h-11 w-11 rounded-full border border-white/40 bg-white/90 text-lg font-black text-slate-700 shadow transition hover:bg-white sm:opacity-0 sm:pointer-events-none sm:group-hover:pointer-events-auto sm:group-hover:opacity-100"
-                        >
-                            ›
-                        </button>
-
                         <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
                             {heroSlides.map((slide, index) => (
                                 <button
