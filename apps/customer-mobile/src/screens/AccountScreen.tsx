@@ -1,11 +1,12 @@
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { API_BASE_URL } from "../config/server";
 import { tr } from "../i18n/strings";
 import { fetchAddressSuggestions, type AddressSuggestion } from "../services/addressService";
-import type { Locale, ThemeMode } from "../types/domain";
+import type { CustomerOrder, Locale, ThemeMode } from "../types/domain";
+import { formatDate, formatMoney } from "../utils/format";
 
 type Props = {
   locale: Locale;
@@ -24,6 +25,7 @@ type Props = {
   profileCity: string;
   profileState: string;
   profilePostalCode: string;
+  orders: CustomerOrder[];
   profilePhotoUrl: string | null;
   profilePhotoBusy: boolean;
   onProfileNameChange: (value: string) => void;
@@ -40,6 +42,7 @@ type Props = {
   onToggleLocale: () => void;
   onToggleTheme: () => void;
   onOpenOrders: () => void;
+  onOpenOrder: (orderId: number) => void;
   onOpenSupport: () => void;
   onLogout: () => void;
 };
@@ -61,6 +64,7 @@ export function AccountScreen({
   profileCity,
   profileState,
   profilePostalCode,
+  orders,
   profilePhotoUrl,
   profilePhotoBusy,
   onProfileNameChange,
@@ -77,6 +81,7 @@ export function AccountScreen({
   onToggleLocale,
   onToggleTheme,
   onOpenOrders,
+  onOpenOrder,
   onOpenSupport,
   onLogout,
 }: Props) {
@@ -85,6 +90,26 @@ export function AccountScreen({
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const recentOrders = useMemo(() => orders.slice(0, 4), [orders]);
+  const orderMetrics = useMemo(() => {
+    let delivered = 0;
+    let pending = 0;
+    let spent = 0;
+
+    orders.forEach((order) => {
+      const status = String(order.status || "").toLowerCase();
+      if (status === "delivered") delivered += 1;
+      if (status === "pending" || status === "confirmed" || status === "shipped") pending += 1;
+      spent += Number(order.total_amount || 0);
+    });
+
+    return {
+      total: orders.length,
+      delivered,
+      pending,
+      spent,
+    };
+  }, [orders]);
 
   const pickProfilePhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -189,6 +214,48 @@ export function AccountScreen({
         >
           <Text className="text-xs font-black text-white">{profilePhotoBusy ? tr(locale, "savingProfile") : "Upload Profile Photo"}</Text>
         </Pressable>
+      </View>
+
+      <View className={`mt-3 rounded-2xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+        <View className="flex-row items-center justify-between">
+          <Text className={`text-sm font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "ordersTitle")}</Text>
+          <Pressable onPress={onOpenOrders}>
+            <Text className={`text-xs font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>View all</Text>
+          </Pressable>
+        </View>
+        <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Tracking and history from your account</Text>
+
+        <View className="mt-3 flex-row flex-wrap justify-between gap-y-2">
+          <MetricCard dark={dark} label="Orders" value={String(orderMetrics.total)} />
+          <MetricCard dark={dark} label="Delivered" value={String(orderMetrics.delivered)} />
+          <MetricCard dark={dark} label="Pending" value={String(orderMetrics.pending)} />
+          <MetricCard dark={dark} label="Spent" value={formatMoney(orderMetrics.spent)} wide />
+        </View>
+
+        <View className="mt-3 gap-2">
+          {recentOrders.length ? (
+            recentOrders.map((order) => (
+              <Pressable
+                key={`account-order-${order.id}`}
+                onPress={() => onOpenOrder(order.id)}
+                className={`rounded-xl border px-3 py-3 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}
+              >
+                <View className="flex-row items-center justify-between">
+                  <Text className={`text-sm font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{order.invoice_no || `Order #${order.id}`}</Text>
+                  <Text className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${
+                    dark ? "bg-slate-700 text-slate-200" : "bg-orange-100 text-orange-700"
+                  }`}>
+                    {String(order.status || "pending")}
+                  </Text>
+                </View>
+                <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{formatDate(order.created_at)}</Text>
+                <Text className={`mt-1 text-xs font-bold ${dark ? "text-slate-300" : "text-slate-600"}`}>{formatMoney(order.total_amount || 0)}</Text>
+              </Pressable>
+            ))
+          ) : (
+            <Text className={`text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "ordersEmpty")}</Text>
+          )}
+        </View>
       </View>
 
       <View className={`mt-3 rounded-2xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
@@ -317,5 +384,14 @@ function Row({ label, value, onPress, dark }: { label: string; value: string; on
       <Text className={`text-sm font-semibold ${dark ? "text-slate-300" : "text-slate-600"}`}>{label}</Text>
       <Text className={`text-sm font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{value}</Text>
     </Pressable>
+  );
+}
+
+function MetricCard({ dark, label, value, wide = false }: { dark: boolean; label: string; value: string; wide?: boolean }) {
+  return (
+    <View className={`rounded-xl border p-3 ${wide ? "w-full" : "w-[49%]"} ${dark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}>
+      <Text className={`text-[10px] font-bold uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>{label}</Text>
+      <Text className={`mt-1 text-sm font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{value}</Text>
+    </View>
   );
 }
