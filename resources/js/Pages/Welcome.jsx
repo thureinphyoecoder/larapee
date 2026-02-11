@@ -152,12 +152,12 @@ export default function Welcome({
         >
             <header className="sticky top-0 z-40 border-b border-slate-200/90 bg-white/95 backdrop-blur">
                 <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-                    <div className="flex flex-wrap items-center gap-3 md:flex-nowrap md:gap-5">
-                        <Link href="/" className="shrink-0 text-4xl font-black tracking-tight text-orange-600">
+                    <div className="flex flex-wrap items-center gap-3 lg:flex-nowrap lg:gap-5">
+                        <Link href="/" className="shrink-0 text-2xl font-black tracking-tight text-orange-600 sm:text-4xl">
                             LaraPee
                         </Link>
 
-                        <div className="flex-1 min-w-[220px]">
+                        <div className="order-3 w-full lg:order-none lg:min-w-[280px] lg:flex-1">
                             <div className="flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <input
                                     type="text"
@@ -189,7 +189,7 @@ export default function Welcome({
                             </div>
                         </div>
 
-                        <div className="ml-auto flex items-center gap-4 text-sm font-semibold text-slate-600">
+                        <div className="ml-auto flex w-auto items-center gap-3 text-xs font-semibold text-slate-600 sm:text-sm">
                             {auth?.user ? (
                                 <>
                                     <Link
@@ -205,7 +205,7 @@ export default function Welcome({
                                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 font-bold text-orange-700">
                                             {auth.user.name.charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="hidden sm:inline">{t("hi", "Hi")}, {auth.user.name}</span>
+                                        <span className="hidden md:inline">{t("hi", "Hi")}, {auth.user.name}</span>
                                     </Link>
                                     <span className="h-4 w-px bg-slate-300" />
                                     <Link
@@ -228,7 +228,7 @@ export default function Welcome({
                                     </Link>
                                 </>
                             )}
-                            <span className="hidden h-4 w-px bg-slate-300 sm:block" />
+                            <span className="hidden h-4 w-px bg-slate-300 md:block" />
                             <LocaleSwitcher />
                         </div>
                     </div>
@@ -268,12 +268,6 @@ export default function Welcome({
                                     className="rounded-2xl bg-white px-6 py-3 text-sm font-extrabold text-slate-900 transition hover:bg-slate-100"
                                 >
                                     {t("explore_product", "Explore Product")}
-                                </Link>
-                                <Link
-                                    href={auth?.user ? route("dashboard") : route("login")}
-                                    className="rounded-2xl border border-white/70 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10"
-                                >
-                                    {auth?.user ? t("open_dashboard", "Open Dashboard") : t("login_to_start", "Login to Start")}
                                 </Link>
                             </div>
                         </div>

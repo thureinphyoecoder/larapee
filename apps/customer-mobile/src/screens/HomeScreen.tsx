@@ -1,4 +1,5 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { CategoryPills } from "../components/CategoryPills";
 import { ProductCard } from "../components/ProductCard";
@@ -39,7 +40,29 @@ export function HomeScreen({
   onOpenProduct,
   onRefresh,
 }: Props) {
-  const featuredProduct = products[0] ?? null;
+  const sliderItems = useMemo(() => products.slice(0, 4), [products]);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const featuredProduct = sliderItems[activeSlide] ?? products[0] ?? null;
+  const slideBackgrounds = [
+    "bg-cyan-700",
+    "bg-indigo-700",
+    "bg-rose-700",
+    "bg-emerald-700",
+  ];
+
+  useEffect(() => {
+    if (sliderItems.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % sliderItems.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [sliderItems.length]);
+
+  useEffect(() => {
+    if (activeSlide >= sliderItems.length) {
+      setActiveSlide(0);
+    }
+  }, [activeSlide, sliderItems.length]);
 
   return (
     <ScrollView
@@ -57,7 +80,7 @@ export function HomeScreen({
         </View>
       </View>
 
-      <View className="relative mt-4 overflow-hidden rounded-3xl bg-indigo-700 px-5 py-6">
+      <View className={`relative mt-4 overflow-hidden rounded-3xl px-5 py-6 ${slideBackgrounds[activeSlide % slideBackgrounds.length]}`}>
         <View className="absolute -right-10 -top-8 h-28 w-28 rounded-full bg-white/20" />
         <View className="absolute -left-6 -bottom-8 h-24 w-24 rounded-full bg-violet-300/40" />
         <View className="absolute inset-0 bg-fuchsia-500/25" />
@@ -79,9 +102,6 @@ export function HomeScreen({
             >
               <Text className="text-xs font-black text-slate-900">Explore Product</Text>
             </Pressable>
-            <View className="rounded-2xl border border-white/50 px-4 py-2">
-              <Text className="text-xs font-black text-white">Open Dashboard</Text>
-            </View>
           </View>
 
           <View className="mt-4 rounded-2xl border border-white/35 bg-white/15 px-4 py-3">
@@ -92,6 +112,32 @@ export function HomeScreen({
             </View>
           </View>
         </View>
+
+        {sliderItems.length > 1 ? (
+          <>
+            <Pressable
+              onPress={() => setActiveSlide((prev) => (prev - 1 + sliderItems.length) % sliderItems.length)}
+              className="absolute bottom-5 left-4 h-10 w-10 items-center justify-center rounded-full bg-white/90"
+            >
+              <Text className="text-lg font-black text-slate-700">‹</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setActiveSlide((prev) => (prev + 1) % sliderItems.length)}
+              className="absolute bottom-5 right-4 h-10 w-10 items-center justify-center rounded-full bg-white/90"
+            >
+              <Text className="text-lg font-black text-slate-700">›</Text>
+            </Pressable>
+            <View className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-row items-center gap-2">
+              {sliderItems.map((item, index) => (
+                <Pressable
+                  key={`dot-${item.id}`}
+                  onPress={() => setActiveSlide(index)}
+                  className={`h-2.5 rounded-full ${index === activeSlide ? "w-8 bg-white" : "w-2.5 bg-white/60"}`}
+                />
+              ))}
+            </View>
+          </>
+        ) : null}
       </View>
 
       <View className="mt-5">
