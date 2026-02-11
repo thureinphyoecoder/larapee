@@ -1,6 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
-import { Alert, BackHandler } from "react-native";
+import { Alert, AppState, BackHandler, type AppStateStatus } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { API_BASE_URL } from "../config/server";
@@ -49,6 +49,7 @@ export function useDeliveryApp() {
   const lastBackPressedAtRef = useRef(0);
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const orderSnapshotRef = useRef<Map<number, string>>(new Map());
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
   useEffect(() => {
     void bootstrap();
@@ -64,9 +65,25 @@ export function useDeliveryApp() {
     }
 
     void registerPushToken();
-    const timer = setInterval(() => void loadOrders(), 8000);
+    // Reduce notification latency while app is active.
+    void loadOrders();
+    const intervalMs = selectedOrder ? 2200 : 3200;
+    const timer = setInterval(() => void loadOrders(), intervalMs);
     return () => clearInterval(timer);
-  }, [token, user]);
+  }, [token, user, selectedOrder]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      const wasBackground = appStateRef.current === "inactive" || appStateRef.current === "background";
+      appStateRef.current = nextState;
+
+      if (wasBackground && nextState === "active" && token && user) {
+        void loadOrders();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [token, user, selectedOrder]);
 
   useEffect(() => {
     return () => {
