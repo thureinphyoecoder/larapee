@@ -195,64 +195,65 @@ export default function AdminLayout({ children, header }) {
     }, []);
 
     useEffect(() => {
-        if (window.Echo) {
-            window.Echo.channel("admin-notifications").listen(
-                ".NewOrderPlaced",
-                (e) => {
-                    const next = {
-                        id: `order-${e.id}-${Date.now()}`,
-                        type: "order",
-                        message: e.message,
-                        createdAt: e.created_at || new Date().toISOString(),
-                        isRead: false,
-                        url: route("admin.orders.show", e.id),
-                    };
-                    setNotifications((prev) => [next, ...prev].slice(0, 80));
-                },
-            );
+        if (!window.Echo || !user?.id) {
+            return () => {};
+        }
 
-            window.Echo.channel("admin-notifications").listen(
-                ".SupportMessageSent",
-                (e) => {
-                    // Staff side: notify only when customer sent a message.
-                    if (Number(e.sender_id) !== Number(e.customer_id)) {
-                        return;
-                    }
+        const channelName = role === "manager" && user?.shop_id
+            ? `shop.${user.shop_id}.notifications`
+            : "admin-notifications";
+        const channel = channelName === "admin-notifications"
+            ? window.Echo.channel(channelName)
+            : window.Echo.private(channelName);
 
-                    const next = {
-                        id: `support-${e.id}`,
-                        type: "support",
-                        message: `Support: ${e.sender_name || "Customer"} - ${e.message}`,
-                        createdAt: e.created_at || new Date().toISOString(),
-                        isRead: false,
-                        url: route("admin.support.index", { customer: e.customer_id }),
-                    };
-                    setNotifications((prev) => [next, ...prev].slice(0, 80));
-                },
-            );
+        channel.listen(".NewOrderPlaced", (e) => {
+            const next = {
+                id: `order-${e.id}-${Date.now()}`,
+                type: "order",
+                message: e.message,
+                createdAt: e.created_at || new Date().toISOString(),
+                isRead: false,
+                url: route("admin.orders.show", e.id),
+            };
+            setNotifications((prev) => [next, ...prev].slice(0, 80));
+        });
 
-            window.Echo.channel("admin-notifications").listen(
-                ".ManagerReportSubmitted",
-                (e) => {
-                    const next = {
-                        id: `daily-close-${e.shop_id || "unknown"}-${Date.now()}`,
-                        type: "daily-close",
-                        message: e.message || `Manager report submitted by ${e.manager_name || "Manager"}.`,
-                        createdAt: e.created_at || new Date().toISOString(),
-                        isRead: false,
-                        url: route("admin.dashboard"),
-                    };
-                    setNotifications((prev) => [next, ...prev].slice(0, 80));
-                },
-            );
+        if (channelName === "admin-notifications") {
+            channel.listen(".SupportMessageSent", (e) => {
+                if (Number(e.sender_id) !== Number(e.customer_id)) {
+                    return;
+                }
+
+                const next = {
+                    id: `support-${e.id}`,
+                    type: "support",
+                    message: `Support: ${e.sender_name || "Customer"} - ${e.message}`,
+                    createdAt: e.created_at || new Date().toISOString(),
+                    isRead: false,
+                    url: route("admin.support.index", { customer: e.customer_id }),
+                };
+                setNotifications((prev) => [next, ...prev].slice(0, 80));
+            });
+
+            channel.listen(".ManagerReportSubmitted", (e) => {
+                const next = {
+                    id: `daily-close-${e.shop_id || "unknown"}-${Date.now()}`,
+                    type: "daily-close",
+                    message: e.message || `Manager report submitted by ${e.manager_name || "Manager"}.`,
+                    createdAt: e.created_at || new Date().toISOString(),
+                    isRead: false,
+                    url: route("admin.dashboard"),
+                };
+                setNotifications((prev) => [next, ...prev].slice(0, 80));
+            });
         }
 
         return () => {
             if (window.Echo) {
-                window.Echo.leaveChannel("admin-notifications");
+                window.Echo.leave(channelName);
             }
         };
-    }, []);
+    }, [role, user?.id, user?.shop_id]);
 
     useEffect(() => {
         const handleSupportSeen = () => {

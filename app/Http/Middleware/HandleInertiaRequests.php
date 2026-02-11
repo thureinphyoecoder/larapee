@@ -72,6 +72,7 @@ class HandleInertiaRequests extends Middleware
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'shop_id' => $user->shop_id,
                 ] : null,
                 'role' => $role,
                 'cart_count' => fn () => $user

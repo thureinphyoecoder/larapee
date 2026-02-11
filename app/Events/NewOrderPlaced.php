@@ -5,7 +5,6 @@ namespace App\Events;
 use App\Models\Order;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -32,9 +31,15 @@ class NewOrderPlaced implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
-        return [
+        $channels = [
             new Channel('admin-notifications'),
         ];
+
+        if ($this->order->shop_id) {
+            $channels[] = new PrivateChannel('shop.' . (int) $this->order->shop_id . '.notifications');
+        }
+
+        return $channels;
     }
 
     public function broadcastAs(): string
@@ -58,7 +63,9 @@ class NewOrderPlaced implements ShouldBroadcastNow
                 'user' => [
                     'name' => $this->order->user?->name,
                 ],
+                'shop_id' => $this->order->shop_id,
                 'shop' => [
+                    'id' => $this->order->shop?->id,
                     'name' => $this->order->shop?->name,
                 ],
             ],

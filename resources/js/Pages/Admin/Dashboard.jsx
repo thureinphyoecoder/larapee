@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head, router } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react";
 
 const PERIODS = [
     { key: "daily", label: "Daily" },
@@ -29,6 +29,9 @@ export default function Dashboard({
     transferTrend = [],
     managerCloseStatus = [],
 }) {
+    const { auth = {} } = usePage().props;
+    const role = auth?.role || "admin";
+    const user = auth?.user || null;
     const [orders, setOrders] = useState(recentOrders || []);
     const [liveStats, setLiveStats] = useState(stats || {});
     const [dailySeries, setDailySeries] = useState(dailySales || []);
@@ -61,7 +64,14 @@ export default function Dashboard({
     useEffect(() => {
         if (!window.Echo) return;
 
-        window.Echo.channel("admin-notifications").listen(".NewOrderPlaced", (e) => {
+        const channelName = role === "manager" && user?.shop_id
+            ? `shop.${user.shop_id}.notifications`
+            : "admin-notifications";
+        const channel = channelName === "admin-notifications"
+            ? window.Echo.channel(channelName)
+            : window.Echo.private(channelName);
+
+        channel.listen(".NewOrderPlaced", (e) => {
             if (e?.order) {
                 setOrders((prev) => [e.order, ...prev].slice(0, 10));
             }
@@ -73,10 +83,10 @@ export default function Dashboard({
 
         return () => {
             if (window.Echo) {
-                window.Echo.leaveChannel("admin-notifications");
+                window.Echo.leave(channelName);
             }
         };
-    }, []);
+    }, [role, user?.shop_id]);
 
     useEffect(() => {
         const intervalId = window.setInterval(() => {
