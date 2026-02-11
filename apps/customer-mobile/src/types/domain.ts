@@ -71,6 +71,7 @@ export type Product = {
   price: number;
   base_price?: number;
   has_discount?: boolean;
+  sold_count?: number;
   stock_level?: number;
   image_url?: string | null;
   description?: string | null;

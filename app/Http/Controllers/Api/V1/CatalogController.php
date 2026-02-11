@@ -14,12 +14,21 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Shop;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class CatalogController extends Controller
 {
     public function products(ProductIndexRequest $request): JsonResponse
     {
         $query = Product::query()
+            ->select('products.*')
+            ->selectSub(function ($sub) {
+                $sub->from('order_items')
+                    ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                    ->whereColumn('order_items.product_id', 'products.id')
+                    ->whereNotIn('orders.status', ['cancelled'])
+                    ->selectRaw('COALESCE(SUM(COALESCE(order_items.quantity, order_items.qty, 0)), 0)');
+            }, 'sold_count')
             ->with([
                 'shop:id,name',
                 'brand:id,name',
@@ -56,6 +65,14 @@ class CatalogController extends Controller
 
     public function product(Product $product): JsonResponse
     {
+        $soldCount = (int) DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.product_id', $product->id)
+            ->whereNotIn('orders.status', ['cancelled'])
+            ->selectRaw('COALESCE(SUM(COALESCE(order_items.quantity, order_items.qty, 0)), 0) as sold_count')
+            ->value('sold_count');
+
+        $product->setAttribute('sold_count', $soldCount);
         $product->load([
             'shop:id,name',
             'brand:id,name',

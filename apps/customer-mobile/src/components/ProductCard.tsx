@@ -15,7 +15,7 @@ type Props = {
   inStockLabel: string;
   outOfStockLabel: string;
   stockLeftLabel: string;
-  fromLabel: string;
+  soldLabel: string;
   viewDetailsLabel: string;
 };
 
@@ -32,7 +32,7 @@ export function ProductCard({
   inStockLabel,
   outOfStockLabel,
   stockLeftLabel,
-  fromLabel,
+  soldLabel,
   viewDetailsLabel,
 }: Props) {
   const firstVariant = product.active_variants?.[0];
@@ -78,7 +78,6 @@ export function ProductCard({
           </Text>
 
           <View className="mt-3 flex-row items-end flex-wrap gap-x-1">
-            <Text className={`text-[11px] font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>{fromLabel}</Text>
             <Text className={`text-base font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{formatMoney(effectivePrice)}</Text>
             {hasDiscount ? (
               <Text className={`text-[11px] line-through ${dark ? "text-slate-500" : "text-slate-400"}`}>{formatMoney(basePrice)}</Text>
@@ -89,8 +88,12 @@ export function ProductCard({
             <Text className={`text-[11px] font-semibold ${dark ? "text-slate-300" : "text-slate-600"}`}>
               {inStock ? `${stockLevel} ${stockLeftLabel}` : outOfStockLabel}
             </Text>
-            <Text className={`text-[11px] font-bold ${dark ? "text-slate-400" : "text-orange-600"}`}>{viewDetailsLabel}</Text>
+            <Text className={`text-[11px] font-bold ${dark ? "text-slate-400" : "text-slate-600"}`}>
+              {soldLabel} {Number(product.sold_count || 0)}
+            </Text>
           </View>
+
+          <Text className={`mt-2 text-[11px] font-bold ${dark ? "text-slate-400" : "text-orange-600"}`}>{viewDetailsLabel}</Text>
         </View>
       </Pressable>
 

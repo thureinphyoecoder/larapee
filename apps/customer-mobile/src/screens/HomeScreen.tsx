@@ -42,13 +42,6 @@ export function HomeScreen({
 }: Props) {
   const sliderItems = useMemo(() => products.slice(0, 4), [products]);
   const [activeSlide, setActiveSlide] = useState(0);
-  const quickStats = useMemo(
-    () => [
-      { label: tr(locale, "discoverProducts"), value: String(products.length) },
-      { label: tr(locale, "categories"), value: String(categories.length) },
-    ],
-    [categories.length, locale, products.length],
-  );
   const [heroWidth, setHeroWidth] = useState(0);
   const heroScrollRef = useRef<ScrollView | null>(null);
   const slideBackgrounds = [
@@ -154,18 +147,6 @@ export function HomeScreen({
         ) : null}
       </View>
 
-      <View className="mt-3 flex-row gap-3">
-        {quickStats.map((item) => (
-          <View
-            key={item.label}
-            className={`flex-1 rounded-2xl border px-3 py-3 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
-          >
-            <Text className={`text-[10px] font-bold uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>{item.label}</Text>
-            <Text className={`mt-1 text-lg font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{item.value}</Text>
-          </View>
-        ))}
-      </View>
-
       <View className="mt-5">
         <SearchBar value={query} onChange={onQueryChange} placeholder={tr(locale, "searchPlaceholder")} dark={dark} />
       </View>
@@ -206,7 +187,7 @@ export function HomeScreen({
                 inStockLabel={tr(locale, "inStock")}
                 outOfStockLabel={tr(locale, "outOfStock")}
                 stockLeftLabel={tr(locale, "stockLeft")}
-                fromLabel={tr(locale, "fromLabel")}
+                soldLabel={tr(locale, "soldLabel")}
                 viewDetailsLabel={tr(locale, "viewDetails")}
               />
             ))}
