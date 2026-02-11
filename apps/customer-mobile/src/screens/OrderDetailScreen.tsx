@@ -200,19 +200,20 @@ export function OrderDetailScreen({
         </View>
       ) : null}
 
-      {(status === "shipped" || status === "delivered") ? (
-        <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
-          <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>Delivery</Text>
-          <View className="mt-3 gap-2">
-            <InfoRow dark={dark} label={tr(locale, "statusLabel")} value={status === "shipped" ? "On the way" : "Delivered"} />
-            <InfoRow
-              dark={dark}
-              label="Location"
-              value={order?.delivery_lat && order?.delivery_lng ? `${order.delivery_lat}, ${order.delivery_lng}` : "-"}
-            />
-          </View>
+      <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+        <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "trackOrder")}</Text>
+        <View className="mt-3 gap-2">
+          <InfoRow dark={dark} label={tr(locale, "statusLabel")} value={status === "delivered" ? "Delivered" : status === "shipped" ? "On the way" : "Preparing"} />
+          <InfoRow
+            dark={dark}
+            label="Location"
+            value={order?.delivery_lat && order?.delivery_lng ? `${order.delivery_lat}, ${order.delivery_lng}` : "Not available yet"}
+          />
+          <InfoRow dark={dark} label="Confirmed" value={["confirmed", "shipped", "delivered"].includes(status) ? "Yes" : "No"} />
+          <InfoRow dark={dark} label="Shipped" value={["shipped", "delivered"].includes(status) ? "Yes" : "No"} />
+          <InfoRow dark={dark} label="Delivered" value={status === "delivered" ? "Yes" : "No"} />
         </View>
-      ) : null}
+      </View>
 
       {(canCancel || canRefund || canReturn) ? (
         <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>

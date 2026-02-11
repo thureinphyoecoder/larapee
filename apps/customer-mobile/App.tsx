@@ -261,7 +261,6 @@ export default function App() {
           profileCity={app.account.profileCity}
           profileState={app.account.profileState}
           profilePostalCode={app.account.profilePostalCode}
-          orders={app.orders}
           profilePhotoUrl={app.account.profilePhotoUrl}
           profilePhotoBusy={app.account.profilePhotoBusy}
           onProfileNameChange={app.account.setProfileName}
@@ -281,9 +280,6 @@ export default function App() {
           onSaveProfile={() => void app.account.saveProfile()}
           onToggleLocale={() => void app.account.toggleLocale()}
           onToggleTheme={() => void app.account.toggleTheme()}
-          onOpenOrders={() => app.setActiveTab("orders")}
-          onOpenOrder={(orderId) => void app.detail.openOrderDetail(orderId)}
-          onOpenSupport={() => app.setActiveTab("support")}
           onLogout={() => void app.account.logout()}
         />
       ) : null}

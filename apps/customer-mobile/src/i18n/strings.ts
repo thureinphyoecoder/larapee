@@ -126,7 +126,8 @@ type I18nKey =
   | "paymentSlipRequired"
   | "receiptTitle"
   | "printReceipt"
-  | "backToOrder";
+  | "backToOrder"
+  | "trackOrder";
 
 type Dictionary = Record<I18nKey, string>;
 
@@ -257,6 +258,7 @@ const en: Dictionary = {
   receiptTitle: "Receipt",
   printReceipt: "Print Receipt",
   backToOrder: "Back to Order",
+  trackOrder: "Track Order",
 };
 
 const mm: Dictionary = {
@@ -386,6 +388,7 @@ const mm: Dictionary = {
   receiptTitle: "ပြေစာ (Receipt)",
   printReceipt: "ပြေစာထုတ်မည်",
   backToOrder: "Order သို့ပြန်မည်",
+  trackOrder: "အော်ဒါလိုက်ကြည့်မည်",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { en, mm };

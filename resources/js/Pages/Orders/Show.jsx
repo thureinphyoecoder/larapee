@@ -184,56 +184,54 @@ export default function Show({ order }) {
                 </div>
 
                 {/* Delivery / Tracking UI */}
-                {(status === "shipped" || status === "delivered") && (
-                    <div className="mt-8 border-t border-gray-100 pt-6">
-                        <h4 className="font-bold text-gray-700 mb-3 uppercase text-xs tracking-wider">
-                            Delivery Route
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="md:col-span-2 bg-slate-50 rounded-xl border p-4">
-                                {liveOrder?.delivery_lat && liveOrder?.delivery_lng ? (
-                                    <iframe
-                                        title="delivery-map"
-                                        className="w-full h-56 rounded border"
-                                        src={`https://www.openstreetmap.org/?mlat=${liveOrder.delivery_lat}&mlon=${liveOrder.delivery_lng}#map=14/${liveOrder.delivery_lat}/${liveOrder.delivery_lng}`}
-                                    />
-                                ) : (
-                                    <div className="h-56 flex items-center justify-center text-slate-400">
-                                        Driver location not available yet
-                                    </div>
-                                )}
-                            </div>
-                            <div className="bg-white rounded-xl border p-4">
-                                <p className="text-xs text-slate-400 uppercase tracking-widest">
-                                    Status
-                                </p>
-                                <p className="mt-2 text-lg font-bold text-slate-800">
-                                    {status === "shipped" ? "On the way" : "Delivered"}
-                                </p>
-                                <div className="mt-4 space-y-2 text-sm text-slate-600">
-                                    <div className="flex justify-between">
-                                        <span>Order Confirmed</span>
-                                        <span>✓</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Shipped</span>
-                                        <span>{status === "shipped" || status === "delivered" ? "✓" : "•"}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Delivered</span>
-                                        <span>{status === "delivered" ? "✓" : "•"}</span>
-                                    </div>
+                <div id="tracking" className="mt-8 border-t border-gray-100 pt-6">
+                    <h4 className="font-bold text-gray-700 mb-3 uppercase text-xs tracking-wider">
+                        Order Tracking
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-2 bg-slate-50 rounded-xl border p-4">
+                            {(status === "shipped" || status === "delivered") && liveOrder?.delivery_lat && liveOrder?.delivery_lng ? (
+                                <iframe
+                                    title="delivery-map"
+                                    className="w-full h-56 rounded border"
+                                    src={`https://www.openstreetmap.org/?mlat=${liveOrder.delivery_lat}&mlon=${liveOrder.delivery_lng}#map=14/${liveOrder.delivery_lat}/${liveOrder.delivery_lng}`}
+                                />
+                            ) : (
+                                <div className="h-56 flex items-center justify-center text-slate-400">
+                                    Tracking location will appear when the order is shipped.
                                 </div>
-                                <p className="mt-4 text-xs text-slate-400">
-                                    Updated:{" "}
-                                    {liveOrder?.delivery_updated_at
-                                        ? new Date(liveOrder.delivery_updated_at).toLocaleString()
-                                        : "N/A"}
-                                </p>
+                            )}
+                        </div>
+                        <div className="bg-white rounded-xl border p-4">
+                            <p className="text-xs text-slate-400 uppercase tracking-widest">
+                                Status
+                            </p>
+                            <p className="mt-2 text-lg font-bold text-slate-800">
+                                {status === "delivered" ? "Delivered" : status === "shipped" ? "On the way" : "Preparing order"}
+                            </p>
+                            <div className="mt-4 space-y-2 text-sm text-slate-600">
+                                <div className="flex justify-between">
+                                    <span>Order Confirmed</span>
+                                    <span>{["confirmed", "shipped", "delivered"].includes(status) ? "✓" : "•"}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Shipped</span>
+                                    <span>{status === "shipped" || status === "delivered" ? "✓" : "•"}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Delivered</span>
+                                    <span>{status === "delivered" ? "✓" : "•"}</span>
+                                </div>
                             </div>
+                            <p className="mt-4 text-xs text-slate-400">
+                                Updated:{" "}
+                                {liveOrder?.delivery_updated_at
+                                    ? new Date(liveOrder.delivery_updated_at).toLocaleString()
+                                    : "N/A"}
+                            </p>
                         </div>
                     </div>
-                )}
+                </div>
 
                 {/* Footer Buttons */}
                 <div className="mt-10 print:hidden space-y-4">

@@ -14,6 +14,7 @@ type Props = {
 
 export function OrdersScreen({ locale, dark, orders, refreshing, onOpenOrder, onRefresh }: Props) {
   const groupedOrders = groupOrdersByDate(orders);
+  const trackingCount = orders.filter((item) => ["pending", "confirmed", "shipped"].includes(String(item.status || "").toLowerCase())).length;
 
   return (
     <ScrollView
@@ -24,6 +25,16 @@ export function OrdersScreen({ locale, dark, orders, refreshing, onOpenOrder, on
       <View className={`rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <Text className={`text-2xl font-black ${dark ? "text-white" : "text-slate-900"}`}>{tr(locale, "ordersTitle")}</Text>
         <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "ordersSubtitle")}</Text>
+        <View className="mt-3 flex-row gap-2">
+          <View className={`flex-1 rounded-xl px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-50"}`}>
+            <Text className={`text-[10px] font-bold uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>Total</Text>
+            <Text className={`text-lg font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{orders.length}</Text>
+          </View>
+          <View className={`flex-1 rounded-xl px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-50"}`}>
+            <Text className={`text-[10px] font-bold uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "trackOrder")}</Text>
+            <Text className={`text-lg font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{trackingCount}</Text>
+          </View>
+        </View>
       </View>
 
       <View className="mt-4">
@@ -36,7 +47,15 @@ export function OrdersScreen({ locale, dark, orders, refreshing, onOpenOrder, on
 
               <View className="mt-2 gap-3">
                 {group.orders.map((order) => (
-                  <OrderCard key={order.id} order={order} dark={dark} locale={locale} onPress={() => onOpenOrder(order.id)} />
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    dark={dark}
+                    locale={locale}
+                    onPress={() => onOpenOrder(order.id)}
+                    trackLabel={tr(locale, "trackOrder")}
+                    viewLabel={tr(locale, "viewDetails")}
+                  />
                 ))}
               </View>
             </View>
