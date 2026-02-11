@@ -69,6 +69,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::prefix('support')->name('support.')->group(function () {
             Route::get('/messages', [SupportController::class, 'index'])->name('messages.index');
             Route::post('/messages', [SupportController::class, 'store'])->name('messages.store');
+            Route::patch('/messages/{message}', [SupportController::class, 'update'])->name('messages.update');
+            Route::delete('/messages/{message}', [SupportController::class, 'destroy'])->name('messages.destroy');
         });
     });
 });

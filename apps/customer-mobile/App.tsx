@@ -1,8 +1,8 @@
 import "./global.css";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
-import { BackHandler, LogBox } from "react-native";
+import { BackHandler, Keyboard, LogBox } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import { BottomTabs } from "./src/components/BottomTabs";
@@ -22,6 +22,16 @@ LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
 
 export default function App() {
   const app = useCustomerApp();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -235,12 +245,19 @@ export default function App() {
           draft={app.support.draft}
           imageUri={app.support.imageUri}
           busy={app.support.busy}
+          loadingMore={app.support.loadingMore}
+          hasMore={app.support.hasMore}
           sending={app.support.sending}
           error={app.support.error}
+          editingMessageId={app.support.editingMessageId}
           onDraftChange={app.support.setDraft}
           onImageUriChange={app.support.setImageUri}
           onSend={() => void app.support.send()}
           onRefresh={() => void app.support.refresh()}
+          onLoadMore={() => void app.support.loadMore()}
+          onStartEdit={(messageId) => app.support.startEdit(messageId)}
+          onCancelEdit={app.support.cancelEdit}
+          onDeleteMessage={(messageId) => void app.support.deleteMessage(messageId)}
         />
       ) : null}
 
@@ -285,13 +302,15 @@ export default function App() {
         />
       ) : null}
 
-        <BottomTabs
-          activeTab={app.activeTab}
-          onChange={app.setActiveTab}
-          items={app.tabItems}
-          dark={app.dark}
-          badges={{ cart: app.cartCount, orders: app.notificationsUnreadCount }}
-        />
+        {!keyboardVisible ? (
+          <BottomTabs
+            activeTab={app.activeTab}
+            onChange={app.setActiveTab}
+            items={app.tabItems}
+            dark={app.dark}
+            badges={{ cart: app.cartCount, orders: app.notificationsUnreadCount }}
+          />
+        ) : null}
       </SafeAreaView>
     </SafeAreaProvider>
   );

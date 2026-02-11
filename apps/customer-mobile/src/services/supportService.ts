@@ -45,6 +45,25 @@ export async function sendSupportMessage(baseUrl: string, token: string, message
   });
 }
 
+export async function updateSupportMessage(baseUrl: string, token: string, messageId: number, message: string): Promise<void> {
+  await requestJson({
+    baseUrl,
+    path: `/support/messages/${messageId}`,
+    method: "PATCH",
+    token,
+    body: { message: message.trim() },
+  });
+}
+
+export async function deleteSupportMessage(baseUrl: string, token: string, messageId: number): Promise<void> {
+  await requestJson({
+    baseUrl,
+    path: `/support/messages/${messageId}`,
+    method: "DELETE",
+    token,
+  });
+}
+
 function toAbsoluteUrl(baseUrl: string, value?: string | null): string | null {
   if (!value) {
     return null;

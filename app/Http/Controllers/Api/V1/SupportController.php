@@ -7,9 +7,11 @@ use App\Actions\Support\StoreSupportMessageAction;
 use App\Events\SupportMessageSent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Support\StoreSupportMessageRequest;
+use App\Models\SupportMessage;
 use App\Services\SupportChatQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SupportController extends Controller
 {
@@ -57,5 +59,51 @@ class SupportController extends Controller
                 'id' => $message->id,
             ],
         ], 201);
+    }
+
+    public function update(Request $request, SupportMessage $message): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user !== null, 401);
+        abort_unless((int) $message->sender_id === (int) $user->id, 403);
+        abort_unless((int) $message->customer_id === (int) $user->id, 403);
+
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $clean = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $validated['message'])) ?? '');
+        if ($clean === '') {
+            return response()->json([
+                'message' => 'Message cannot be empty.',
+            ], 422);
+        }
+
+        $message->update(['message' => $clean]);
+
+        return response()->json([
+            'message' => 'Message updated.',
+            'data' => ['id' => $message->id],
+        ]);
+    }
+
+    public function destroy(Request $request, SupportMessage $message): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user !== null, 401);
+        abort_unless((int) $message->sender_id === (int) $user->id, 403);
+        abort_unless((int) $message->customer_id === (int) $user->id, 403);
+
+        if ($message->attachment_path) {
+            Storage::disk('public')->delete($message->attachment_path);
+        }
+
+        $deletedId = $message->id;
+        $message->delete();
+
+        return response()->json([
+            'message' => 'Message deleted.',
+            'data' => ['id' => $deletedId],
+        ]);
     }
 }

@@ -18,7 +18,7 @@ import {
   updateMePhoto,
 } from "../services/authService";
 import { cancelOrder, fetchOrderDetail, fetchOrders, placeOrderFromCart, requestRefund, requestReturn } from "../services/orderService";
-import { fetchSupportMessages, sendSupportMessage } from "../services/supportService";
+import { deleteSupportMessage, fetchSupportMessages, sendSupportMessage, updateSupportMessage } from "../services/supportService";
 import type { CartItem, Category, CustomerOrder, CustomerTab, Locale, MePayload, Product, SupportMessage, ThemeMode } from "../types/domain";
 
 type DetailView = "none" | "product" | "order" | "checkout";
@@ -62,8 +62,12 @@ export function useCustomerApp() {
   const [supportDraft, setSupportDraft] = useState("");
   const [supportImageUri, setSupportImageUri] = useState<string | null>(null);
   const [supportBusy, setSupportBusy] = useState(false);
+  const [supportLoadingMore, setSupportLoadingMore] = useState(false);
   const [supportSending, setSupportSending] = useState(false);
   const [supportError, setSupportError] = useState("");
+  const [supportCurrentPage, setSupportCurrentPage] = useState(1);
+  const [supportHasMore, setSupportHasMore] = useState(false);
+  const [supportEditingMessageId, setSupportEditingMessageId] = useState<number | null>(null);
 
   const [detailView, setDetailView] = useState<DetailView>("none");
   const [detailBusy, setDetailBusy] = useState(false);
@@ -152,14 +156,48 @@ export function useCustomerApp() {
   }, [locale]);
 
   const loadSupport = useCallback(
-    async (token: string) => {
-      setSupportBusy(true);
+    async (token: string, options?: { page?: number; mode?: "replace" | "append" | "merge_latest" }) => {
+      const page = options?.page ?? 1;
+      const mode = options?.mode ?? "replace";
+
+      if (mode === "append") {
+        setSupportLoadingMore(true);
+      } else {
+        setSupportBusy(true);
+      }
       setSupportError("");
 
       try {
-        const payload = await fetchSupportMessages(API_BASE_URL, token, 1);
-        setSupportMessages(payload.messages || []);
+        const payload = await fetchSupportMessages(API_BASE_URL, token, page);
+        const nextMessages = payload.messages || [];
+        const pageMeta = payload.messagePagination;
         setSupportAssignedStaffName(payload.assigned_staff?.name || null);
+        setSupportCurrentPage(pageMeta?.current_page ?? page);
+        setSupportHasMore(Boolean(pageMeta?.has_more_pages ?? ((pageMeta?.current_page ?? page) < (pageMeta?.last_page ?? page))));
+
+        if (mode === "append") {
+          setSupportMessages((prev) => {
+            const seen = new Set(prev.map((item) => item.id));
+            const older = nextMessages.filter((item) => !seen.has(item.id));
+            return [...older, ...prev];
+          });
+          return;
+        }
+
+        if (mode === "merge_latest") {
+          setSupportMessages((prev) => {
+            const latestIds = new Set(nextMessages.map((item) => item.id));
+            const older = prev.filter((item) => !latestIds.has(item.id));
+            const mergedLatest = nextMessages.map((item) => {
+              const existing = prev.find((prevItem) => prevItem.id === item.id);
+              return existing ? { ...existing, ...item } : item;
+            });
+            return [...older, ...mergedLatest];
+          });
+          return;
+        }
+
+        setSupportMessages(nextMessages);
       } catch (error) {
         if (error instanceof ApiError) {
           setSupportError(error.message || tr(locale, "unknownError"));
@@ -167,7 +205,11 @@ export function useCustomerApp() {
           setSupportError(tr(locale, "unknownError"));
         }
       } finally {
-        setSupportBusy(false);
+        if (mode === "append") {
+          setSupportLoadingMore(false);
+        } else {
+          setSupportBusy(false);
+        }
       }
     },
     [locale],
@@ -258,9 +300,10 @@ export function useCustomerApp() {
       return;
     }
 
+    void loadSupport(session.token, { page: 1, mode: "merge_latest" });
     const timer = setInterval(() => {
-      void loadSupport(session.token);
-    }, 10000);
+      void loadSupport(session.token, { page: 1, mode: "merge_latest" });
+    }, 4000);
 
     return () => clearInterval(timer);
   }, [activeTab, loadSupport, session?.token]);
@@ -793,7 +836,7 @@ export function useCustomerApp() {
     }
 
     const text = supportDraft.trim();
-    if (!text && !supportImageUri) {
+    if (!text && !supportImageUri && !supportEditingMessageId) {
       return;
     }
 
@@ -801,10 +844,16 @@ export function useCustomerApp() {
     setSupportError("");
 
     try {
-      await sendSupportMessage(API_BASE_URL, session.token, text, supportImageUri);
+      if (supportEditingMessageId) {
+        await updateSupportMessage(API_BASE_URL, session.token, supportEditingMessageId, text);
+        setSupportMessages((prev) => prev.map((item) => (item.id === supportEditingMessageId ? { ...item, message: text } : item)));
+      } else {
+        await sendSupportMessage(API_BASE_URL, session.token, text, supportImageUri);
+      }
       setSupportDraft("");
       setSupportImageUri(null);
-      await loadSupport(session.token);
+      setSupportEditingMessageId(null);
+      await loadSupport(session.token, { page: 1, mode: "merge_latest" });
     } catch (error) {
       if (error instanceof ApiError) {
         setSupportError(error.message || tr(locale, "unknownError"));
@@ -814,7 +863,47 @@ export function useCustomerApp() {
     } finally {
       setSupportSending(false);
     }
-  }, [loadSupport, locale, session?.token, supportDraft, supportImageUri]);
+  }, [loadSupport, locale, session?.token, supportDraft, supportEditingMessageId, supportImageUri]);
+
+  const handleLoadMoreSupport = useCallback(async () => {
+    if (!session?.token || supportLoadingMore || !supportHasMore) {
+      return;
+    }
+
+    await loadSupport(session.token, { page: supportCurrentPage + 1, mode: "append" });
+  }, [loadSupport, session?.token, supportCurrentPage, supportHasMore, supportLoadingMore]);
+
+  const handleStartEditSupport = useCallback((messageId: number) => {
+    const target = supportMessages.find((item) => item.id === messageId);
+    if (!target) return;
+    setSupportEditingMessageId(messageId);
+    setSupportDraft(target.message || "");
+    setSupportImageUri(null);
+  }, [supportMessages]);
+
+  const handleCancelEditSupport = useCallback(() => {
+    setSupportEditingMessageId(null);
+    setSupportDraft("");
+  }, []);
+
+  const handleDeleteSupport = useCallback(async (messageId: number) => {
+    if (!session?.token) return;
+
+    try {
+      await deleteSupportMessage(API_BASE_URL, session.token, messageId);
+      setSupportMessages((prev) => prev.filter((item) => item.id !== messageId));
+      if (supportEditingMessageId === messageId) {
+        setSupportEditingMessageId(null);
+        setSupportDraft("");
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setSupportError(error.message || tr(locale, "unknownError"));
+      } else {
+        setSupportError(tr(locale, "unknownError"));
+      }
+    }
+  }, [locale, session?.token, supportEditingMessageId]);
 
   const handleSaveProfile = useCallback(async () => {
     if (!session?.token) {
@@ -924,6 +1013,10 @@ export function useCustomerApp() {
     setSupportDraft("");
     setSupportImageUri(null);
     setSupportError("");
+    setSupportCurrentPage(1);
+    setSupportHasMore(false);
+    setSupportLoadingMore(false);
+    setSupportEditingMessageId(null);
     setCheckoutPhone("");
     setCheckoutAddress("");
     setCheckoutError("");
@@ -1073,12 +1166,19 @@ export function useCustomerApp() {
       draft: supportDraft,
       imageUri: supportImageUri,
       busy: supportBusy,
+      loadingMore: supportLoadingMore,
+      hasMore: supportHasMore,
       sending: supportSending,
       error: supportError,
+      editingMessageId: supportEditingMessageId,
       setDraft: setSupportDraft,
       setImageUri: setSupportImageUri,
       send: handleSendSupport,
-      refresh: () => (session?.token ? loadSupport(session.token) : Promise.resolve()),
+      refresh: () => (session?.token ? loadSupport(session.token, { page: 1, mode: "replace" }) : Promise.resolve()),
+      loadMore: handleLoadMoreSupport,
+      startEdit: handleStartEditSupport,
+      cancelEdit: handleCancelEditSupport,
+      deleteMessage: handleDeleteSupport,
     },
   };
 }
