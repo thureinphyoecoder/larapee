@@ -1,6 +1,7 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
 import { useEffect, useMemo, useState } from "react";
 import { Image, Linking, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { API_BASE_URL } from "../config/server";
@@ -51,6 +52,8 @@ export function CheckoutScreen({
   const [addressFocused, setAddressFocused] = useState(false);
   const [addressSuggestBusy, setAddressSuggestBusy] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
 
   const qrPayload = useMemo(
     () => `LARAPEE_PAY|WAVEPAY|09123456789|U_THUREIN_PHYO|MMK|AMOUNT=${Math.round(totalPrice)}|ORDER_ITEMS=${cartItems.length}`,
@@ -98,6 +101,49 @@ export function CheckoutScreen({
 
   const downloadQr = async () => {
     await Linking.openURL(qrImageUrl);
+  };
+
+  const useCurrentLocation = async () => {
+    setLocating(true);
+    setLocationError("");
+
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (!permission.granted) {
+        setLocationError("Location permission denied.");
+        return;
+      }
+
+      const current = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const reverse = await Location.reverseGeocodeAsync({
+        latitude: current.coords.latitude,
+        longitude: current.coords.longitude,
+      });
+      const first = reverse[0];
+      if (!first) {
+        setLocationError("Unable to detect nearby address.");
+        return;
+      }
+
+      const nextAddress = [first.name, first.street, first.subregion || first.city, first.region, first.country]
+        .filter((item) => Boolean(item && String(item).trim()))
+        .join(", ");
+
+      if (!nextAddress) {
+        setLocationError("Unable to build address from location.");
+        return;
+      }
+
+      onAddressChange(nextAddress);
+      setAddressSuggestions([]);
+      setAddressFocused(false);
+    } catch {
+      setLocationError("Failed to read current location.");
+    } finally {
+      setLocating(false);
+    }
   };
 
   const pickSlipImage = async () => {
@@ -190,7 +236,12 @@ export function CheckoutScreen({
             </View>
 
             <View>
-              <Text className={`mb-1 text-xs font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "addressLine")}</Text>
+              <View className="mb-1 flex-row items-center justify-between">
+                <Text className={`text-xs font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "addressLine")}</Text>
+                <Pressable onPress={useCurrentLocation} disabled={locating} className={`rounded-lg px-2 py-1 ${locating ? "bg-slate-300" : "bg-sky-600"}`}>
+                  <Text className="text-[10px] font-black text-white">{locating ? "Locating..." : "Use Current Location"}</Text>
+                </Pressable>
+              </View>
               <TextInput
                 value={address}
                 onChangeText={onAddressChange}
@@ -223,6 +274,7 @@ export function CheckoutScreen({
                   )}
                 </View>
               ) : null}
+              {locationError ? <Text className="mt-2 text-xs font-semibold text-rose-600">{locationError}</Text> : null}
             </View>
           </View>
         </View>
