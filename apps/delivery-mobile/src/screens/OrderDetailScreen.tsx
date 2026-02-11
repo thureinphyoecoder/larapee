@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Image, Linking, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
-import MapView, { Marker, UrlTile } from "react-native-maps";
+import { Image, Linking, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import MapView, { Marker } from "react-native-maps";
 
 import type { Order } from "../types/domain";
 import { formatDateTime, formatMMK } from "../utils/formatters";
@@ -42,10 +42,18 @@ export function OrderDetailScreen({
     };
   }, [order.delivery_lat, order.delivery_lng]);
 
-  async function openInOsm() {
+  async function openInMaps() {
     if (!coordinates) return;
-    const url = `https://www.openstreetmap.org/?mlat=${coordinates.latitude}&mlon=${coordinates.longitude}#map=16/${coordinates.latitude}/${coordinates.longitude}`;
-    await Linking.openURL(url);
+    const label = encodeURIComponent(`Order ${order.id} Delivery Location`);
+    const latLng = `${coordinates.latitude},${coordinates.longitude}`;
+    const nativeUrl =
+      Platform.OS === "ios"
+        ? `http://maps.apple.com/?ll=${latLng}&q=${label}`
+        : `geo:${latLng}?q=${latLng}(${label})`;
+    const webFallback = `https://www.google.com/maps/search/?api=1&query=${latLng}`;
+
+    const supported = await Linking.canOpenURL(nativeUrl);
+    await Linking.openURL(supported ? nativeUrl : webFallback);
   }
 
   return (
@@ -74,10 +82,10 @@ export function OrderDetailScreen({
 
         <View className={`rounded-3xl border p-4 ${dark ? "border-slate-800 bg-slate-900/95" : "border-white bg-white"}`}>
           <View className="flex-row items-center justify-between">
-            <Text className={`text-sm font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>Live Location (OSM)</Text>
+            <Text className={`text-sm font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>Live Location</Text>
             <Pressable
               className={`rounded-full px-3 py-1 ${coordinates ? "bg-cyan-500" : "bg-slate-500"}`}
-              onPress={() => void openInOsm()}
+              onPress={() => void openInMaps()}
               disabled={!coordinates}
             >
               <Text className="text-xs font-bold text-white">Open Map</Text>
@@ -93,9 +101,8 @@ export function OrderDetailScreen({
                   latitudeDelta: 0.01,
                   longitudeDelta: 0.01,
                 }}
-                mapType="none"
+                mapType="standard"
               >
-                <UrlTile urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maximumZ={19} />
                 <Marker coordinate={coordinates} title="Delivery Location" />
               </MapView>
             </View>

@@ -89,6 +89,8 @@ export async function scheduleLocalNotification(title: string, body: string): Pr
       title,
       body,
       sound: true,
+      channelId: Platform.OS === "android" ? "orders" : undefined,
+      priority: Notifications.AndroidNotificationPriority?.MAX,
     },
     trigger: null,
   });
