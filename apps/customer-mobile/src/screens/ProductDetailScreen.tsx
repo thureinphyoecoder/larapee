@@ -1,8 +1,8 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { tr } from "../i18n/strings";
-import { formatMoney } from "../utils/format";
+import { formatDate, formatMoney } from "../utils/format";
 import type { Locale, Product } from "../types/domain";
 
 type Props = {
@@ -24,15 +24,29 @@ export function ProductDetailScreen({ locale, dark, product, busy, error, adding
     () => variants.find((variant) => variant.id === selectedVariantId) ?? variants[0],
     [selectedVariantId, variants],
   );
+  const galleryImages = useMemo(() => {
+    const dynamic = [product?.image_url].filter((item): item is string => Boolean(item));
+    const fallback = [
+      `https://placehold.co/600x600/F59E0B/FFFFFF?text=${encodeURIComponent(product?.name || "Product")}`,
+      "https://placehold.co/600x600/FB923C/FFFFFF?text=Detail+1",
+      "https://placehold.co/600x600/F97316/FFFFFF?text=Detail+2",
+    ];
+    return [...dynamic, ...fallback];
+  }, [product?.image_url, product?.name]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(galleryImages[0] || null);
   const effectivePrice = Number(selectedVariant?.effective_price ?? product?.price ?? selectedVariant?.price ?? 0);
   const basePrice = Number(selectedVariant?.base_price ?? product?.base_price ?? selectedVariant?.price ?? effectivePrice);
   const hasDiscount = Boolean(product?.has_discount ?? effectivePrice < basePrice);
   const stockLevel = Number(selectedVariant?.stock_level ?? product?.stock_level ?? 0);
   const totalPrice = effectivePrice * Math.max(1, qty);
+  const ratingAverage = Number(product?.rating_summary?.average || 0);
+  const ratingCount = Number(product?.rating_summary?.count || 0);
+  const reviews = product?.reviews || [];
 
   useEffect(() => {
     setSelectedVariantId(product?.active_variants?.[0]?.id ?? null);
     setQty(1);
+    setSelectedImage((product?.image_url || galleryImages[0] || null) as string | null);
   }, [product?.id]);
 
   return (
@@ -47,12 +61,35 @@ export function ProductDetailScreen({ locale, dark, product, busy, error, adding
 
       <View className={`mt-4 overflow-hidden rounded-3xl border ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <View className={`aspect-square items-center justify-center ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
-          <Text className={`text-5xl font-black ${dark ? "text-slate-500" : "text-slate-300"}`}>{String(product?.name || "?").slice(0, 1).toUpperCase()}</Text>
+          {selectedImage ? (
+            <Image source={{ uri: selectedImage }} className="h-full w-full" resizeMode="cover" />
+          ) : (
+            <Text className={`text-5xl font-black ${dark ? "text-slate-500" : "text-slate-300"}`}>{String(product?.name || "?").slice(0, 1).toUpperCase()}</Text>
+          )}
         </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-3 py-3">
+          {galleryImages.map((imageUrl) => (
+            <Pressable
+              key={imageUrl}
+              onPress={() => setSelectedImage(imageUrl)}
+              className={`mr-2 h-16 w-16 overflow-hidden rounded-xl border ${
+                selectedImage === imageUrl ? "border-orange-400" : dark ? "border-slate-700" : "border-slate-200"
+              }`}
+            >
+              <Image source={{ uri: imageUrl }} className="h-full w-full" resizeMode="cover" />
+            </Pressable>
+          ))}
+        </ScrollView>
 
         <View className="p-5">
           <Text className={`text-xl font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{product?.name || "-"}</Text>
           <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{product?.shop?.name || "LaraPee Store"}</Text>
+          <View className="mt-2 flex-row items-center gap-2">
+            <Text className={`text-xs font-bold ${dark ? "text-amber-300" : "text-amber-600"}`}>{"★".repeat(Math.round(ratingAverage || 0))}</Text>
+            <Text className={`text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>
+              {ratingAverage.toFixed(1)} ({ratingCount})
+            </Text>
+          </View>
 
           <View className="mt-4 flex-row items-end gap-2">
             <Text className={`text-2xl font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{formatMoney(totalPrice)}</Text>
@@ -125,6 +162,26 @@ export function ProductDetailScreen({ locale, dark, product, busy, error, adding
             <Text className="text-center text-sm font-black text-white">{adding ? tr(locale, "adding") : tr(locale, "addToCart")}</Text>
           </Pressable>
         </View>
+      </View>
+
+      <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+        <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "customerReviews")}</Text>
+        {reviews.length ? (
+          <View className="mt-3 gap-3">
+            {reviews.map((review) => (
+              <View key={review.id} className={`rounded-xl border p-3 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}>
+                <View className="flex-row items-center justify-between">
+                  <Text className={`text-xs font-black ${dark ? "text-slate-200" : "text-slate-800"}`}>{review.reviewer_name || "Customer"}</Text>
+                  <Text className={`text-[11px] ${dark ? "text-slate-400" : "text-slate-500"}`}>{formatDate(review.created_at || null)}</Text>
+                </View>
+                <Text className={`mt-1 text-xs ${dark ? "text-amber-300" : "text-amber-600"}`}>{"★".repeat(Number(review.rating || 0))}</Text>
+                <Text className={`mt-2 text-sm ${dark ? "text-slate-300" : "text-slate-700"}`}>{review.comment || "-"}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text className={`mt-3 text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "noReviews")}</Text>
+        )}
       </View>
 
       {busy ? <Text className={`mt-4 text-center text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Loading...</Text> : null}

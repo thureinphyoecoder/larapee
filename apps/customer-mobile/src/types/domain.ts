@@ -76,6 +76,18 @@ export type Product = {
   shop?: { id: number; name: string } | null;
   category?: Category | null;
   active_variants?: ProductVariant[];
+  variants?: ProductVariant[];
+  reviews?: {
+    id: number;
+    reviewer_name?: string | null;
+    rating?: number | null;
+    comment?: string | null;
+    created_at?: string | null;
+  }[];
+  rating_summary?: {
+    average: number;
+    count: number;
+  } | null;
 };
 
 export type CartItem = {
@@ -157,6 +169,8 @@ export type SupportMessage = {
     id: number;
     name: string;
   } | null;
+  attachment_url?: string | null;
+  attachment_name?: string | null;
 };
 
 export type SupportMessagesPayload = {

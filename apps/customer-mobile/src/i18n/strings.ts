@@ -39,6 +39,8 @@ type I18nKey =
   | "productDetails"
   | "orderDetails"
   | "description"
+  | "customerReviews"
+  | "noReviews"
   | "orderItems"
   | "noOrderItems"
   | "customerPhone"
@@ -161,6 +163,8 @@ const en: Dictionary = {
   productDetails: "Product Details",
   orderDetails: "Order Details",
   description: "Description",
+  customerReviews: "Customer Reviews",
+  noReviews: "No reviews yet.",
   orderItems: "Order Items",
   noOrderItems: "No order items found.",
   customerPhone: "Phone",
@@ -282,6 +286,8 @@ const mm: Dictionary = {
   productDetails: "ပစ္စည်း အသေးစိတ်",
   orderDetails: "အော်ဒါ အသေးစိတ်",
   description: "ဖော်ပြချက်",
+  customerReviews: "Customer Review များ",
+  noReviews: "Review မရှိသေးပါ။",
   orderItems: "အော်ဒါပစ္စည်းများ",
   noOrderItems: "အော်ဒါပစ္စည်း မတွေ့ပါ။",
   customerPhone: "ဖုန်းနံပါတ်",

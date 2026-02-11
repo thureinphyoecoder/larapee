@@ -1,4 +1,4 @@
-import { requestJson } from "../lib/http";
+import { requestFormData, requestJson } from "../lib/http";
 import type { SupportMessagesPayload } from "../types/domain";
 
 export async function fetchSupportMessages(baseUrl: string, token: string, page = 1): Promise<SupportMessagesPayload> {
@@ -10,14 +10,27 @@ export async function fetchSupportMessages(baseUrl: string, token: string, page 
   });
 }
 
-export async function sendSupportMessage(baseUrl: string, token: string, message: string): Promise<void> {
-  await requestJson({
+export async function sendSupportMessage(baseUrl: string, token: string, message: string, imageUri?: string | null): Promise<void> {
+  const formData = new FormData();
+
+  if (message.trim()) {
+    formData.append("message", message.trim());
+  }
+
+  if (imageUri) {
+    const fileName = imageUri.split("/").pop() || `support-${Date.now()}.jpg`;
+    formData.append("image", {
+      uri: imageUri,
+      name: fileName,
+      type: "image/jpeg",
+    } as any);
+  }
+
+  await requestFormData({
     baseUrl,
     path: "/support/messages",
     method: "POST",
     token,
-    body: {
-      message,
-    },
+    body: formData,
   });
 }

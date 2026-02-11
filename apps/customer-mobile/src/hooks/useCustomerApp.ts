@@ -46,6 +46,7 @@ export function useCustomerApp() {
   const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
   const [supportAssignedStaffName, setSupportAssignedStaffName] = useState<string | null>(null);
   const [supportDraft, setSupportDraft] = useState("");
+  const [supportImageUri, setSupportImageUri] = useState<string | null>(null);
   const [supportBusy, setSupportBusy] = useState(false);
   const [supportSending, setSupportSending] = useState(false);
   const [supportError, setSupportError] = useState("");
@@ -492,7 +493,7 @@ export function useCustomerApp() {
     }
 
     const text = supportDraft.trim();
-    if (!text) {
+    if (!text && !supportImageUri) {
       return;
     }
 
@@ -500,8 +501,9 @@ export function useCustomerApp() {
     setSupportError("");
 
     try {
-      await sendSupportMessage(API_BASE_URL, session.token, text);
+      await sendSupportMessage(API_BASE_URL, session.token, text, supportImageUri);
       setSupportDraft("");
+      setSupportImageUri(null);
       await loadSupport(session.token);
     } catch (error) {
       if (error instanceof ApiError) {
@@ -512,7 +514,7 @@ export function useCustomerApp() {
     } finally {
       setSupportSending(false);
     }
-  }, [loadSupport, locale, session?.token, supportDraft]);
+  }, [loadSupport, locale, session?.token, supportDraft, supportImageUri]);
 
   const handleSaveProfile = useCallback(async () => {
     if (!session?.token) {
@@ -595,6 +597,7 @@ export function useCustomerApp() {
     setSupportMessages([]);
     setSupportAssignedStaffName(null);
     setSupportDraft("");
+    setSupportImageUri(null);
     setSupportError("");
     setCheckoutPhone("");
     setCheckoutAddress("");
@@ -718,10 +721,12 @@ export function useCustomerApp() {
       messages: supportMessages,
       assignedStaffName: supportAssignedStaffName,
       draft: supportDraft,
+      imageUri: supportImageUri,
       busy: supportBusy,
       sending: supportSending,
       error: supportError,
       setDraft: setSupportDraft,
+      setImageUri: setSupportImageUri,
       send: handleSendSupport,
       refresh: () => (session?.token ? loadSupport(session.token) : Promise.resolve()),
     },

@@ -1,7 +1,8 @@
 import "./global.css";
 
+import { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaView } from "react-native";
+import { BackHandler, SafeAreaView } from "react-native";
 
 import { BottomTabs } from "./src/components/BottomTabs";
 import { LoadingView } from "./src/components/LoadingView";
@@ -18,6 +19,28 @@ import { SupportScreen } from "./src/screens/SupportScreen";
 
 export default function App() {
   const app = useCustomerApp();
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (!app.session?.token || !app.session.user) {
+        return true;
+      }
+
+      if (app.detail.view !== "none") {
+        app.detail.close();
+        return true;
+      }
+
+      if (app.activeTab !== "home") {
+        app.setActiveTab("home");
+        return true;
+      }
+
+      return false;
+    });
+
+    return () => subscription.remove();
+  }, [app]);
 
   if (app.booting) {
     return <LoadingView dark={app.dark} label="Preparing app..." />;
@@ -159,10 +182,12 @@ export default function App() {
           assignedStaffName={app.support.assignedStaffName}
           messages={app.support.messages}
           draft={app.support.draft}
+          imageUri={app.support.imageUri}
           busy={app.support.busy}
           sending={app.support.sending}
           error={app.support.error}
           onDraftChange={app.support.setDraft}
+          onImageUriChange={app.support.setImageUri}
           onSend={() => void app.support.send()}
           onRefresh={() => void app.support.refresh()}
         />

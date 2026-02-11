@@ -11,6 +11,11 @@ class ProductResource extends JsonResource
     public function toArray(Request $request): array
     {
         $activeVariants = $this->relationLoaded('activeVariants') ? $this->activeVariants : collect();
+        $reviews = $this->relationLoaded('reviews') ? $this->reviews : collect();
+        $ratingCount = $reviews->whereNotNull('rating')->count();
+        $ratingAverage = $ratingCount > 0
+            ? round((float) ($reviews->whereNotNull('rating')->avg('rating') ?? 0), 1)
+            : 0.0;
         $basePrice = $activeVariants->count() > 0
             ? (float) $activeVariants->min(fn ($variant) => (float) ($variant->price ?? 0))
             : (float) $this->price;
@@ -34,6 +39,19 @@ class ProductResource extends JsonResource
             'category' => $this->whenLoaded('category', fn () => new CategoryResource($this->category)),
             'variants' => $this->whenLoaded('variants', fn () => ProductVariantResource::collection($this->variants)),
             'active_variants' => $this->whenLoaded('activeVariants', fn () => ProductVariantResource::collection($this->activeVariants)),
+            'reviews' => $this->whenLoaded('reviews', function () {
+                return $this->reviews->map(fn ($review) => [
+                    'id' => $review->id,
+                    'reviewer_name' => $review->reviewer_name ?: $review->user?->name,
+                    'rating' => $review->rating !== null ? (int) $review->rating : null,
+                    'comment' => $review->comment,
+                    'created_at' => optional($review->created_at)->toISOString(),
+                ])->values();
+            }),
+            'rating_summary' => $this->whenLoaded('reviews', fn () => [
+                'average' => $ratingAverage,
+                'count' => $ratingCount,
+            ]),
         ];
     }
 }
