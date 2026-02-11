@@ -238,9 +238,6 @@ export function CheckoutScreen({
             <View>
               <View className="mb-1 flex-row items-center justify-between">
                 <Text className={`text-xs font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "addressLine")}</Text>
-                <Pressable onPress={useCurrentLocation} disabled={locating} className={`rounded-lg px-2 py-1 ${locating ? "bg-slate-300" : "bg-sky-600"}`}>
-                  <Text className="text-[10px] font-black text-white">{locating ? "Locating..." : "Use Current Location"}</Text>
-                </Pressable>
               </View>
               <TextInput
                 value={address}
@@ -253,6 +250,13 @@ export function CheckoutScreen({
                 placeholder="No, Street, Township, City"
                 placeholderTextColor={dark ? "#64748b" : "#94a3b8"}
               />
+              <Pressable
+                onPress={useCurrentLocation}
+                disabled={locating}
+                className={`mt-2 rounded-xl py-2 ${locating ? "bg-slate-300" : "bg-sky-600"}`}
+              >
+                <Text className="text-center text-xs font-black text-white">{locating ? "Locating..." : "Use Current Location"}</Text>
+              </Pressable>
               {addressFocused && (addressSuggestBusy || addressSuggestions.length > 0) ? (
                 <View className={`mt-2 overflow-hidden rounded-xl border ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
                   {addressSuggestBusy ? (
@@ -273,6 +277,9 @@ export function CheckoutScreen({
                     ))
                   )}
                 </View>
+              ) : null}
+              {addressFocused && !addressSuggestBusy && address.trim().length >= 2 && addressSuggestions.length === 0 ? (
+                <Text className={`mt-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>No suggestions. Continue typing...</Text>
               ) : null}
               {locationError ? <Text className="mt-2 text-xs font-semibold text-rose-600">{locationError}</Text> : null}
             </View>
