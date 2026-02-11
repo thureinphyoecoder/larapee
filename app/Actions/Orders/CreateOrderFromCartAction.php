@@ -4,6 +4,7 @@ namespace App\Actions\Orders;
 
 use App\Models\CartItem;
 use App\Models\Order;
+use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
@@ -24,7 +25,7 @@ class CreateOrderFromCartAction
         ?string $idempotencyKey = null,
     ): Order {
         $cartItems = CartItem::query()
-            ->with('variant:id')
+            ->with('variant.product:id,shop_id')
             ->where('user_id', $user->id)
             ->get(['id', 'variant_id', 'quantity']);
 
@@ -34,27 +35,51 @@ class CreateOrderFromCartAction
             ]);
         }
 
-        $items = $cartItems
-            ->map(fn (CartItem $item) => [
-                'variant_id' => (int) $item->variant_id,
-                'quantity' => (int) $item->quantity,
-            ])
-            ->all();
+        $defaultShopId = $shopId ?: ($user->shop_id ?: Shop::query()->orderBy('id')->value('id'));
+        $grouped = $cartItems->groupBy(function (CartItem $item) use ($defaultShopId) {
+            $resolved = $item->variant?->product?->shop_id ?: $defaultShopId;
+            return (int) ($resolved ?: 0);
+        });
 
-        $order = $this->createOrderFromItemsAction->execute(
-            user: $user,
-            items: $items,
-            phone: $phone,
-            address: $address,
-            customerName: null,
-            customerId: null,
-            forcedShopId: $shopId,
-            paymentSlip: $paymentSlip,
-            idempotencyKey: $idempotencyKey,
-        );
+        $firstOrder = null;
+
+        foreach ($grouped as $resolvedShopId => $groupItems) {
+            $items = $groupItems
+                ->map(fn (CartItem $item) => [
+                    'variant_id' => (int) $item->variant_id,
+                    'quantity' => (int) $item->quantity,
+                ])
+                ->all();
+
+            if ($items === []) {
+                continue;
+            }
+
+            $order = $this->createOrderFromItemsAction->execute(
+                user: $user,
+                items: $items,
+                phone: $phone,
+                address: $address,
+                customerName: null,
+                customerId: null,
+                forcedShopId: ((int) $resolvedShopId) > 0 ? (int) $resolvedShopId : (int) ($defaultShopId ?: 0),
+                paymentSlip: $paymentSlip,
+                idempotencyKey: $idempotencyKey ? "{$idempotencyKey}:shop:{$resolvedShopId}" : null,
+            );
+
+            if (! $firstOrder) {
+                $firstOrder = $order;
+            }
+        }
+
+        if (! $firstOrder) {
+            throw ValidationException::withMessages([
+                'cart' => 'Cart could not be converted to order items.',
+            ]);
+        }
 
         CartItem::query()->where('user_id', $user->id)->delete();
 
-        return $order;
+        return $firstOrder;
     }
 }
