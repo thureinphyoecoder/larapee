@@ -3,9 +3,45 @@ import { Head, useForm } from "@inertiajs/react";
 import Swal from "sweetalert2";
 
 const defaultVariants = [
-    { label: "REG", sku: "", price: "", stock_level: 0, is_active: true },
-    { label: "PREMIUM", sku: "", price: "", stock_level: 0, is_active: true },
-    { label: "DELUXE", sku: "", price: "", stock_level: 0, is_active: true },
+    {
+        label: "REG",
+        sku: "",
+        price: "",
+        stock_level: 0,
+        is_active: true,
+        promo_type: "",
+        promo_value_type: "percent",
+        promo_value: "",
+        promo_label: "",
+        promo_starts_at: "",
+        promo_ends_at: "",
+    },
+    {
+        label: "PREMIUM",
+        sku: "",
+        price: "",
+        stock_level: 0,
+        is_active: true,
+        promo_type: "",
+        promo_value_type: "percent",
+        promo_value: "",
+        promo_label: "",
+        promo_starts_at: "",
+        promo_ends_at: "",
+    },
+    {
+        label: "DELUXE",
+        sku: "",
+        price: "",
+        stock_level: 0,
+        is_active: true,
+        promo_type: "",
+        promo_value_type: "percent",
+        promo_value: "",
+        promo_label: "",
+        promo_starts_at: "",
+        promo_ends_at: "",
+    },
 ];
 
 export default function Create({ categories }) {
@@ -27,7 +63,19 @@ export default function Create({ categories }) {
     const addVariant = () => {
         setData("variants", [
             ...data.variants,
-            { label: `OPTION ${data.variants.length + 1}`, sku: "", price: "", stock_level: 0, is_active: true },
+            {
+                label: `OPTION ${data.variants.length + 1}`,
+                sku: "",
+                price: "",
+                stock_level: 0,
+                is_active: true,
+                promo_type: "",
+                promo_value_type: "percent",
+                promo_value: "",
+                promo_label: "",
+                promo_starts_at: "",
+                promo_ends_at: "",
+            },
         ]);
     };
 
@@ -130,7 +178,8 @@ export default function Create({ categories }) {
                         </div>
 
                         {data.variants.map((variant, index) => (
-                            <div key={index} className="grid grid-cols-1 lg:grid-cols-12 gap-3 bg-white p-3 rounded-lg border border-slate-200">
+                            <div key={index} className="space-y-3 bg-white p-3 rounded-lg border border-slate-200">
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                                 <div className="lg:col-span-3">
                                     <label className="text-xs font-semibold text-slate-500">Label</label>
                                     <input
@@ -188,6 +237,84 @@ export default function Create({ categories }) {
                                     >
                                         Remove
                                     </button>
+                                </div>
+                            </div>
+
+                                <div className="rounded-lg border border-orange-100 bg-orange-50/40 p-3">
+                                    <p className="text-[11px] font-bold uppercase tracking-wider text-orange-700 mb-2">Scheduled Discount / Flash Sale</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
+                                        <div className="lg:col-span-1">
+                                            <label className="text-xs font-semibold text-slate-500">Type</label>
+                                            <select
+                                                className="mt-1 w-full border rounded-lg px-3 py-2 bg-white"
+                                                value={variant.promo_type || ""}
+                                                onChange={(e) => updateVariant(index, "promo_type", e.target.value)}
+                                            >
+                                                <option value="">None</option>
+                                                <option value="discount">Discount</option>
+                                                <option value="flash_sale">Flash Sale</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="lg:col-span-1">
+                                            <label className="text-xs font-semibold text-slate-500">Value Type</label>
+                                            <select
+                                                className="mt-1 w-full border rounded-lg px-3 py-2 bg-white"
+                                                value={variant.promo_value_type || "percent"}
+                                                onChange={(e) => updateVariant(index, "promo_value_type", e.target.value)}
+                                                disabled={!variant.promo_type}
+                                            >
+                                                <option value="percent">Percent %</option>
+                                                <option value="fixed_amount">Fixed Amount</option>
+                                                <option value="fixed_price">Final Price</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="lg:col-span-1">
+                                            <label className="text-xs font-semibold text-slate-500">Value</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                                                value={variant.promo_value || ""}
+                                                onChange={(e) => updateVariant(index, "promo_value", e.target.value)}
+                                                disabled={!variant.promo_type}
+                                            />
+                                        </div>
+
+                                        <div className="lg:col-span-1">
+                                            <label className="text-xs font-semibold text-slate-500">Label</label>
+                                            <input
+                                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                                                value={variant.promo_label || ""}
+                                                onChange={(e) => updateVariant(index, "promo_label", e.target.value)}
+                                                placeholder="Flash Hour"
+                                                disabled={!variant.promo_type}
+                                            />
+                                        </div>
+
+                                        <div className="lg:col-span-1">
+                                            <label className="text-xs font-semibold text-slate-500">Start</label>
+                                            <input
+                                                type="datetime-local"
+                                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                                                value={variant.promo_starts_at || ""}
+                                                onChange={(e) => updateVariant(index, "promo_starts_at", e.target.value)}
+                                                disabled={!variant.promo_type}
+                                            />
+                                        </div>
+
+                                        <div className="lg:col-span-1">
+                                            <label className="text-xs font-semibold text-slate-500">End</label>
+                                            <input
+                                                type="datetime-local"
+                                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                                                value={variant.promo_ends_at || ""}
+                                                onChange={(e) => updateVariant(index, "promo_ends_at", e.target.value)}
+                                                disabled={!variant.promo_type}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}

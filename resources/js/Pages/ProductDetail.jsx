@@ -8,7 +8,11 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
     const [quantity, setQuantity] = useState(1);
     const [processing, setProcessing] = useState(false);
 
-    const selectedPrice = Number(selectedVariant?.price || 0) * quantity;
+    const selectedEffectiveUnitPrice = Number(selectedVariant?.effective_price ?? selectedVariant?.price ?? 0);
+    const selectedBaseUnitPrice = Number(selectedVariant?.base_price ?? selectedVariant?.price ?? 0);
+    const selectedDiscountPerUnit = Math.max(0, selectedBaseUnitPrice - selectedEffectiveUnitPrice);
+    const selectedPrice = selectedEffectiveUnitPrice * quantity;
+    const selectedBasePrice = selectedBaseUnitPrice * quantity;
     const inStock = Number(selectedVariant?.stock_level || 0) > 0;
     const avgRating = Number(ratingSummary?.average || 0);
     const totalRatings = Number(ratingSummary?.count || 0);
@@ -165,8 +169,23 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                         )}
 
                         <div className="bg-orange-50 border border-orange-200 p-5 rounded-2xl">
-                            <span className="text-3xl font-black text-orange-600">Ks {selectedPrice.toLocaleString()}</span>
+                            <div className="flex flex-wrap items-end gap-2">
+                                <span className="text-3xl font-black text-orange-600">Ks {selectedPrice.toLocaleString()}</span>
+                                {selectedDiscountPerUnit > 0 && (
+                                    <span className="text-sm text-slate-400 line-through">Ks {selectedBasePrice.toLocaleString()}</span>
+                                )}
+                                {selectedVariant?.promotion?.label && (
+                                    <span className="rounded-full bg-rose-100 px-2 py-1 text-[10px] font-bold uppercase text-rose-700">
+                                        {selectedVariant.promotion.label}
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-xs text-slate-500 mt-2">Stock: {selectedVariant?.stock_level ?? 0}</p>
+                            {selectedDiscountPerUnit > 0 && (
+                                <p className="text-xs font-semibold text-emerald-700 mt-1">
+                                    You save Ks {(selectedDiscountPerUnit * quantity).toLocaleString()}
+                                </p>
+                            )}
                         </div>
 
                         <div>

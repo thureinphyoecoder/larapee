@@ -72,7 +72,20 @@ export default function Index({ products }) {
                                             {product.shop?.name || "Not assigned"}
                                         </td>
                                         <td className="px-6 py-4 text-sm font-semibold text-slate-700">
-                                            {(product.variants || []).filter((variant) => variant.is_active ?? true).length}
+                                            {(() => {
+                                                const activeVariants = (product.variants || []).filter((variant) => variant.is_active ?? true);
+                                                const promoVariants = activeVariants.filter((variant) => Boolean(variant.promo_type));
+                                                return (
+                                                    <div className="space-y-1">
+                                                        <p>{activeVariants.length}</p>
+                                                        {promoVariants.length > 0 && (
+                                                            <p className="text-[11px] font-bold text-rose-600">
+                                                                {promoVariants.length} promo
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4 text-sm font-bold text-slate-900">
                                             {(() => {

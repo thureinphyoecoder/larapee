@@ -137,6 +137,12 @@ class OrderController extends Controller
             ], 403);
         }
 
+        if ($nextStatus === 'cancelled' && $previousStatus !== 'pending') {
+            return response()->json([
+                'message' => 'Only pending orders can be cancelled.',
+            ], 422);
+        }
+
         if (in_array($nextStatus, ['refund_requested', 'refunded'], true)) {
             $isFinanceApprover = $actor?->hasAnyRole(['admin', 'manager', 'accountant']) ?? false;
             if (! $isFinanceApprover) {
@@ -178,6 +184,12 @@ class OrderController extends Controller
         }
         if ($nextStatus === 'delivered') {
             $order->update(['delivered_at' => now()]);
+        }
+        if ($nextStatus === 'cancelled') {
+            $order->update([
+                'cancelled_at' => now(),
+                'cancel_reason' => $request->input('cancel_reason'),
+            ]);
         }
 
         $this->auditLogger->log(

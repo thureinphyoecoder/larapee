@@ -16,6 +16,7 @@ class UpdateOrderStatusRequest extends FormRequest
         return [
             'status' => ['required', 'string', 'in:pending,confirmed,shipped,delivered,cancelled,refund_requested,refunded,return_requested,returned'],
             'approval_request_id' => ['nullable', 'integer', 'exists:approval_requests,id'],
+            'cancel_reason' => ['nullable', 'string', 'max:500', 'required_if:status,cancelled'],
         ];
     }
 }

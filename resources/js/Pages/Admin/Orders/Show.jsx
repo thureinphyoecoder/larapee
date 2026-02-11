@@ -52,17 +52,32 @@ export default function Show({ order }) {
     );
 
     const confirmAndRun = (newStatus) => {
+        const isCancel = newStatus === "cancelled";
         Swal.fire({
             title: "Confirm status change",
             text: `Change order status to ${newStatus}?`,
             icon: "warning",
+            input: isCancel ? "textarea" : undefined,
+            inputLabel: isCancel ? "Cancellation reason" : undefined,
+            inputPlaceholder: isCancel ? "Please enter cancel reason..." : undefined,
+            inputValidator: isCancel
+                ? (value) => {
+                    if (!value || value.trim().length < 5) {
+                        return "Please enter at least 5 characters.";
+                    }
+                    return null;
+                }
+                : undefined,
             showCancelButton: true,
             confirmButtonText: "Yes, update",
         }).then((result) => {
             if (!result.isConfirmed) return;
             router.patch(
                 route("admin.orders.updateStatus", order.id),
-                { status: newStatus },
+                {
+                    status: newStatus,
+                    ...(isCancel ? { cancel_reason: result.value || "" } : {}),
+                },
                 {
                     preserveScroll: true,
                     onSuccess: () => {
@@ -308,6 +323,13 @@ export default function Show({ order }) {
                                 <p><span className="font-semibold">Address:</span> {liveOrder?.address || "Not provided"}</p>
                             </div>
                         </div>
+
+                        {status === "cancelled" && liveOrder?.cancel_reason && (
+                            <div className="rounded-3xl border border-rose-200 bg-rose-50 p-5 shadow-sm">
+                                <h3 className="text-lg font-black text-rose-700">Cancel Reason</h3>
+                                <p className="mt-2 text-sm text-rose-800">{liveOrder.cancel_reason}</p>
+                            </div>
+                        )}
 
                         {canAccessPaymentSlip && (
                             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">

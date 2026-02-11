@@ -3,11 +3,26 @@ import { router, Head, useForm } from "@inertiajs/react";
 import Swal from "sweetalert2";
 
 export default function Confirm({ formData, cartItems }) {
+    const calculatedTotal = cartItems.reduce(
+        (sum, item) =>
+            sum +
+            Number(
+                item.line_total ||
+                    (item.effective_unit_price || item.variant?.price || 0) *
+                        item.quantity,
+            ),
+        0,
+    );
+    const totalDiscount = cartItems.reduce(
+        (sum, item) => sum + Number(item.discount_line_total || 0),
+        0,
+    );
+
     const { data, post, processing } = useForm({
         phone: formData.phone,
         address: formData.address,
         payment_slip: formData.payment_slip, // ဒါက storage path ဖြစ်နေပါလိမ့်မယ်
-        total_amount: formData.total_amount,
+        total_amount: calculatedTotal,
     });
 
     const handleEdit = () => {
@@ -113,7 +128,13 @@ export default function Confirm({ formData, cartItems }) {
                                     </td>
                                     <td className="p-4 text-right font-semibold text-gray-800">
                                         {(
-                                            item.variant.price * item.quantity
+                                            Number(
+                                                item.line_total ||
+                                                    (item.effective_unit_price ||
+                                                        item.variant?.price ||
+                                                        0) *
+                                                        item.quantity,
+                                            )
                                         ).toLocaleString()}{" "}
                                         Ks
                                     </td>
@@ -125,8 +146,15 @@ export default function Confirm({ formData, cartItems }) {
 
                 {/* အောက်ခြေ စုစုပေါင်းနှင့် ခလုတ်များ */}
                 <div className="flex flex-col md:flex-row justify-between items-center bg-gray-900 p-6 rounded-2xl text-white gap-6">
-                    <div className="text-2xl font-bold text-orange-400">
-                        စုစုပေါင်း: {formData.total_amount.toLocaleString()} Ks
+                    <div className="space-y-1">
+                        <div className="text-2xl font-bold text-orange-400">
+                            စုစုပေါင်း: {calculatedTotal.toLocaleString()} Ks
+                        </div>
+                        {totalDiscount > 0 && (
+                            <div className="text-sm font-semibold text-emerald-300">
+                                Promotion Discount: -{totalDiscount.toLocaleString()} Ks
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex gap-4 w-full md:w-auto">

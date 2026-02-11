@@ -12,11 +12,20 @@ export default function Index({ orders }) {
             title: "Cancel order?",
             text: "Only pending orders can be cancelled.",
             icon: "warning",
+            input: "textarea",
+            inputLabel: "Cancellation reason",
+            inputPlaceholder: "Please tell us why you want to cancel this order...",
+            inputValidator: (value) => {
+                if (!value || value.trim().length < 5) {
+                    return "Please enter at least 5 characters.";
+                }
+                return null;
+            },
             showCancelButton: true,
             confirmButtonText: "Cancel",
         }).then((result) => {
             if (!result.isConfirmed) return;
-            router.patch(route("orders.cancel", id), {}, {
+            router.patch(route("orders.cancel", id), { cancel_reason: result.value || "" }, {
                 onSuccess: () => Swal.fire("Cancelled", "Order cancelled.", "success"),
             });
         });

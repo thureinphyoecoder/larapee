@@ -157,12 +157,31 @@ class OrderController extends Controller
             return redirect()->route('checkout.index');
         }
 
+        $cartItems = \App\Models\CartItem::with('variant.product')
+            ->where('user_id', Auth::id())
+            ->get()
+            ->transform(function (CartItem $item) {
+                $pricing = $item->variant?->resolvePricing() ?? [
+                    'base_price' => (float) ($item->variant?->price ?? 0),
+                    'final_price' => (float) ($item->variant?->price ?? 0),
+                    'discount_amount' => 0.0,
+                    'promotion' => null,
+                ];
+
+                $qty = (int) $item->quantity;
+                $item->setAttribute('base_unit_price', (float) ($pricing['base_price'] ?? 0));
+                $item->setAttribute('effective_unit_price', (float) ($pricing['final_price'] ?? 0));
+                $item->setAttribute('line_total', (float) ($pricing['final_price'] ?? 0) * $qty);
+                $item->setAttribute('discount_line_total', (float) ($pricing['discount_amount'] ?? 0) * $qty);
+                $item->setAttribute('promotion', $pricing['promotion'] ?? null);
+
+                return $item;
+            });
+
         return Inertia::render('Checkout/Confirm', [
             'formData' => $formData,
-            'cartItems' => \App\Models\CartItem::with('variant.product')
-                ->where('user_id', Auth::id())
-                ->get(),
-            'total_amount' => $formData['total_amount'] ?? 0,
+            'cartItems' => $cartItems,
+            'total_amount' => $cartItems->sum('line_total'),
         ]);
     }
 
@@ -202,8 +221,6 @@ class OrderController extends Controller
             ]);
         }
 
-        $calculatedTotal = $cartItems->sum(fn($item) => (float) $item->variant->price * (int) $item->quantity);
-
         DB::beginTransaction();
         try {
             $variantIds = $cartItems->pluck('variant_id')->unique()->values();
@@ -211,6 +228,10 @@ class OrderController extends Controller
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
+
+            $preparedOrderItems = [];
+            $promotionDiscounts = [];
+            $calculatedTotal = 0.0;
 
             // Profile Update
             $user->profile()->updateOrCreate(
@@ -229,19 +250,6 @@ class OrderController extends Controller
                 ['address' => $request->address, 'created_by' => $user->id],
             );
 
-            $order = Order::create([
-                'user_id' => $user->id,
-                'customer_id' => $customer->id,
-                'shop_id' => (int) $shopIds->first(),
-                'total_amount' => $calculatedTotal, // 🎯 Backend calculated value
-                'payment_slip' => $request->payment_slip,
-                'status' => 'pending',
-                'phone' => $request->phone,
-                'address' => $request->address,
-            ]);
-
-            // Order Items ထဲ သိမ်း
-            $affectedProductIds = [];
             foreach ($cartItems as $item) {
                 $variant = $lockedVariants->get($item->variant_id);
                 if (!$variant || !$variant->is_active) {
@@ -255,30 +263,79 @@ class OrderController extends Controller
                     ]);
                 }
 
+                $pricing = $variant->resolvePricing();
+                $unitPrice = (float) ($pricing['final_price'] ?? $variant->price);
+                $basePrice = (float) ($pricing['base_price'] ?? $variant->price);
+                $lineDiscount = max(0, ($basePrice - $unitPrice) * (int) $item->quantity);
+
+                $preparedOrderItems[] = [
+                    'product_id' => (int) $item->product_id,
+                    'variant_id' => (int) $item->variant_id,
+                    'quantity' => (int) $item->quantity,
+                    'unit_price' => $unitPrice,
+                    'sku' => (string) $variant->sku,
+                ];
+
+                $calculatedTotal += $unitPrice * (int) $item->quantity;
+
+                if ($lineDiscount > 0) {
+                    $promotion = (array) ($pricing['promotion'] ?? []);
+                    $discountKey = ((string) ($promotion['type'] ?? 'discount')) . '|' . ((string) ($promotion['label'] ?? 'Scheduled promotion'));
+                    $promotionDiscounts[$discountKey] = [
+                        'type' => (string) ($promotion['type'] ?? 'discount'),
+                        'reason' => (string) ($promotion['label'] ?? 'Scheduled promotion'),
+                        'amount' => (($promotionDiscounts[$discountKey]['amount'] ?? 0) + $lineDiscount),
+                    ];
+                }
+            }
+
+            $order = Order::create([
+                'user_id' => $user->id,
+                'customer_id' => $customer->id,
+                'shop_id' => (int) $shopIds->first(),
+                'total_amount' => $calculatedTotal, // 🎯 Backend calculated value
+                'payment_slip' => $request->payment_slip,
+                'status' => 'pending',
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+
+            // Order Items ထဲ သိမ်း
+            $affectedProductIds = [];
+            foreach ($preparedOrderItems as $item) {
                 $order->items()->create([
-                    'product_id' => $item->product_id,
-                    'product_variant_id' => $item->variant_id,
-                    'qty' => (int) $item->quantity,
-                    'unit_price' => $variant->price,
-                    'quantity' => $item->quantity,
-                    'price' => $variant->price,
+                    'product_id' => $item['product_id'],
+                    'product_variant_id' => $item['variant_id'],
+                    'qty' => (int) $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'quantity' => (int) $item['quantity'],
+                    'price' => $item['unit_price'],
 
                 ]);
 
                 $affected = ProductVariant::query()
-                    ->whereKey((int) $variant->id)
-                    ->where('stock_level', '>=', (int) $item->quantity)
-                    ->decrement('stock_level', (int) $item->quantity);
+                    ->whereKey((int) $item['variant_id'])
+                    ->where('stock_level', '>=', (int) $item['quantity'])
+                    ->decrement('stock_level', (int) $item['quantity']);
 
                 if ($affected !== 1) {
                     throw ValidationException::withMessages([
-                        'system_error' => "Insufficient stock for {$variant->sku}.",
+                        'system_error' => "Insufficient stock for {$item['sku']}.",
                     ]);
                 }
-                $affectedProductIds[] = (int) $item->product_id;
+                $affectedProductIds[] = (int) $item['product_id'];
             }
 
             $this->refreshProductStockAction->execute($affectedProductIds);
+
+            foreach ($promotionDiscounts as $discount) {
+                $order->discounts()->create([
+                    'type' => $discount['type'],
+                    'amount' => (float) $discount['amount'],
+                    'reason' => $discount['reason'],
+                    'created_by' => $user->id,
+                ]);
+            }
 
             Payment::query()->create([
                 'order_id' => $order->id,
@@ -329,11 +386,25 @@ class OrderController extends Controller
         $this->authorizeStaffOrderAccess($user, $order);
 
         $request->validate([
-            'status' => 'required|in:pending,confirmed,shipped,delivered,cancelled,refund_requested,refunded,return_requested,returned'
+            'status' => 'required|in:pending,confirmed,shipped,delivered,cancelled,refund_requested,refunded,return_requested,returned',
+            'cancel_reason' => 'nullable|string|max:500',
         ]);
 
         $previousStatus = $order->status;
         $nextStatus = $request->status;
+
+        if ($nextStatus === 'cancelled' && $previousStatus !== 'pending') {
+            return back()->withErrors([
+                'status' => 'Only pending orders can be cancelled.',
+            ]);
+        }
+
+        if ($nextStatus === 'cancelled' && ! $request->filled('cancel_reason')) {
+            return back()->withErrors([
+                'cancel_reason' => 'Cancel reason is required.',
+            ]);
+        }
+
         $order->update(['status' => $nextStatus]);
 
         if (
@@ -358,13 +429,19 @@ class OrderController extends Controller
         if ($nextStatus === 'delivered') {
             $order->update(['delivered_at' => now()]);
         }
+        if ($nextStatus === 'cancelled') {
+            $order->update([
+                'cancelled_at' => now(),
+                'cancel_reason' => $request->input('cancel_reason'),
+            ]);
+        }
 
         event(new \App\Events\OrderStatusUpdated($order));
 
         return back()->with('success', 'Order Status ကို ပြောင်းလဲပြီးပါပြီ');
     }
 
-    public function customerCancel(Order $order)
+    public function customerCancel(Request $request, Order $order)
     {
         if ($order->user_id !== Auth::id()) {
             abort(403);
@@ -374,7 +451,15 @@ class OrderController extends Controller
             return back()->withErrors(['status' => 'Only pending orders can be cancelled.']);
         }
 
-        $order->update(['status' => 'cancelled']);
+        $validated = $request->validate([
+            'cancel_reason' => 'required|string|min:5|max:500',
+        ]);
+
+        $order->update([
+            'status' => 'cancelled',
+            'cancel_reason' => $validated['cancel_reason'],
+            'cancelled_at' => now(),
+        ]);
         $this->restockOrderItems($order);
         event(new \App\Events\OrderStatusUpdated($order));
 

@@ -4,6 +4,7 @@ namespace App\Actions\Orders;
 
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\OrderDiscount;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\ProductVariant;
@@ -120,6 +121,7 @@ class CreateOrderFromItemsAction
             $itemRows = [];
             $affectedProductIds = [];
             $total = 0.0;
+            $discountRows = [];
 
             foreach ($normalized as $item) {
                 $variant = $variants[$item['variant_id']];
@@ -137,16 +139,29 @@ class CreateOrderFromItemsAction
                     ]);
                 }
 
-                $price = (float) $variant->price;
-                $total += $price * $qty;
+                $pricing = $variant->resolvePricing();
+                $unitPrice = (float) ($pricing['final_price'] ?? $variant->price);
+                $basePrice = (float) ($pricing['base_price'] ?? $variant->price);
+                $lineDiscount = max(0, ($basePrice - $unitPrice) * $qty);
+
+                $total += $unitPrice * $qty;
                 $affectedProductIds[] = (int) $variant->product_id;
 
                 $itemRows[] = [
                     'product_id' => (int) $variant->product_id,
                     'product_variant_id' => (int) $variant->id,
                     'quantity' => $qty,
-                    'price' => $price,
+                    'price' => $unitPrice,
                 ];
+
+                if ($lineDiscount > 0) {
+                    $promotion = (array) ($pricing['promotion'] ?? []);
+                    $discountRows[] = [
+                        'type' => (string) ($promotion['type'] ?? 'discount'),
+                        'reason' => (string) ($promotion['label'] ?? 'Scheduled promotion'),
+                        'amount' => $lineDiscount,
+                    ];
+                }
             }
 
             $paymentSlipPath = $paymentSlip
@@ -231,6 +246,31 @@ class CreateOrderFromItemsAction
                     'actor_id' => $user->id,
                     'meta' => ['payment_slip' => $paymentSlipPath],
                 ]);
+            }
+
+            if (! empty($discountRows)) {
+                $groupedDiscounts = collect($discountRows)
+                    ->groupBy(fn (array $row) => $row['type'] . '|' . $row['reason'])
+                    ->map(function (Collection $rows): array {
+                        $first = $rows->first();
+
+                        return [
+                            'type' => (string) ($first['type'] ?? 'discount'),
+                            'reason' => (string) ($first['reason'] ?? 'Scheduled promotion'),
+                            'amount' => (float) $rows->sum('amount'),
+                        ];
+                    })
+                    ->values();
+
+                foreach ($groupedDiscounts as $row) {
+                    OrderDiscount::query()->create([
+                        'order_id' => $order->id,
+                        'type' => $row['type'],
+                        'amount' => $row['amount'],
+                        'reason' => $row['reason'],
+                        'created_by' => $user->id,
+                    ]);
+                }
             }
 
             foreach ($itemRows as $row) {

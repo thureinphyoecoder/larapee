@@ -1,6 +1,5 @@
 import React from "react";
 import { Head, Link } from "@inertiajs/react";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
 export default function Receipt({ order }) {
     const printReceipt = () => {
@@ -8,16 +7,23 @@ export default function Receipt({ order }) {
     };
 
     return (
-        <AuthenticatedLayout>
-            <div className="py-6 bg-gray-50 min-h-screen print:bg-white print:py-0">
-                <Head title={`Order #${order.id} - Receipt`} />
+        <div className="py-6 bg-gray-50 min-h-screen print:bg-white print:py-0">
+            <Head title={`Order #${order.id} - Receipt`} />
+            <style>{`
+                @media print {
+                    body {
+                        background: #fff !important;
+                    }
+                    @page {
+                        margin: 12mm;
+                    }
+                }
+            `}</style>
 
-                <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-sm border print:shadow-none print:border-none">
+            <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-sm border print:shadow-none print:border-none">
                 <div className="flex justify-between items-start border-b pb-6 mb-6">
                     <div>
-                        <h1 className="text-3xl font-extrabold text-orange-600 mb-1">
-                            MY SHOP
-                        </h1>
+                        <h1 className="text-3xl font-extrabold text-orange-600 mb-1">LaraPee</h1>
                         <p className="text-gray-500 text-sm">
                             ဝယ်ယူအားပေးမှုကို ကျေးဇူးတင်ပါသည်
                         </p>
@@ -29,6 +35,11 @@ export default function Receipt({ order }) {
                         <p className="text-sm text-gray-500">
                             အော်ဒါနံပါတ်: #{order.id}
                         </p>
+                        {order.invoice_no && (
+                            <p className="text-sm text-gray-500">
+                                Invoice: {order.invoice_no}
+                            </p>
+                        )}
                         <p className="text-sm text-gray-500">
                             ရက်စွဲ: {new Date(order.created_at).toLocaleDateString()}
                         </p>
@@ -116,8 +127,7 @@ export default function Receipt({ order }) {
                         Back to Order
                     </Link>
                 </div>
-                </div>
             </div>
-        </AuthenticatedLayout>
+        </div>
     );
 }

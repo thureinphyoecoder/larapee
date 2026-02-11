@@ -33,11 +33,20 @@ export default function Show({ order }) {
             title: "Cancel order?",
             text: "Only pending orders can be cancelled.",
             icon: "warning",
+            input: "textarea",
+            inputLabel: "Cancellation reason",
+            inputPlaceholder: "Please tell us why you want to cancel this order...",
+            inputValidator: (value) => {
+                if (!value || value.trim().length < 5) {
+                    return "Please enter at least 5 characters.";
+                }
+                return null;
+            },
             showCancelButton: true,
             confirmButtonText: "Cancel",
         }).then((result) => {
             if (!result.isConfirmed) return;
-            router.patch(route("orders.cancel", order.id), {}, {
+            router.patch(route("orders.cancel", order.id), { cancel_reason: result.value || "" }, {
                 onSuccess: () => Swal.fire("Cancelled", "Order cancelled.", "success"),
             });
         });
@@ -129,6 +138,13 @@ export default function Show({ order }) {
                         </p>
                     </div>
                 </div>
+
+                {status === "cancelled" && liveOrder?.cancel_reason && (
+                    <div className="mb-8 rounded-xl border border-rose-200 bg-rose-50 p-4">
+                        <h4 className="font-bold text-rose-700 mb-2 uppercase text-xs tracking-wider">Cancel Reason</h4>
+                        <p className="text-sm text-rose-800">{liveOrder.cancel_reason}</p>
+                    </div>
+                )}
 
                 {/* Items preview */}
                 <div className="mb-8">

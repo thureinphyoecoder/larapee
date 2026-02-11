@@ -10,12 +10,22 @@ class ProductResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $activeVariants = $this->relationLoaded('activeVariants') ? $this->activeVariants : collect();
+        $basePrice = $activeVariants->count() > 0
+            ? (float) $activeVariants->min(fn ($variant) => (float) ($variant->price ?? 0))
+            : (float) $this->price;
+        $effectivePrice = $activeVariants->count() > 0
+            ? (float) $activeVariants->min(fn ($variant) => (float) (($variant->resolvePricing()['final_price'] ?? $variant->price) ?: 0))
+            : $basePrice;
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
             'sku' => $this->sku,
-            'price' => (float) $this->price,
+            'price' => $effectivePrice,
+            'base_price' => $basePrice,
+            'has_discount' => $effectivePrice < $basePrice,
             'stock_level' => (int) $this->stock_level,
             'description' => $this->description,
             'image_url' => $this->image_path ? Storage::disk('public')->url($this->image_path) : null,

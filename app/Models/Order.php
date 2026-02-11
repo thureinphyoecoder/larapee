@@ -37,6 +37,8 @@ class Order extends Model
         'return_requested_at',
         'returned_at',
         'return_reason',
+        'cancel_reason',
+        'cancelled_at',
         'delivered_at',
     ];
 
@@ -51,6 +53,7 @@ class Order extends Model
         'refunded_at' => 'datetime',
         'return_requested_at' => 'datetime',
         'returned_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'delivered_at' => 'datetime',
     ];
 

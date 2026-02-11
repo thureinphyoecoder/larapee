@@ -2,8 +2,23 @@ import { Link, usePage } from "@inertiajs/react";
 import { useEffect, useMemo, useState } from "react";
 import LocaleSwitcher from "@/Components/LocaleSwitcher";
 
-function safePrice(product) {
-    return Number(product?.variants?.[0]?.price || 0).toLocaleString();
+function priceMeta(product) {
+    const variants = product?.variants || [];
+    const base = variants.length
+        ? Math.min(...variants.map((v) => Number(v?.base_price ?? v?.price ?? 0)))
+        : Number(product?.base_price ?? product?.price ?? 0);
+    const effective = variants.length
+        ? Math.min(...variants.map((v) => Number(v?.effective_price ?? v?.price ?? 0)))
+        : Number(product?.price ?? 0);
+    const hasDiscount = effective < base;
+    const flashSale = variants.some((v) => v?.promotion?.type === "flash_sale");
+
+    return {
+        base,
+        effective,
+        hasDiscount,
+        flashSale,
+    };
 }
 
 export default function Welcome({
@@ -314,12 +329,15 @@ export default function Welcome({
 
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                         {filteredProducts.length > 0 ? (
-                            filteredProducts.map((product) => (
-                                <Link
-                                    href={route("product.show", { slug: product.slug })}
-                                    key={product.id}
-                                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
-                                >
+                            filteredProducts.map((product) => {
+                                const price = priceMeta(product);
+
+                                return (
+                                    <Link
+                                        href={route("product.show", { slug: product.slug })}
+                                        key={product.id}
+                                        className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+                                    >
                                     <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
                                         <img
                                             src={getProductImage(product)}
@@ -332,6 +350,11 @@ export default function Welcome({
                                                 In Stock
                                             </div>
                                         )}
+                                        {price.hasDiscount && (
+                                            <div className="absolute right-2 top-2 rounded-full bg-rose-500 px-2 py-1 text-[10px] font-extrabold text-white">
+                                                {price.flashSale ? "Flash Sale" : "Sale"}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="p-3 sm:p-4">
@@ -342,7 +365,12 @@ export default function Welcome({
 
                                         <div className="mt-3 flex items-baseline gap-1">
                                             <span className="text-[11px] font-bold text-orange-600">Ks</span>
-                                            <span className="text-lg font-black text-orange-600">{safePrice(product)}</span>
+                                            <span className="text-lg font-black text-orange-600">{price.effective.toLocaleString()}</span>
+                                            {price.hasDiscount && (
+                                                <span className="text-xs text-slate-400 line-through">
+                                                    {price.base.toLocaleString()}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500">
@@ -350,8 +378,9 @@ export default function Welcome({
                                             <span>{product?.variants?.[0]?.stock_level ?? 0} left</span>
                                         </div>
                                     </div>
-                                </Link>
-                            ))
+                                    </Link>
+                                );
+                            })
                         ) : (
                             <div className="col-span-full rounded-2xl border border-slate-200 bg-white py-20 text-center text-slate-500">
                                 No products matched your search.

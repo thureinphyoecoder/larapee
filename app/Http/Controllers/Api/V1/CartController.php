@@ -26,7 +26,11 @@ class CartController extends Controller
             ->orderBy('id')
             ->get();
 
-        $total = $items->sum(fn (CartItem $item) => (float) ($item->variant?->price ?? 0) * (int) $item->quantity);
+        $total = $items->sum(function (CartItem $item) {
+            $pricing = $item->variant?->resolvePricing() ?? ['final_price' => (float) ($item->variant?->price ?? 0)];
+
+            return (float) ($pricing['final_price'] ?? 0) * (int) $item->quantity;
+        });
 
         return response()->json([
             'data' => CartItemResource::collection($items),

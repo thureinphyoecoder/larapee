@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -55,6 +56,12 @@ class AdminProductController extends Controller
             'variants.*.price' => 'required|numeric|min:0',
             'variants.*.stock_level' => 'required|integer|min:0',
             'variants.*.is_active' => 'nullable|boolean',
+            'variants.*.promo_type' => 'nullable|in:discount,flash_sale',
+            'variants.*.promo_value_type' => 'nullable|in:percent,fixed_amount,fixed_price',
+            'variants.*.promo_value' => 'nullable|numeric|min:0',
+            'variants.*.promo_label' => 'nullable|string|max:80',
+            'variants.*.promo_starts_at' => 'nullable|date',
+            'variants.*.promo_ends_at' => 'nullable|date',
         ]);
 
         $variants = $this->normalizeVariants($validated['variants']);
@@ -95,6 +102,12 @@ class AdminProductController extends Controller
                     'price' => $variant['price'],
                     'stock_level' => $variant['stock_level'],
                     'is_active' => (bool) $variant['is_active'],
+                    'promo_type' => $variant['promo_type'],
+                    'promo_value_type' => $variant['promo_value_type'],
+                    'promo_value' => $variant['promo_value'],
+                    'promo_label' => $variant['promo_label'],
+                    'promo_starts_at' => $variant['promo_starts_at'],
+                    'promo_ends_at' => $variant['promo_ends_at'],
                 ]);
             }
         });
@@ -129,6 +142,12 @@ class AdminProductController extends Controller
             'variants.*.price' => 'required|numeric|min:0',
             'variants.*.stock_level' => 'required|integer|min:0',
             'variants.*.is_active' => 'nullable|boolean',
+            'variants.*.promo_type' => 'nullable|in:discount,flash_sale',
+            'variants.*.promo_value_type' => 'nullable|in:percent,fixed_amount,fixed_price',
+            'variants.*.promo_value' => 'nullable|numeric|min:0',
+            'variants.*.promo_label' => 'nullable|string|max:80',
+            'variants.*.promo_starts_at' => 'nullable|date',
+            'variants.*.promo_ends_at' => 'nullable|date',
         ]);
 
         $variants = $this->normalizeVariants($validated['variants']);
@@ -193,6 +212,23 @@ class AdminProductController extends Controller
                 continue;
             }
 
+            $promoType = $this->normalizePromotionType($variant['promo_type'] ?? null);
+            $promoValueType = $this->normalizePromotionValueType($variant['promo_value_type'] ?? null);
+            $promoValue = isset($variant['promo_value']) && $variant['promo_value'] !== ''
+                ? (float) $variant['promo_value']
+                : null;
+            $promoLabel = trim((string) ($variant['promo_label'] ?? '')) ?: null;
+            $promoStartsAt = $this->normalizePromotionDate($variant['promo_starts_at'] ?? null);
+            $promoEndsAt = $this->normalizePromotionDate($variant['promo_ends_at'] ?? null);
+
+            if (! $promoType) {
+                $promoValueType = null;
+                $promoValue = null;
+                $promoLabel = null;
+                $promoStartsAt = null;
+                $promoEndsAt = null;
+            }
+
             $normalized[] = [
                 'id' => isset($variant['id']) ? (int) $variant['id'] : null,
                 'label' => trim((string) ($variant['label'] ?? '')),
@@ -202,10 +238,17 @@ class AdminProductController extends Controller
                 'is_active' => array_key_exists('is_active', $variant)
                     ? filter_var($variant['is_active'], FILTER_VALIDATE_BOOLEAN)
                     : true,
+                'promo_type' => $promoType,
+                'promo_value_type' => $promoValueType,
+                'promo_value' => $promoValue,
+                'promo_label' => $promoLabel,
+                'promo_starts_at' => $promoStartsAt,
+                'promo_ends_at' => $promoEndsAt,
             ];
         }
 
         $this->ensureNoDuplicateSkuInPayload($normalized);
+        $this->ensureValidPromotionPayload($normalized);
 
         return $normalized;
     }
@@ -247,6 +290,12 @@ class AdminProductController extends Controller
                     'price' => $variant['price'],
                     'stock_level' => $variant['stock_level'],
                     'is_active' => (bool) $variant['is_active'],
+                    'promo_type' => $variant['promo_type'],
+                    'promo_value_type' => $variant['promo_value_type'],
+                    'promo_value' => $variant['promo_value'],
+                    'promo_label' => $variant['promo_label'],
+                    'promo_starts_at' => $variant['promo_starts_at'],
+                    'promo_ends_at' => $variant['promo_ends_at'],
                 ]);
                 continue;
             }
@@ -256,6 +305,12 @@ class AdminProductController extends Controller
                 'price' => $variant['price'],
                 'stock_level' => $variant['stock_level'],
                 'is_active' => (bool) $variant['is_active'],
+                'promo_type' => $variant['promo_type'],
+                'promo_value_type' => $variant['promo_value_type'],
+                'promo_value' => $variant['promo_value'],
+                'promo_label' => $variant['promo_label'],
+                'promo_starts_at' => $variant['promo_starts_at'],
+                'promo_ends_at' => $variant['promo_ends_at'],
             ]);
         }
 
@@ -337,6 +392,76 @@ class AdminProductController extends Controller
             throw ValidationException::withMessages([
                 'variants' => 'One or more variants are invalid for this product.',
             ]);
+        }
+    }
+
+    private function normalizePromotionType(mixed $value): ?string
+    {
+        $type = strtolower(trim((string) $value));
+
+        return in_array($type, ['discount', 'flash_sale'], true) ? $type : null;
+    }
+
+    private function normalizePromotionValueType(mixed $value): ?string
+    {
+        $type = strtolower(trim((string) $value));
+
+        return in_array($type, ['percent', 'fixed_amount', 'fixed_price'], true) ? $type : null;
+    }
+
+    private function normalizePromotionDate(mixed $value): ?string
+    {
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($raw)->toDateTimeString();
+        } catch (\Throwable) {
+            throw ValidationException::withMessages([
+                'variants' => 'Invalid promotion start/end date format.',
+            ]);
+        }
+    }
+
+    private function ensureValidPromotionPayload(array $variants): void
+    {
+        foreach ($variants as $index => $variant) {
+            $row = $index + 1;
+            $promoType = $variant['promo_type'] ?? null;
+            $valueType = $variant['promo_value_type'] ?? null;
+            $value = $variant['promo_value'] ?? null;
+            $startsAt = $variant['promo_starts_at'] ? Carbon::parse($variant['promo_starts_at']) : null;
+            $endsAt = $variant['promo_ends_at'] ? Carbon::parse($variant['promo_ends_at']) : null;
+
+            if (! $promoType) {
+                continue;
+            }
+
+            if (! $valueType) {
+                throw ValidationException::withMessages([
+                    'variants' => "Variant #{$row}: promotion value type is required.",
+                ]);
+            }
+
+            if (! is_numeric($value) || (float) $value <= 0) {
+                throw ValidationException::withMessages([
+                    'variants' => "Variant #{$row}: promotion value must be greater than zero.",
+                ]);
+            }
+
+            if ($valueType === 'percent' && (float) $value > 100) {
+                throw ValidationException::withMessages([
+                    'variants' => "Variant #{$row}: percent discount cannot exceed 100.",
+                ]);
+            }
+
+            if ($endsAt && $startsAt && $endsAt->lt($startsAt)) {
+                throw ValidationException::withMessages([
+                    'variants' => "Variant #{$row}: promotion end time must be after start time.",
+                ]);
+            }
         }
     }
 }

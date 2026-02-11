@@ -4,7 +4,17 @@ import Swal from "sweetalert2";
 export default function Checkout({ cartItems, user }) {
     // ၁။ စုစုပေါင်းဈေးနှုန်းကို တွက်မယ်
     const totalPrice = cartItems.reduce(
-        (sum, item) => sum + item.variant.price * item.quantity,
+        (sum, item) =>
+            sum +
+            Number(
+                item.line_total ||
+                    (item.effective_unit_price || item.variant?.price || 0) *
+                        item.quantity,
+            ),
+        0,
+    );
+    const totalDiscount = cartItems.reduce(
+        (sum, item) => sum + Number(item.discount_line_total || 0),
         0,
     );
 
@@ -170,16 +180,29 @@ export default function Checkout({ cartItems, user }) {
                                                 Qty: {item.quantity}
                                             </span>
                                         </div>
-                                        <span className="text-gray-600">
-                                            Ks{" "}
-                                            {(
-                                                item.variant.price *
-                                                item.quantity
+                                            <span className="text-gray-600">
+                                                Ks{" "}
+                                                {(
+                                                    Number(
+                                                        item.line_total ||
+                                                            (item.effective_unit_price ||
+                                                                item.variant
+                                                                    ?.price ||
+                                                                0) *
+                                                                item.quantity,
+                                                    )
                                             ).toLocaleString()}
-                                        </span>
-                                    </div>
-                                ))}
+                                            </span>
+                                        </div>
+                                    ))}
                             </div>
+
+                            {totalDiscount > 0 && (
+                                <div className="border-t pt-3 flex justify-between text-emerald-700 text-sm font-semibold">
+                                    <span>Promotion Discount</span>
+                                    <span>-Ks {totalDiscount.toLocaleString()}</span>
+                                </div>
+                            )}
 
                             <div className="border-t pt-4 flex justify-between font-bold text-lg text-orange-600">
                                 <span>စုစုပေါင်း</span>

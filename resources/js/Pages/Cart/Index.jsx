@@ -6,7 +6,11 @@ export default function Index({ cartItems = [] }) {
 
     // စုစုပေါင်း ကျသင့်ငွေ တွက်ချက်ခြင်း
     const totalPrice = cartItems.reduce((sum, item) => {
-        return sum + item.variant.price * item.quantity;
+        return sum + Number(item.line_total || (item.effective_unit_price || item.variant?.price || 0) * item.quantity);
+    }, 0);
+
+    const totalDiscount = cartItems.reduce((sum, item) => {
+        return sum + Number(item.discount_line_total || 0);
     }, 0);
 
     const removeFromCart = (id) => {
@@ -69,8 +73,13 @@ export default function Index({ cartItems = [] }) {
                                         </p>
                                         <p className="text-orange-600 font-bold mt-1">
                                             Ks{" "}
-                                            {item.variant.price.toLocaleString()}
+                                            {Number(item.effective_unit_price || item.variant?.price || 0).toLocaleString()}
                                         </p>
+                                        {Number(item.discount_line_total || 0) > 0 && (
+                                            <p className="text-xs text-emerald-600 font-semibold mt-1">
+                                                Promotion applied: -Ks {Number(item.discount_line_total).toLocaleString()}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center gap-4">
@@ -118,6 +127,17 @@ export default function Index({ cartItems = [] }) {
                                     Ks {totalPrice.toLocaleString()}
                                 </span>
                             </div>
+
+                            {totalDiscount > 0 && (
+                                <div className="flex justify-between mb-6 text-sm">
+                                    <span className="text-emerald-700 font-semibold">
+                                        Promotion Discount
+                                    </span>
+                                    <span className="font-bold text-emerald-700">
+                                        -Ks {totalDiscount.toLocaleString()}
+                                    </span>
+                                </div>
+                            )}
 
                             <Link
                                 href={
