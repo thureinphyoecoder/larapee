@@ -11,6 +11,7 @@ class CheckoutController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $user->loadMissing('profile');
         $cartItems = CartItem::with(['product', 'variant'])
             ->where('user_id', $user->id)
             ->get();
@@ -37,13 +38,23 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index');
         }
 
+        $lastOrder = \App\Models\Order::query()
+            ->where('user_id', $user->id)
+            ->latest('id')
+            ->first();
+
+        $profilePhone = $user->profile?->phone_number;
+        $profileAddress = $user->profile?->address_line_1;
+        $orderPhone = $lastOrder?->phone;
+        $orderAddress = $lastOrder?->address;
+
         return Inertia::render('Checkout/Index', [
             'cartItems' => $cartItems,
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
-                'phone' => $user->phone, // Register မှာ မဖြည့်ရသေးလို့ null ဖြစ်နေမယ်
-                'address' => $user->address, // null ဖြစ်နေမယ်
+                'phone' => $profilePhone ?: $orderPhone ?: '',
+                'address' => $profileAddress ?: $orderAddress ?: '',
             ]
         ]);
     }
