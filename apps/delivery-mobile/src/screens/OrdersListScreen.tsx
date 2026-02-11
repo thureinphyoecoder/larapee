@@ -177,6 +177,9 @@ export function OrdersListScreen({
 
             <View className={`mt-3 rounded-xl px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
               <Text className={`text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>{item.phone || tr(locale, "noPhone")}</Text>
+              <Text numberOfLines={2} className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>
+                {item.address || "-"}
+              </Text>
             </View>
 
             <View className="mt-3 flex-row items-center justify-between">
@@ -204,20 +207,33 @@ function SummaryBadge({
   const toneClass =
     tone === "amber"
       ? dark
-        ? "bg-amber-500/12 border-amber-500/25 text-amber-200"
-        : "bg-amber-50 border-amber-200 text-amber-800"
+        ? "bg-amber-500/12 border-amber-500/25"
+        : "bg-amber-50 border-amber-200"
       : tone === "sky"
         ? dark
-          ? "bg-sky-500/12 border-sky-500/25 text-sky-200"
-          : "bg-sky-50 border-sky-200 text-sky-800"
+          ? "bg-sky-500/12 border-sky-500/25"
+          : "bg-sky-50 border-sky-200"
         : dark
-          ? "bg-emerald-500/12 border-emerald-500/25 text-emerald-200"
-          : "bg-emerald-50 border-emerald-200 text-emerald-800";
+          ? "bg-emerald-500/12 border-emerald-500/25"
+          : "bg-emerald-50 border-emerald-200";
+
+  const textClass =
+    tone === "amber"
+      ? dark
+        ? "text-amber-200"
+        : "text-amber-800"
+      : tone === "sky"
+        ? dark
+          ? "text-sky-200"
+          : "text-sky-800"
+        : dark
+          ? "text-emerald-200"
+          : "text-emerald-800";
 
   return (
     <View className={`flex-1 rounded-xl border px-2 py-2 ${toneClass}`}>
-      <Text className="text-[10px] font-bold uppercase tracking-wider">{label}</Text>
-      <Text className="mt-1 text-lg font-black">{value}</Text>
+      <Text className={`text-[10px] font-bold uppercase tracking-wider ${textClass}`}>{label}</Text>
+      <Text className={`mt-1 text-lg font-black ${textClass}`}>{value}</Text>
     </View>
   );
 }
