@@ -296,18 +296,18 @@ export default function Welcome({
                             <button
                                 type="button"
                                 onClick={() => setActiveSlide((prev) => (prev - 1 + sliderItems.length) % sliderItems.length)}
-                                className="absolute bottom-5 left-4 z-30 h-11 w-11 rounded-full border border-white/40 bg-white/90 text-lg font-black text-slate-700 shadow transition hover:bg-white sm:opacity-0 sm:pointer-events-none sm:group-hover:pointer-events-auto sm:group-hover:opacity-100"
+                                className="absolute left-3 top-1/2 z-30 h-9 w-9 -translate-y-1/2 rounded-full border border-white/40 bg-white/80 text-base font-black text-slate-700 shadow-sm transition hover:bg-white sm:opacity-0 sm:pointer-events-none sm:group-hover:pointer-events-auto sm:group-hover:opacity-100"
                             >
                                 ‹
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setActiveSlide((prev) => (prev + 1) % sliderItems.length)}
-                                className="absolute bottom-5 right-4 z-30 h-11 w-11 rounded-full border border-white/40 bg-white/90 text-lg font-black text-slate-700 shadow transition hover:bg-white sm:opacity-0 sm:pointer-events-none sm:group-hover:pointer-events-auto sm:group-hover:opacity-100"
+                                className="absolute right-3 top-1/2 z-30 h-9 w-9 -translate-y-1/2 rounded-full border border-white/40 bg-white/80 text-base font-black text-slate-700 shadow-sm transition hover:bg-white sm:opacity-0 sm:pointer-events-none sm:group-hover:pointer-events-auto sm:group-hover:opacity-100"
                             >
                                 ›
                             </button>
-                            <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+                            <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
                                 {sliderItems.map((item, index) => (
                                     <button
                                         key={item.id}

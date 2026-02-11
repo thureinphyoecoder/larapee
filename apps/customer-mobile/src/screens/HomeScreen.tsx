@@ -117,17 +117,19 @@ export function HomeScreen({
           <>
             <Pressable
               onPress={() => setActiveSlide((prev) => (prev - 1 + sliderItems.length) % sliderItems.length)}
-              className="absolute bottom-5 left-4 h-10 w-10 items-center justify-center rounded-full bg-white/90"
+              className="absolute left-3 top-1/2 h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/80"
+              style={{ transform: [{ translateY: -16 }] }}
             >
-              <Text className="text-lg font-black text-slate-700">‹</Text>
+              <Text className="text-base font-black text-slate-700">‹</Text>
             </Pressable>
             <Pressable
               onPress={() => setActiveSlide((prev) => (prev + 1) % sliderItems.length)}
-              className="absolute bottom-5 right-4 h-10 w-10 items-center justify-center rounded-full bg-white/90"
+              className="absolute right-3 top-1/2 h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/80"
+              style={{ transform: [{ translateY: -16 }] }}
             >
-              <Text className="text-lg font-black text-slate-700">›</Text>
+              <Text className="text-base font-black text-slate-700">›</Text>
             </Pressable>
-            <View className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-row items-center gap-2">
+            <View className="absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-row items-center gap-2">
               {sliderItems.map((item, index) => (
                 <Pressable
                   key={`dot-${item.id}`}
