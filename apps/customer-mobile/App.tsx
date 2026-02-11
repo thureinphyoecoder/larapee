@@ -2,7 +2,7 @@ import "./global.css";
 
 import { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
-import { BackHandler } from "react-native";
+import { BackHandler, LogBox } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import { BottomTabs } from "./src/components/BottomTabs";
@@ -17,6 +17,8 @@ import { OrderDetailScreen } from "./src/screens/OrderDetailScreen";
 import { OrdersScreen } from "./src/screens/OrdersScreen";
 import { ProductDetailScreen } from "./src/screens/ProductDetailScreen";
 import { SupportScreen } from "./src/screens/SupportScreen";
+
+LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
 
 export default function App() {
   const app = useCustomerApp();
