@@ -79,6 +79,12 @@ export default function App() {
           reviewMessage={app.detail.reviewMessage}
           adding={app.catalog.addingProductId === app.detail.product?.id}
           onBack={app.detail.close}
+          onOpenCart={() => {
+            app.detail.close();
+            app.setActiveTab("cart");
+          }}
+          cartCount={app.cartCount}
+          onOpenProduct={(product) => void app.catalog.openProductDetail(product)}
           onAddToCart={(product, variantId, quantity) => void app.catalog.addToCart(product, variantId, quantity)}
           onSubmitReview={(rating, comment) => void app.detail.submitReview(rating, comment)}
         />
@@ -230,7 +236,13 @@ export default function App() {
         />
       ) : null}
 
-      <BottomTabs activeTab={app.activeTab} onChange={app.setActiveTab} items={app.tabItems} dark={app.dark} />
+      <BottomTabs
+        activeTab={app.activeTab}
+        onChange={app.setActiveTab}
+        items={app.tabItems}
+        dark={app.dark}
+        badges={{ cart: app.cartCount }}
+      />
     </SafeAreaView>
   );
 }

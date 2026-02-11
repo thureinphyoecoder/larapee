@@ -52,6 +52,11 @@ class ProductResource extends JsonResource
                 'average' => $ratingAverage,
                 'count' => $ratingCount,
             ]),
+            'recommendations' => $this->when($this->relationLoaded('aiRecommendations'), function () use ($request) {
+                return $this->aiRecommendations
+                    ->map(fn ($product) => (new ProductResource($product))->toArray($request))
+                    ->values();
+            }),
         ];
     }
 }

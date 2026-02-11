@@ -77,10 +77,16 @@ export async function submitProductReview(
 
 function normalizeProduct(baseUrl: string, product: Product): Product {
   const imageUrl = toAbsoluteUrl(baseUrl, product.image_url);
+  const recommendations = (product.recommendations || []).map((item) => {
+    const nested = { ...item };
+    delete nested.recommendations;
+    return normalizeProduct(baseUrl, nested);
+  });
 
   return {
     ...product,
     image_url: imageUrl,
+    recommendations,
   };
 }
 

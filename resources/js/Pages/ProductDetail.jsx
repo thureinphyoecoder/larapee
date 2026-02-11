@@ -2,11 +2,12 @@ import { Link, usePage, router } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 import Swal from "sweetalert2";
 
-export default function ProductDetail({ product, reviews = [], ratingSummary = {} }) {
+export default function ProductDetail({ product, reviews = [], ratingSummary = {}, recommendations = [] }) {
     const { auth, errors = {} } = usePage().props;
     const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || null);
     const [quantity, setQuantity] = useState(1);
     const [processing, setProcessing] = useState(false);
+    const [localCartCount, setLocalCartCount] = useState(Number(auth?.cart_count || 0));
 
     const selectedEffectiveUnitPrice = Number(selectedVariant?.effective_price ?? selectedVariant?.price ?? 0);
     const selectedBaseUnitPrice = Number(selectedVariant?.base_price ?? selectedVariant?.price ?? 0);
@@ -73,9 +74,12 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                 onFinish: () => setProcessing(false),
                 onSuccess: () => {
                     if (type === "buy_now") {
+                        setLocalCartCount((count) => count + quantity);
                         router.visit(route("checkout.index"));
                         return;
                     }
+
+                    setLocalCartCount((count) => count + quantity);
 
                     Swal.fire({
                         icon: "success",
@@ -105,12 +109,23 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
     return (
         <div className="bg-slate-100 min-h-screen pb-12">
             <nav className="bg-white border-b border-slate-200 sticky top-0 z-30 backdrop-blur">
-                <div className="max-w-6xl mx-auto px-4 py-3 flex items-center text-sm gap-2 text-slate-500">
-                    <Link href="/" className="hover:text-orange-500 transition font-medium">
-                        Home
+                <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between text-sm gap-2 text-slate-500">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <Link href="/" className="hover:text-orange-500 transition font-medium">
+                            Home
+                        </Link>
+                        <span className="text-slate-300">/</span>
+                        <span className="text-slate-800 font-semibold truncate">{product.name}</span>
+                    </div>
+                    <Link
+                        href={auth?.user ? route("cart.index") : route("login")}
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:border-orange-300 hover:text-orange-600"
+                    >
+                        <span>Cart</span>
+                        <span className="rounded-full bg-orange-600 px-2 py-0.5 text-xs font-black text-white">
+                            {localCartCount > 99 ? "99+" : localCartCount}
+                        </span>
                     </Link>
-                    <span className="text-slate-300">/</span>
-                    <span className="text-slate-800 font-semibold truncate">{product.name}</span>
                 </div>
             </nav>
 
@@ -295,6 +310,33 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                     ratingSummary={ratingSummary}
                     auth={auth}
                 />
+
+                {recommendations.length > 0 && (
+                    <section className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-black text-slate-900">AI Recommendations</h2>
+                            <p className="text-sm font-semibold text-slate-500">Based on this product and buyer behavior</p>
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                            {recommendations.map((item) => (
+                                <Link
+                                    key={item.id}
+                                    href={route("product.show", { slug: item.slug })}
+                                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+                                >
+                                    <div className="aspect-square overflow-hidden bg-slate-100">
+                                        <img src={item.image_url || "/images/products/product-1.svg"} alt={item.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                                    </div>
+                                    <div className="p-3">
+                                        <p className="line-clamp-2 min-h-[40px] text-sm font-bold text-slate-800">{item.name}</p>
+                                        <p className="mt-1 text-[11px] text-slate-400">{item.shop?.name || "LaraPee Store"}</p>
+                                        <p className="mt-2 text-sm font-black text-orange-600">Ks {Number(item.price || 0).toLocaleString()}</p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
             </div>
         </div>
     );

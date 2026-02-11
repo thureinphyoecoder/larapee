@@ -13,9 +13,10 @@ type Props = {
   onChange: (tab: CustomerTab) => void;
   items: TabItem[];
   dark: boolean;
+  badges?: Partial<Record<CustomerTab, number>>;
 };
 
-export function BottomTabs({ activeTab, onChange, items, dark }: Props) {
+export function BottomTabs({ activeTab, onChange, items, dark, badges = {} }: Props) {
   return (
     <View
       className={`mx-4 mb-6 flex-row rounded-3xl border p-2 ${
@@ -31,7 +32,16 @@ export function BottomTabs({ activeTab, onChange, items, dark }: Props) {
             onPress={() => onChange(item.key)}
             className={`flex-1 items-center rounded-2xl px-2 py-2.5 ${active ? "bg-orange-600" : "bg-transparent"}`}
           >
-            <Ionicons name={iconForTab(item.key)} size={16} color={active ? "#ffffff" : dark ? "#cbd5e1" : "#475569"} />
+            <View className="relative">
+              <Ionicons name={iconForTab(item.key)} size={16} color={active ? "#ffffff" : dark ? "#cbd5e1" : "#475569"} />
+              {Number(badges[item.key] || 0) > 0 ? (
+                <View className={`absolute -right-3 -top-2 min-w-[16px] rounded-full px-1 ${active ? "bg-white" : "bg-orange-600"}`}>
+                  <Text className={`text-center text-[9px] font-black ${active ? "text-orange-600" : "text-white"}`}>
+                    {Number(badges[item.key]) > 99 ? "99+" : Number(badges[item.key])}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
             <Text className={`mt-1 text-[11px] font-black ${active ? "text-white" : dark ? "text-slate-300" : "text-slate-600"}`}>
               {item.label}
             </Text>

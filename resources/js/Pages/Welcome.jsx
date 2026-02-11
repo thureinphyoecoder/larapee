@@ -37,6 +37,7 @@ export default function Welcome({
     );
     const [activeSlide, setActiveSlide] = useState(0);
     const [pauseSlider, setPauseSlider] = useState(false);
+    const cartCount = Number(auth?.cart_count || 0);
 
     const sliderItems = useMemo(() => {
         const top = products.slice(0, 4);
@@ -109,6 +110,36 @@ export default function Welcome({
         });
     }, [products, search, activeCategory]);
 
+    const aiRecommendations = useMemo(() => {
+        const pivot = activeItem || products[0];
+        if (!pivot) return [];
+        const pivotPrice = Number(priceMeta(pivot).effective || 0);
+        const tokens = String(pivot?.name || "")
+            .toLowerCase()
+            .split(/\s+/)
+            .filter((token) => token.length >= 3);
+
+        return [...products]
+            .filter((item) => item.id !== pivot.id)
+            .map((item) => {
+                const itemPrice = Number(priceMeta(item).effective || 0);
+                const priceDistance = pivotPrice > 0 ? Math.min(Math.abs(itemPrice - pivotPrice) / pivotPrice, 1) : 1;
+                const keywordBoost = tokens.filter((token) => String(item?.name || "").toLowerCase().includes(token)).length;
+                let score = 0;
+                score += Number(item?.category_id === pivot?.category_id) * 45;
+                score += Number(item?.brand?.id === pivot?.brand?.id) * 30;
+                score += Number(item?.shop?.id === pivot?.shop?.id) * 15;
+                score += Math.round((1 - priceDistance) * 20);
+                score += Math.min(10, keywordBoost * 3);
+                score += Number(item?.variants?.[0]?.stock_level > 0) * 5;
+
+                return { item, score };
+            })
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 8)
+            .map((entry) => entry.item);
+    }, [activeItem, products]);
+
     const getProductImage = (product) => {
         if (product?.image) return product.image;
         if (product?.image_url) return product.image_url;
@@ -165,6 +196,15 @@ export default function Welcome({
                         <div className="ml-auto flex items-center gap-4 text-sm font-semibold text-slate-600">
                             {auth?.user ? (
                                 <>
+                                    <Link
+                                        href={route("cart.index")}
+                                        className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                                    >
+                                        <span>Cart</span>
+                                        <span className="rounded-full bg-orange-600 px-2 py-0.5 text-xs font-black text-white">
+                                            {cartCount > 99 ? "99+" : cartCount}
+                                        </span>
+                                    </Link>
                                     <Link href={route("dashboard")} className="flex items-center gap-2 text-slate-700">
                                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 font-bold text-orange-700">
                                             {auth.user.name.charAt(0).toUpperCase()}
@@ -388,6 +428,42 @@ export default function Welcome({
                         )}
                     </div>
                 </section>
+
+                {aiRecommendations.length > 0 && (
+                    <section className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-black text-slate-900 sm:text-2xl">AI Recommendations</h2>
+                            <p className="text-sm font-semibold text-slate-500">Smart matches for your current interest</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                            {aiRecommendations.map((product) => {
+                                const price = priceMeta(product);
+
+                                return (
+                                    <Link
+                                        href={route("product.show", { slug: product.slug })}
+                                        key={`ai-${product.id}`}
+                                        className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+                                    >
+                                        <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
+                                            <img
+                                                src={getProductImage(product)}
+                                                alt={product.name}
+                                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                        <div className="p-3">
+                                            <h3 className="min-h-[40px] text-sm font-bold leading-tight text-slate-800">{product.name}</h3>
+                                            <p className="mt-1 text-[11px] text-slate-400">{product.shop?.name || "LaraPee Store"}</p>
+                                            <p className="mt-2 text-sm font-black text-orange-600">Ks {price.effective.toLocaleString()}</p>
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
             </div>
         </div>
     );

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CartItem;
 use App\Models\StaffAttendance;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
@@ -73,6 +74,9 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                 ] : null,
                 'role' => $role,
+                'cart_count' => fn () => $user
+                    ? (int) CartItem::query()->where('user_id', $user->id)->sum('quantity')
+                    : 0,
             ],
             'attendance' => $attendance,
             'flash' => [

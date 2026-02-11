@@ -269,7 +269,6 @@ export function useCustomerApp() {
         await addCartItem(API_BASE_URL, session.token, resolvedVariantId, Math.max(1, quantity));
         const nextCart = await fetchCart(API_BASE_URL, session.token);
         setCartItems(nextCart);
-        setActiveTab("cart");
       } catch {
         // Keep UX stable and let pull-to-refresh recover.
       } finally {
@@ -665,6 +664,11 @@ export function useCustomerApp() {
     [locale],
   );
 
+  const cartCount = useMemo(
+    () => cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+    [cartItems],
+  );
+
   return {
     booting,
     dark,
@@ -673,6 +677,7 @@ export function useCustomerApp() {
     session,
     activeTab,
     tabItems,
+    cartCount,
     setActiveTab,
     login: {
       email,

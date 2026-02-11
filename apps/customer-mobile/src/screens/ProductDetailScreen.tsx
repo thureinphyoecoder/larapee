@@ -16,6 +16,9 @@ type Props = {
   reviewMessage: string;
   adding: boolean;
   onBack: () => void;
+  onOpenCart: () => void;
+  cartCount: number;
+  onOpenProduct: (product: Product) => void;
   onAddToCart: (product: Product, variantId?: number, quantity?: number) => void;
   onSubmitReview: (rating: number | null, comment: string) => void;
 };
@@ -31,6 +34,9 @@ export function ProductDetailScreen({
   reviewMessage,
   adding,
   onBack,
+  onOpenCart,
+  cartCount,
+  onOpenProduct,
   onAddToCart,
   onSubmitReview,
 }: Props) {
@@ -64,6 +70,7 @@ export function ProductDetailScreen({
   const ratingAverage = Number(product?.rating_summary?.average || 0);
   const ratingCount = Number(product?.rating_summary?.count || 0);
   const reviews = product?.reviews || [];
+  const recommendations = product?.recommendations || [];
 
   useEffect(() => {
     setSelectedVariantId(firstVariantId);
@@ -81,7 +88,14 @@ export function ProductDetailScreen({
           <Ionicons name="chevron-back" size={18} color={dark ? "#e2e8f0" : "#334155"} />
         </Pressable>
         <Text className={`text-lg font-black ${dark ? "text-white" : "text-slate-900"}`}>{tr(locale, "productDetails")}</Text>
-        <View className="w-10" />
+        <Pressable onPress={onOpenCart} className={`relative h-10 w-10 items-center justify-center rounded-xl border ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+          <Ionicons name="bag-handle-outline" size={16} color={dark ? "#e2e8f0" : "#334155"} />
+          {cartCount > 0 ? (
+            <View className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5">
+              <Text className="text-[9px] font-black text-white">{cartCount > 99 ? "99+" : cartCount}</Text>
+            </View>
+          ) : null}
+        </Pressable>
       </View>
 
       <View className={`mt-4 overflow-hidden rounded-3xl border ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
@@ -257,8 +271,41 @@ export function ProductDetailScreen({
           >
             <Text className="text-center text-sm font-black text-white">{adding ? tr(locale, "adding") : tr(locale, "addToCart")}</Text>
           </Pressable>
+          <Pressable
+            onPress={onOpenCart}
+            className={`mt-2 rounded-xl border py-3 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
+          >
+            <Text className={`text-center text-xs font-black ${dark ? "text-slate-200" : "text-slate-700"}`}>
+              Open Cart ({cartCount})
+            </Text>
+          </Pressable>
         </View>
       </View>
+
+      {recommendations.length ? (
+        <View className={`mt-4 rounded-3xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+          <Text className={`text-sm font-black uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-700"}`}>AI Recommendations</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3">
+            {recommendations.map((item) => (
+              <Pressable
+                key={item.id}
+                onPress={() => onOpenProduct(item)}
+                className={`mr-3 w-36 overflow-hidden rounded-2xl border ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-slate-50"}`}
+              >
+                <View className={`${dark ? "bg-slate-700" : "bg-slate-200"} aspect-square`}>
+                  {item.image_url ? <Image source={{ uri: item.image_url }} className="h-full w-full" resizeMode="cover" /> : null}
+                </View>
+                <View className="p-2">
+                  <Text className={`text-xs font-black ${dark ? "text-slate-100" : "text-slate-800"}`} numberOfLines={2}>
+                    {item.name}
+                  </Text>
+                  <Text className="mt-1 text-[11px] font-bold text-orange-600">{formatMoney(Number(item.price || 0))}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
 
       {busy ? <Text className={`mt-4 text-center text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Loading...</Text> : null}
     </ScrollView>

@@ -11,6 +11,7 @@ use App\Http\Resources\Api\V1\ShopResource;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Shop;
 use Illuminate\Http\JsonResponse;
 
@@ -63,10 +64,77 @@ class CatalogController extends Controller
             'activeVariants' => fn ($q) => $q->orderBy('id'),
             'reviews' => fn ($q) => $q->with('user:id,name')->latest('id')->limit(20),
         ]);
+        $product->setRelation('aiRecommendations', $this->buildAiRecommendations($product));
 
         return response()->json([
             'data' => new ProductResource($product),
         ]);
+    }
+
+    private function buildAiRecommendations(Product $product, int $limit = 6)
+    {
+        $targetPrice = $this->resolveEffectivePrice($product);
+        $targetKeywords = collect(preg_split('/\s+/', strtolower((string) $product->name)) ?: [])
+            ->filter(fn ($word) => strlen((string) $word) >= 3)
+            ->values();
+
+        $candidates = Product::query()
+            ->with([
+                'shop:id,name',
+                'brand:id,name',
+                'category:id,name,slug',
+                'activeVariants' => fn ($q) => $q->where('is_active', true)->orderBy('id'),
+            ])
+            ->withCount(['reviews as ai_rating_count' => fn ($q) => $q->whereNotNull('rating')])
+            ->withAvg(['reviews as ai_rating_avg' => fn ($q) => $q->whereNotNull('rating')], 'rating')
+            ->whereKeyNot($product->id)
+            ->whereHas('activeVariants')
+            ->latest('id')
+            ->limit(120)
+            ->get();
+
+        return $candidates
+            ->map(function (Product $candidate) use ($product, $targetPrice, $targetKeywords) {
+                $candidatePrice = $this->resolveEffectivePrice($candidate);
+                $priceDistance = $targetPrice > 0
+                    ? min(abs($targetPrice - $candidatePrice) / max($targetPrice, 1), 1)
+                    : 1;
+                $keywordBoost = $targetKeywords
+                    ->filter(fn ($token) => str_contains(strtolower((string) $candidate->name), (string) $token))
+                    ->count();
+
+                $score = 0;
+                $score += (int) ($candidate->category_id === $product->category_id) * 45;
+                $score += (int) ($candidate->brand_id === $product->brand_id) * 30;
+                $score += (int) ($candidate->shop_id === $product->shop_id) * 15;
+                $score += (int) round((1 - $priceDistance) * 20);
+                $score += (int) min(10, ($keywordBoost * 3));
+                $score += (int) min(10, round(((float) ($candidate->ai_rating_avg ?? 0)) * 2));
+                $score += (int) min(8, (int) ($candidate->ai_rating_count ?? 0));
+                $score += (int) (($candidate->stock_level ?? 0) > 0) * 4;
+
+                return [
+                    'product' => $candidate,
+                    'score' => $score,
+                ];
+            })
+            ->sortByDesc('score')
+            ->take($limit)
+            ->pluck('product')
+            ->values();
+    }
+
+    private function resolveEffectivePrice(Product $product): float
+    {
+        $variants = $product->activeVariants ?? collect();
+        if ($variants->count() === 0) {
+            return (float) $product->price;
+        }
+
+        return (float) $variants
+            ->map(fn (ProductVariant $variant) => (float) (($variant->resolvePricing()['final_price'] ?? $variant->price) ?: 0))
+            ->filter(fn ($price) => $price > 0)
+            ->min();
     }
 
     public function meta(): JsonResponse

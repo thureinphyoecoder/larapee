@@ -88,6 +88,7 @@ export type Product = {
     average: number;
     count: number;
   } | null;
+  recommendations?: Product[];
 };
 
 export type CartItem = {

@@ -30,6 +30,7 @@ class ProductController extends Controller
     {
         $product = Product::with([
             'variants' => fn ($query) => $query->where('is_active', true),
+            'activeVariants' => fn ($query) => $query->where('is_active', true)->orderBy('id'),
             'shop',
             'brand',
             'category',
@@ -57,6 +58,8 @@ class ProductController extends Controller
             ? round((float) (clone $ratingQuery)->avg('rating'), 1)
             : 0.0;
 
+        $recommendations = $this->buildAiRecommendations($product);
+
         return Inertia::render('ProductDetail', [
             'product' => $this->serializeStorefrontProduct($product),
             'reviews' => $reviews,
@@ -64,7 +67,75 @@ class ProductController extends Controller
                 'average' => $ratingAverage,
                 'count' => $ratingCount,
             ],
+            'recommendations' => $recommendations->map(fn (Product $item) => $this->serializeStorefrontProduct($item))->values(),
         ]);
+    }
+
+    private function buildAiRecommendations(Product $product, int $limit = 6)
+    {
+        $targetPrice = $this->resolveEffectivePrice($product);
+        $targetKeywords = collect(preg_split('/\s+/', strtolower((string) $product->name)) ?: [])
+            ->filter(fn ($word) => strlen((string) $word) >= 3)
+            ->values();
+
+        $candidates = Product::query()
+            ->with([
+                'variants' => fn ($q) => $q->where('is_active', true),
+                'activeVariants' => fn ($q) => $q->where('is_active', true)->orderBy('id'),
+                'shop:id,name',
+                'brand:id,name',
+                'category:id,name,slug',
+            ])
+            ->withCount(['reviews as ai_rating_count' => fn ($q) => $q->whereNotNull('rating')])
+            ->withAvg(['reviews as ai_rating_avg' => fn ($q) => $q->whereNotNull('rating')], 'rating')
+            ->whereKeyNot($product->id)
+            ->whereHas('activeVariants')
+            ->latest('id')
+            ->limit(120)
+            ->get();
+
+        return $candidates
+            ->map(function (Product $candidate) use ($product, $targetPrice, $targetKeywords) {
+                $candidatePrice = $this->resolveEffectivePrice($candidate);
+                $priceDistance = $targetPrice > 0
+                    ? min(abs($targetPrice - $candidatePrice) / max($targetPrice, 1), 1)
+                    : 1;
+                $keywordBoost = $targetKeywords
+                    ->filter(fn ($token) => str_contains(strtolower((string) $candidate->name), (string) $token))
+                    ->count();
+
+                $score = 0;
+                $score += (int) ($candidate->category_id === $product->category_id) * 45;
+                $score += (int) ($candidate->brand_id === $product->brand_id) * 30;
+                $score += (int) ($candidate->shop_id === $product->shop_id) * 15;
+                $score += (int) round((1 - $priceDistance) * 20);
+                $score += (int) min(10, ($keywordBoost * 3));
+                $score += (int) min(10, round(((float) ($candidate->ai_rating_avg ?? 0)) * 2));
+                $score += (int) min(8, (int) ($candidate->ai_rating_count ?? 0));
+                $score += (int) (($candidate->stock_level ?? 0) > 0) * 4;
+
+                return [
+                    'product' => $candidate,
+                    'score' => $score,
+                ];
+            })
+            ->sortByDesc('score')
+            ->take($limit)
+            ->pluck('product')
+            ->values();
+    }
+
+    private function resolveEffectivePrice(Product $product): float
+    {
+        $variants = $product->activeVariants ?? $product->variants ?? collect();
+        if ($variants->count() === 0) {
+            return (float) $product->price;
+        }
+
+        return (float) $variants
+            ->map(fn (ProductVariant $variant) => (float) (($variant->resolvePricing()['final_price'] ?? $variant->price) ?: 0))
+            ->filter(fn ($price) => $price > 0)
+            ->min();
     }
 
     private function serializeStorefrontProduct(Product $product): array
