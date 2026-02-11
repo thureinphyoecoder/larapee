@@ -38,6 +38,7 @@ The architecture is designed to support both web applications and future mobile 
 - Docker
 - Docker Compose
 - Nginx
+- RabbitMQ
 - Git
 
 ---
@@ -61,7 +62,8 @@ Services include:
 
 - PHP (Laravel)
 - Nginx
-- PostgreSQL
+- MySQL
+- RabbitMQ (queue broker)
 
 ---
 
@@ -86,3 +88,18 @@ It represents production-oriented engineering practices rather than tutorial-bas
 - API expansion for external integrations
 
 ---
+
+## Queue (RabbitMQ)
+
+RabbitMQ is used as the default queue backend.
+
+1. Ensure RabbitMQ is running (`docker compose up -d rabbitmq`).
+2. Use `QUEUE_CONNECTION=rabbitmq` in `.env`.
+3. Start app with worker:
+   - `composer dev`
+   - or run worker manually: `php artisan queue:work rabbitmq --queue=default --tries=3 --timeout=90`
+
+RabbitMQ management UI:
+- `http://localhost:15672`
+- username: `guest`
+- password: `guest`
