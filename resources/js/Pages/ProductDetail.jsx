@@ -314,7 +314,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                 {recommendations.length > 0 && (
                     <section className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-black text-slate-900">AI Recommendations</h2>
+                            <h2 className="text-xl font-black text-slate-900">Recommended for You</h2>
                             <p className="text-sm font-semibold text-slate-500">Based on this product and buyer behavior</p>
                         </div>
                         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

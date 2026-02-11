@@ -286,6 +286,14 @@ export function ProductDetailScreen({
                 <Text className={`mt-2 text-sm leading-6 ${dark ? "text-slate-300" : "text-slate-600"}`}>
                   {product?.description || "No description available."}
                 </Text>
+                <Text className={`mt-4 text-xs font-bold uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>Detail Images</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
+                  {galleryImages.map((imageUrl) => (
+                    <View key={`detail-${imageUrl}`} className={`mr-3 h-28 w-28 overflow-hidden rounded-xl border ${dark ? "border-slate-700" : "border-slate-200"}`}>
+                      <Image source={{ uri: imageUrl }} className="h-full w-full" resizeMode="cover" />
+                    </View>
+                  ))}
+                </ScrollView>
               </>
             ) : tab === "comments" ? (
               <View className="mt-4">
@@ -374,7 +382,7 @@ export function ProductDetailScreen({
 
         {recommendations.length ? (
           <View className={`mt-4 rounded-3xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
-            <Text className={`text-sm font-black uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-700"}`}>AI Recommendations</Text>
+            <Text className={`text-sm font-black uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-700"}`}>You May Like</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3">
               {recommendations.map((item) => (
                 <Pressable

@@ -1,5 +1,5 @@
 import { Link, usePage } from "@inertiajs/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import LocaleSwitcher from "@/Components/LocaleSwitcher";
 
 function priceMeta(product) {
@@ -37,6 +37,7 @@ export default function Welcome({
     );
     const [activeSlide, setActiveSlide] = useState(0);
     const [pauseSlider, setPauseSlider] = useState(false);
+    const touchStartX = useRef(null);
     const cartCount = Number(auth?.cart_count || 0);
 
     const sliderItems = useMemo(() => {
@@ -239,6 +240,22 @@ export default function Welcome({
                 <section
                     onMouseEnter={() => setPauseSlider(true)}
                     onMouseLeave={() => setPauseSlider(false)}
+                    onTouchStart={(event) => {
+                        touchStartX.current = event.changedTouches?.[0]?.clientX ?? null;
+                    }}
+                    onTouchEnd={(event) => {
+                        if (!sliderItems.length) return;
+                        const start = touchStartX.current;
+                        const end = event.changedTouches?.[0]?.clientX ?? null;
+                        if (start === null || end === null) return;
+                        const delta = start - end;
+                        if (Math.abs(delta) < 28) return;
+                        if (delta > 0) {
+                            setActiveSlide((prev) => (prev + 1) % sliderItems.length);
+                        } else {
+                            setActiveSlide((prev) => (prev - 1 + sliderItems.length) % sliderItems.length);
+                        }
+                    }}
                     className="group relative overflow-hidden rounded-3xl shadow-xl"
                 >
                     <div
@@ -293,20 +310,6 @@ export default function Welcome({
 
                     {sliderItems.length > 1 && (
                         <>
-                            <button
-                                type="button"
-                                onClick={() => setActiveSlide((prev) => (prev - 1 + sliderItems.length) % sliderItems.length)}
-                                className="absolute left-3 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 rounded-full border border-white/40 bg-white/80 text-base font-black text-slate-700 shadow-sm transition hover:bg-white sm:opacity-0 sm:pointer-events-none sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 md:block"
-                            >
-                                ‹
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setActiveSlide((prev) => (prev + 1) % sliderItems.length)}
-                                className="absolute right-3 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 rounded-full border border-white/40 bg-white/80 text-base font-black text-slate-700 shadow-sm transition hover:bg-white sm:opacity-0 sm:pointer-events-none sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 md:block"
-                            >
-                                ›
-                            </button>
                             <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
                                 {sliderItems.map((item, index) => (
                                     <button
@@ -424,8 +427,8 @@ export default function Welcome({
                 {aiRecommendations.length > 0 && (
                     <section className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-black text-slate-900 sm:text-2xl">AI Recommendations</h2>
-                            <p className="text-sm font-semibold text-slate-500">Smart matches for your current interest</p>
+                            <h2 className="text-xl font-black text-slate-900 sm:text-2xl">Recommended for You</h2>
+                            <p className="text-sm font-semibold text-slate-500">Based on your browsing and order behavior</p>
                         </div>
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                             {aiRecommendations.map((product) => {

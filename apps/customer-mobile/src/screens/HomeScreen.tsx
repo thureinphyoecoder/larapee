@@ -1,5 +1,5 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { CategoryPills } from "../components/CategoryPills";
 import { ProductCard } from "../components/ProductCard";
@@ -43,6 +43,8 @@ export function HomeScreen({
   const sliderItems = useMemo(() => products.slice(0, 4), [products]);
   const [activeSlide, setActiveSlide] = useState(0);
   const featuredProduct = sliderItems[activeSlide] ?? products[0] ?? null;
+  const [heroWidth, setHeroWidth] = useState(0);
+  const heroScrollRef = useRef<ScrollView | null>(null);
   const slideBackgrounds = [
     "bg-cyan-700",
     "bg-indigo-700",
@@ -51,12 +53,16 @@ export function HomeScreen({
   ];
 
   useEffect(() => {
-    if (sliderItems.length <= 1) return;
+    if (sliderItems.length <= 1 || !heroWidth) return;
     const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % sliderItems.length);
+      setActiveSlide((prev) => {
+        const next = (prev + 1) % sliderItems.length;
+        heroScrollRef.current?.scrollTo({ x: next * heroWidth, animated: true });
+        return next;
+      });
     }, 4500);
     return () => clearInterval(timer);
-  }, [sliderItems.length]);
+  }, [heroWidth, sliderItems.length]);
 
   useEffect(() => {
     if (activeSlide >= sliderItems.length) {
@@ -80,51 +86,73 @@ export function HomeScreen({
         </View>
       </View>
 
-      <View className={`relative mt-4 overflow-hidden rounded-3xl px-5 py-6 ${slideBackgrounds[activeSlide % slideBackgrounds.length]}`}>
-        <View className="absolute -right-10 -top-8 h-28 w-28 rounded-full bg-white/20" />
-        <View className="absolute -left-6 -bottom-8 h-24 w-24 rounded-full bg-violet-300/40" />
-        <View className="absolute inset-0 bg-fuchsia-500/25" />
+      <View className="relative mt-4 overflow-hidden rounded-3xl" onLayout={(event) => setHeroWidth(event.nativeEvent.layout.width)}>
+        <ScrollView
+          ref={heroScrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(event) => {
+            const width = event.nativeEvent.layoutMeasurement.width;
+            if (!width) return;
+            const index = Math.round(event.nativeEvent.contentOffset.x / width);
+            setActiveSlide(index);
+          }}
+        >
+          {sliderItems.length ? (
+            sliderItems.map((item, index) => (
+              <View key={`hero-${item.id}`} style={{ width: heroWidth || undefined }} className={`px-5 py-6 ${slideBackgrounds[index % slideBackgrounds.length]}`}>
+                <View className="absolute -right-10 -top-8 h-28 w-28 rounded-full bg-white/20" />
+                <View className="absolute -left-6 -bottom-8 h-24 w-24 rounded-full bg-violet-300/40" />
+                <View className="absolute inset-0 bg-fuchsia-500/25" />
 
-        <View className="relative">
-          <Text className="text-[11px] font-extrabold uppercase tracking-widest text-white/80">{tr(locale, "featuredProducts")}</Text>
-          <Text className="mt-3 text-2xl font-black leading-tight text-white">
-            {featuredProduct?.name || `${tr(locale, "welcomeBack")}, ${userName}`}
-          </Text>
-          <Text className="mt-2 text-xs leading-5 text-white/85">
-            {featuredProduct ? `${featuredProduct.shop?.name || "LaraPee"} collection with fast checkout updates.` : tr(locale, "pullToRefresh")}
-          </Text>
+                <View className="relative">
+                  <Text className="text-[11px] font-extrabold uppercase tracking-widest text-white/80">{tr(locale, "featuredProducts")}</Text>
+                  <Text className="mt-3 text-2xl font-black leading-tight text-white">{item.name}</Text>
+                  <Text className="mt-2 text-xs leading-5 text-white/85">
+                    {`${item.shop?.name || "LaraPee"} collection with fast checkout updates.`}
+                  </Text>
 
-          <View className="mt-5 flex-row gap-3">
-            <Pressable
-              onPress={() => featuredProduct && onOpenProduct(featuredProduct)}
-              className={`rounded-2xl px-4 py-2 ${featuredProduct ? "bg-white" : "bg-white/30"}`}
-              disabled={!featuredProduct}
-            >
-              <Text className="text-xs font-black text-slate-900">Explore Product</Text>
-            </Pressable>
-          </View>
+                  <View className="mt-5 flex-row gap-3">
+                    <Pressable onPress={() => onOpenProduct(item)} className="rounded-2xl bg-white px-4 py-2">
+                      <Text className="text-xs font-black text-slate-900">Explore Product</Text>
+                    </Pressable>
+                  </View>
 
-          <View className="mt-4 rounded-2xl border border-white/35 bg-white/15 px-4 py-3">
-            <Text className="text-[11px] font-extrabold uppercase tracking-wider text-white/80">Live Snapshot</Text>
-            <View className="mt-2 flex-row gap-6">
-              <StatPill label={tr(locale, "discoverProducts")} value={String(products.length)} />
-              <StatPill label={tr(locale, "categories")} value={String(categories.length)} />
+                  <View className="mt-4 rounded-2xl border border-white/35 bg-white/15 px-4 py-3">
+                    <Text className="text-[11px] font-extrabold uppercase tracking-wider text-white/80">Live Snapshot</Text>
+                    <View className="mt-2 flex-row gap-6">
+                      <StatPill label={tr(locale, "discoverProducts")} value={String(products.length)} />
+                      <StatPill label={tr(locale, "categories")} value={String(categories.length)} />
+                    </View>
+                  </View>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={{ width: heroWidth || undefined }} className={`px-5 py-6 ${slideBackgrounds[0]}`}>
+              <Text className="text-[11px] font-extrabold uppercase tracking-widest text-white/80">{tr(locale, "featuredProducts")}</Text>
+              <Text className="mt-3 text-2xl font-black leading-tight text-white">{`${tr(locale, "welcomeBack")}, ${userName}`}</Text>
+              <Text className="mt-2 text-xs leading-5 text-white/85">{tr(locale, "pullToRefresh")}</Text>
             </View>
-          </View>
-        </View>
+          )}
+        </ScrollView>
 
         {sliderItems.length > 1 ? (
-          <>
-            <View className="absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-row items-center gap-2">
-              {sliderItems.map((item, index) => (
-                <Pressable
-                  key={`dot-${item.id}`}
-                  onPress={() => setActiveSlide(index)}
-                  className={`h-2.5 rounded-full ${index === activeSlide ? "w-8 bg-white" : "w-2.5 bg-white/60"}`}
-                />
-              ))}
-            </View>
-          </>
+          <View className="absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-row items-center gap-2">
+            {sliderItems.map((item, index) => (
+              <Pressable
+                key={`dot-${item.id}`}
+                onPress={() => {
+                  setActiveSlide(index);
+                  if (heroWidth) {
+                    heroScrollRef.current?.scrollTo({ x: index * heroWidth, animated: true });
+                  }
+                }}
+                className={`h-2.5 rounded-full ${index === activeSlide ? "w-8 bg-white" : "w-2.5 bg-white/60"}`}
+              />
+            ))}
+          </View>
         ) : null}
       </View>
 
