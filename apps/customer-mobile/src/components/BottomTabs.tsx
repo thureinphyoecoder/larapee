@@ -1,6 +1,7 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import type { ComponentProps } from "react";
 import { Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { CustomerTab } from "../types/domain";
 
 type TabItem = {
@@ -17,11 +18,14 @@ type Props = {
 };
 
 export function BottomTabs({ activeTab, onChange, items, dark, badges = {} }: Props) {
+  const insets = useSafeAreaInsets();
+
   return (
     <View
       className={`mx-4 mb-6 flex-row rounded-3xl border p-2 ${
         dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"
       }`}
+      style={{ marginBottom: Math.max(insets.bottom + 8, 20) }}
     >
       {items.map((item) => {
         const active = activeTab === item.key;

@@ -2,7 +2,8 @@ import "./global.css";
 
 import { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
-import { BackHandler, SafeAreaView } from "react-native";
+import { BackHandler } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import { BottomTabs } from "./src/components/BottomTabs";
 import { LoadingView } from "./src/components/LoadingView";
@@ -43,114 +44,129 @@ export default function App() {
   }, [app]);
 
   if (app.booting) {
-    return <LoadingView dark={app.dark} label="Preparing app..." />;
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`} edges={["top", "bottom", "left", "right"]}>
+          <LoadingView dark={app.dark} label="Preparing app..." />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );
   }
 
   if (!app.session?.token || !app.session.user) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-100">
-        <StatusBar style="dark" />
-        <LoginScreen
-          locale={app.locale}
-          email={app.login.email}
-          password={app.login.password}
-          busy={app.login.busy}
-          error={app.login.error}
-          onEmailChange={app.login.setEmail}
-          onPasswordChange={app.login.setPassword}
-          onSubmit={() => void app.login.submit()}
-        />
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView className="flex-1 bg-slate-100" edges={["top", "bottom", "left", "right"]}>
+          <StatusBar style="dark" />
+          <LoginScreen
+            locale={app.locale}
+            email={app.login.email}
+            password={app.login.password}
+            busy={app.login.busy}
+            error={app.login.error}
+            onEmailChange={app.login.setEmail}
+            onPasswordChange={app.login.setPassword}
+            onSubmit={() => void app.login.submit()}
+          />
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
   if (app.detail.view === "product") {
     return (
-      <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`}>
-        <StatusBar style={app.dark ? "light" : "dark"} />
-        <ProductDetailScreen
-          locale={app.locale}
-          dark={app.dark}
-          product={app.detail.product}
-          busy={app.detail.busy}
-          error={app.detail.error}
-          reviewBusy={app.detail.reviewBusy}
-          reviewError={app.detail.reviewError}
-          reviewMessage={app.detail.reviewMessage}
-          adding={app.catalog.addingProductId === app.detail.product?.id}
-          onBack={app.detail.close}
-          onOpenCart={() => {
-            app.detail.close();
-            app.setActiveTab("cart");
-          }}
-          cartCount={app.cartCount}
-          onOpenProduct={(product) => void app.catalog.openProductDetail(product)}
-          onAddToCart={(product, variantId, quantity) => void app.catalog.addToCart(product, variantId, quantity)}
-          onSubmitReview={(rating, comment) => void app.detail.submitReview(rating, comment)}
-        />
-        <BottomTabs
-          activeTab={app.activeTab}
-          onChange={(tab) => {
-            app.detail.close();
-            app.setActiveTab(tab);
-          }}
-          items={app.tabItems}
-          dark={app.dark}
-          badges={{ cart: app.cartCount }}
-        />
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`} edges={["top", "left", "right"]}>
+          <StatusBar style={app.dark ? "light" : "dark"} />
+          <ProductDetailScreen
+            locale={app.locale}
+            dark={app.dark}
+            product={app.detail.product}
+            busy={app.detail.busy}
+            error={app.detail.error}
+            reviewBusy={app.detail.reviewBusy}
+            reviewError={app.detail.reviewError}
+            reviewMessage={app.detail.reviewMessage}
+            adding={app.catalog.addingProductId === app.detail.product?.id}
+            onBack={app.detail.close}
+            onOpenCart={() => {
+              app.detail.close();
+              app.setActiveTab("cart");
+            }}
+            cartCount={app.cartCount}
+            onOpenProduct={(product) => void app.catalog.openProductDetail(product)}
+            onAddToCart={(product, variantId, quantity) => void app.catalog.addToCart(product, variantId, quantity)}
+            onSubmitReview={(rating, comment) => void app.detail.submitReview(rating, comment)}
+          />
+          <BottomTabs
+            activeTab={app.activeTab}
+            onChange={(tab) => {
+              app.detail.close();
+              app.setActiveTab(tab);
+            }}
+            items={app.tabItems}
+            dark={app.dark}
+            badges={{ cart: app.cartCount }}
+          />
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
   if (app.detail.view === "order") {
     return (
-      <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`}>
-        <StatusBar style={app.dark ? "light" : "dark"} />
-        <OrderDetailScreen
-          locale={app.locale}
-          dark={app.dark}
-          order={app.detail.order}
-          busy={app.detail.busy}
-          error={app.detail.error}
-          actionBusy={app.detail.actionBusy}
-          actionMessage={app.detail.actionMessage}
-          onCancelOrder={(reason) => void app.detail.cancelOrder(reason)}
-          onRequestRefund={() => void app.detail.requestRefund()}
-          onRequestReturn={(reason) => void app.detail.requestReturn(reason)}
-          onBack={app.detail.close}
-        />
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`} edges={["top", "bottom", "left", "right"]}>
+          <StatusBar style={app.dark ? "light" : "dark"} />
+          <OrderDetailScreen
+            locale={app.locale}
+            dark={app.dark}
+            order={app.detail.order}
+            busy={app.detail.busy}
+            error={app.detail.error}
+            actionBusy={app.detail.actionBusy}
+            actionMessage={app.detail.actionMessage}
+            onCancelOrder={(reason) => void app.detail.cancelOrder(reason)}
+            onRequestRefund={() => void app.detail.requestRefund()}
+            onRequestReturn={(reason) => void app.detail.requestReturn(reason)}
+            onBack={app.detail.close}
+          />
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
   if (app.detail.view === "checkout") {
     return (
-      <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`}>
-        <StatusBar style={app.dark ? "light" : "dark"} />
-        <CheckoutScreen
-          locale={app.locale}
-          dark={app.dark}
-          cartItems={app.cart.items}
-          phone={app.cart.checkoutPhone}
-          address={app.cart.checkoutAddress}
-          paymentSlipUri={app.cart.checkoutSlipUri}
-          qrData={app.cart.checkoutQrData}
-          busy={app.cart.checkoutBusy}
-          error={app.cart.checkoutError}
-          onPhoneChange={app.cart.setCheckoutPhone}
-          onAddressChange={app.cart.setCheckoutAddress}
-          onSlipUriChange={app.cart.setCheckoutSlipUri}
-          onQrDataChange={app.cart.setCheckoutQrData}
-          onBack={app.detail.close}
-          onConfirm={() => void app.cart.confirmCheckout()}
-        />
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`} edges={["top", "bottom", "left", "right"]}>
+          <StatusBar style={app.dark ? "light" : "dark"} />
+          <CheckoutScreen
+            locale={app.locale}
+            dark={app.dark}
+            cartItems={app.cart.items}
+            phone={app.cart.checkoutPhone}
+            address={app.cart.checkoutAddress}
+            paymentSlipUri={app.cart.checkoutSlipUri}
+            qrData={app.cart.checkoutQrData}
+            busy={app.cart.checkoutBusy}
+            error={app.cart.checkoutError}
+            onPhoneChange={app.cart.setCheckoutPhone}
+            onAddressChange={app.cart.setCheckoutAddress}
+            onSlipUriChange={app.cart.setCheckoutSlipUri}
+            onQrDataChange={app.cart.setCheckoutQrData}
+            onBack={app.detail.close}
+            onConfirm={() => void app.cart.confirmCheckout()}
+          />
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`}>
-      <StatusBar style={app.dark ? "light" : "dark"} />
+    <SafeAreaProvider>
+      <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`} edges={["top", "left", "right"]}>
+        <StatusBar style={app.dark ? "light" : "dark"} />
 
       {app.activeTab === "home" ? (
         <HomeScreen
@@ -250,13 +266,14 @@ export default function App() {
         />
       ) : null}
 
-      <BottomTabs
-        activeTab={app.activeTab}
-        onChange={app.setActiveTab}
-        items={app.tabItems}
-        dark={app.dark}
-        badges={{ cart: app.cartCount }}
-      />
-    </SafeAreaView>
+        <BottomTabs
+          activeTab={app.activeTab}
+          onChange={app.setActiveTab}
+          items={app.tabItems}
+          dark={app.dark}
+          badges={{ cart: app.cartCount }}
+        />
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
