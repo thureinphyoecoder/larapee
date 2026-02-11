@@ -65,6 +65,7 @@ class OrderController extends Controller
     public function store(StoreOrderRequest $request): JsonResponse
     {
         $user = $request->user();
+        $isItemsCheckout = $request->filled('items');
         $resolvedShopId = $request->integer('shop_id') ?: ($user->shop_id ?: null);
         $idempotencyKey = trim((string) $request->header('X-Idempotency-Key'));
         if ($idempotencyKey !== '' && strlen($idempotencyKey) > 120) {
@@ -88,7 +89,7 @@ class OrderController extends Controller
             }
         }
 
-        $order = $request->filled('items')
+        $order = $isItemsCheckout
             ? $this->createOrderFromItemsAction->execute(
                 user: $user,
                 items: $request->input('items', []),
@@ -109,7 +110,10 @@ class OrderController extends Controller
                 idempotencyKey: $idempotencyKey,
             );
 
-        event(new \App\Events\NewOrderPlaced($order));
+        // Cart checkout can split into multiple shop orders and broadcasts inside action.
+        if ($isItemsCheckout) {
+            event(new \App\Events\NewOrderPlaced($order));
+        }
 
         return response()->json([
             'message' => 'Order created successfully.',

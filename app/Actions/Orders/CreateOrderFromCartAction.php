@@ -2,11 +2,13 @@
 
 namespace App\Actions\Orders;
 
+use App\Events\NewOrderPlaced;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class CreateOrderFromCartAction
@@ -66,6 +68,17 @@ class CreateOrderFromCartAction
                 paymentSlip: $paymentSlip,
                 idempotencyKey: $idempotencyKey ? "{$idempotencyKey}:shop:{$resolvedShopId}" : null,
             );
+
+            // Each shop-group order needs its own notification.
+            try {
+                event(new NewOrderPlaced($order));
+            } catch (\Throwable $broadcastError) {
+                Log::warning('NewOrderPlaced broadcast failed (cart-grouped)', [
+                    'order_id' => $order->id,
+                    'shop_id' => $order->shop_id,
+                    'error' => $broadcastError->getMessage(),
+                ]);
+            }
 
             if (! $firstOrder) {
                 $firstOrder = $order;
