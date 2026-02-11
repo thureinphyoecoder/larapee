@@ -29,6 +29,11 @@ function getNotificationModule(): NotificationModule | null {
 }
 
 export async function ensureNotificationPermission(): Promise<boolean> {
+  if (isExpoGoRuntime()) {
+    // Expo Go (SDK53+) has limited notifications support.
+    return false;
+  }
+
   const Notifications = getNotificationModule();
   if (!Notifications) {
     return false;

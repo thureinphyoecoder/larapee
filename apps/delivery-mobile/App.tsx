@@ -1,7 +1,7 @@
 import "./global.css";
 
 import { StatusBar } from "expo-status-bar";
-import { Pressable, Text, View } from "react-native";
+import { LogBox, Pressable, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -20,6 +20,12 @@ const APP_RELEASE = "v0.5.1";
 type TabKey = "home" | "notifications" | "profile";
 
 export default function App() {
+  LogBox.ignoreLogs([
+    "SafeAreaView has been deprecated",
+    "expo-notifications: Android Push notifications",
+    "`expo-notifications` functionality is not fully supported in Expo Go",
+  ]);
+
   return (
     <SafeAreaProvider>
       <DeliveryAppShell />

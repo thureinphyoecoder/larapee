@@ -19,7 +19,11 @@ import { NotificationsCenterScreen } from "./src/screens/NotificationsCenterScre
 import { ProductDetailScreen } from "./src/screens/ProductDetailScreen";
 import { SupportScreen } from "./src/screens/SupportScreen";
 
-LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
+LogBox.ignoreLogs([
+  "SafeAreaView has been deprecated",
+  "expo-notifications: Android Push notifications",
+  "`expo-notifications` functionality is not fully supported in Expo Go",
+]);
 
 export default function App() {
   const app = useCustomerApp();

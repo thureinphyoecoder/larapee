@@ -52,6 +52,11 @@ export function configureNotificationHandler(): void {
 }
 
 export async function ensureNotificationPermission(): Promise<boolean> {
+  if (isExpoGoRuntime()) {
+    // Expo Go (SDK53+) remote notifications are unsupported.
+    return false;
+  }
+
   const Notifications = getNotificationModule();
   if (!Notifications) {
     return false;
