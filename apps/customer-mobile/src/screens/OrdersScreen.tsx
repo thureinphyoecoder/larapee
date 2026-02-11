@@ -53,7 +53,6 @@ export function OrdersScreen({ locale, dark, orders, refreshing, onOpenOrder, on
                     dark={dark}
                     locale={locale}
                     onPress={() => onOpenOrder(order.id)}
-                    trackLabel={tr(locale, "trackOrder")}
                     viewLabel={tr(locale, "viewDetails")}
                   />
                 ))}

@@ -8,11 +8,10 @@ type Props = {
   dark: boolean;
   locale: Locale;
   onPress: () => void;
-  trackLabel: string;
   viewLabel: string;
 };
 
-export function OrderCard({ order, dark, locale, onPress, trackLabel, viewLabel }: Props) {
+export function OrderCard({ order, dark, locale, onPress, viewLabel }: Props) {
   const normalized = String(order.status || "").toLowerCase();
   const accentClass =
     normalized === "delivered"
@@ -44,12 +43,9 @@ export function OrderCard({ order, dark, locale, onPress, trackLabel, viewLabel 
         <Text className={`text-base font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{formatMoney(order.total_amount)}</Text>
       </View>
 
-      <View className="mt-3 flex-row gap-2">
-        <Pressable onPress={onPress} className={`flex-1 rounded-lg px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
+      <View className="mt-3">
+        <Pressable onPress={onPress} className={`rounded-lg px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
           <Text className={`text-center text-xs font-black ${dark ? "text-slate-100" : "text-slate-700"}`}>{viewLabel}</Text>
-        </Pressable>
-        <Pressable onPress={onPress} className="flex-1 rounded-lg bg-orange-600 px-3 py-2">
-          <Text className="text-center text-xs font-black text-white">{trackLabel}</Text>
         </Pressable>
       </View>
     </Pressable>

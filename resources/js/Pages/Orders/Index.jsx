@@ -106,9 +106,6 @@ export default function Index({ orders }) {
                                             <Link href={route("orders.show", order.id)} className="rounded-lg bg-orange-600 px-3 py-1.5 font-semibold text-white hover:bg-orange-700">
                                                 View
                                             </Link>
-                                            <Link href={`${route("orders.show", order.id)}#tracking`} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100">
-                                                Track Order
-                                            </Link>
 
                                             {order.status === "pending" && (
                                                 <button onClick={() => cancelOrder(order.id)} className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-100">
