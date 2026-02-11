@@ -61,7 +61,7 @@ class CartController extends Controller
 
         if ($existingShopIds->isNotEmpty() && ! $existingShopIds->contains($variant->product?->shop_id)) {
             throw ValidationException::withMessages([
-                'variant_id' => 'Please add items from one shop at a time.',
+                'variant_id' => 'Your cart contains items from different shops. Please checkout one shop at a time.',
             ]);
         }
 

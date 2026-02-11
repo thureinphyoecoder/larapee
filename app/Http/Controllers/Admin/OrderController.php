@@ -186,7 +186,7 @@ class OrderController extends Controller
             ->values();
         if ($shopIds->count() !== 1) {
             throw ValidationException::withMessages([
-                'system_error' => 'Please checkout items from one shop at a time.',
+                'system_error' => 'Your cart contains items from different shops. Please checkout one shop at a time.',
             ]);
         }
 
