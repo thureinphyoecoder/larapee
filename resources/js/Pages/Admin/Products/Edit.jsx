@@ -52,6 +52,7 @@ export default function Edit({ product, categories }) {
         sku: product.sku || "",
         category_id: product.category_id || "",
         description: product.description || "",
+        is_hero: Boolean(product.is_hero),
         image: null,
         variants: existingVariants,
     });
@@ -171,6 +172,15 @@ export default function Edit({ product, categories }) {
                             />
                         )}
                     </div>
+
+                    <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                        <input
+                            type="checkbox"
+                            checked={Boolean(data.is_hero)}
+                            onChange={(e) => setData("is_hero", e.target.checked)}
+                        />
+                        Use as Hero Product
+                    </label>
 
                     <div className="rounded-xl border border-slate-200 p-4 bg-slate-50 space-y-4">
                         <div className="flex items-center justify-between">

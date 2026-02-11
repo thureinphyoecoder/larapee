@@ -48,6 +48,7 @@ class AdminProductController extends Controller
             'sku' => 'nullable|string|max:64|unique:products,sku',
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
+            'is_hero' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'variants' => 'required|array|min:1|max:20',
             'variants.*.id' => 'nullable|integer',
@@ -81,6 +82,7 @@ class AdminProductController extends Controller
                 'shop_id' => $user->shop_id ?: 1,
                 'category_id' => $validated['category_id'],
                 'description' => $validated['description'] ?? null,
+                'is_hero' => (bool) ($validated['is_hero'] ?? false),
                 'sku' => $productSku,
                 'price' => min(array_column($variants, 'price')),
                 'stock_level' => array_sum(array_column($variants, 'stock_level')),
@@ -134,6 +136,7 @@ class AdminProductController extends Controller
             'sku' => 'nullable|string|max:64|unique:products,sku,' . $product->id,
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
+            'is_hero' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'variants' => 'required|array|min:1|max:20',
             'variants.*.id' => 'nullable|integer|exists:product_variants,id',
@@ -166,6 +169,7 @@ class AdminProductController extends Controller
                 'name' => $validated['name'],
                 'category_id' => $validated['category_id'],
                 'description' => $validated['description'] ?? null,
+                'is_hero' => (bool) ($validated['is_hero'] ?? false),
                 'sku' => $baseSku,
             ];
 
@@ -201,6 +205,21 @@ class AdminProductController extends Controller
         $product->delete();
 
         return back()->with('success', 'Product deleted.');
+    }
+
+    public function toggleHero(Request $request, Product $product)
+    {
+        $this->authorizeProductAccess($request->user(), $product);
+
+        $validated = $request->validate([
+            'is_hero' => 'required|boolean',
+        ]);
+
+        $product->update([
+            'is_hero' => (bool) $validated['is_hero'],
+        ]);
+
+        return back()->with('success', $validated['is_hero'] ? 'Product set as hero.' : 'Product removed from hero.');
     }
 
     private function normalizeVariants(array $variants): array

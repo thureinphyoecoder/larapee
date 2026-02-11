@@ -31,6 +31,7 @@ class ProductResource extends JsonResource
             'price' => $effectivePrice,
             'base_price' => $basePrice,
             'has_discount' => $effectivePrice < $basePrice,
+            'is_hero' => (bool) ($this->is_hero ?? false),
             'sold_count' => (int) ($this->sold_count ?? 0),
             'stock_level' => (int) $this->stock_level,
             'description' => $this->description,

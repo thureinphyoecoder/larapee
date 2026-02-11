@@ -50,6 +50,7 @@ export default function Create({ categories }) {
         sku: "",
         category_id: "",
         description: "",
+        is_hero: false,
         image: null,
         variants: defaultVariants,
     });
@@ -164,6 +165,15 @@ export default function Create({ categories }) {
                         />
                         {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image}</p>}
                     </div>
+
+                    <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                        <input
+                            type="checkbox"
+                            checked={Boolean(data.is_hero)}
+                            onChange={(e) => setData("is_hero", e.target.checked)}
+                        />
+                        Use as Hero Product
+                    </label>
 
                     <div className="rounded-xl border border-slate-200 p-4 bg-slate-50 space-y-4">
                         <div className="flex items-center justify-between">

@@ -35,6 +35,7 @@ class CatalogController extends Controller
                 'category:id,name,slug',
                 'activeVariants' => fn ($q) => $q->orderBy('id'),
             ])
+            ->orderByDesc('is_hero')
             ->latest('id');
 
         $query->when($request->filled('q'), function ($q) use ($request) {

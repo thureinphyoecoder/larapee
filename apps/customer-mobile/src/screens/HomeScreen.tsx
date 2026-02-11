@@ -1,6 +1,6 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Image, Modal, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { CategoryPills } from "../components/CategoryPills";
 import { ProductCard } from "../components/ProductCard";
 import { SearchBar } from "../components/SearchBar";
@@ -44,10 +44,26 @@ export function HomeScreen({
   notificationsUnreadCount,
   onOpenNotifications,
 }: Props) {
-  const sliderItems = useMemo(() => products.slice(0, 4), [products]);
+  const sliderItems = useMemo(() => {
+    const heroProducts = products.filter((product) => Boolean(product?.is_hero));
+    const regularProducts = products.filter((product) => !Boolean(product?.is_hero));
+    return [...heroProducts, ...regularProducts].slice(0, 4);
+  }, [products]);
+  const flashSaleProducts = useMemo(
+    () =>
+      products.filter((product) => {
+        const variants = product.active_variants?.length ? product.active_variants : product.variants || [];
+        const hasFlashSale = variants.some((variant) => variant.promotion?.type === "flash_sale");
+        const hasDiscount = Number(product.base_price ?? product.price ?? 0) > Number(product.price ?? 0);
+        return hasFlashSale && hasDiscount;
+      }),
+    [products],
+  );
   const [activeSlide, setActiveSlide] = useState(0);
   const [heroWidth, setHeroWidth] = useState(0);
+  const [flashModalVisible, setFlashModalVisible] = useState(false);
   const heroScrollRef = useRef<ScrollView | null>(null);
+  const shownFlashKeyRef = useRef<string | null>(null);
   const slideBackgrounds = [
     "bg-cyan-700",
     "bg-indigo-700",
@@ -72,6 +88,22 @@ export function HomeScreen({
       setActiveSlide(0);
     }
   }, [activeSlide, sliderItems.length]);
+
+  useEffect(() => {
+    if (!flashSaleProducts.length) {
+      setFlashModalVisible(false);
+      shownFlashKeyRef.current = null;
+      return;
+    }
+
+    const flashKey = flashSaleProducts.map((product) => product.id).join("-");
+    if (shownFlashKeyRef.current === flashKey) {
+      return;
+    }
+
+    shownFlashKeyRef.current = flashKey;
+    setFlashModalVisible(true);
+  }, [flashSaleProducts]);
 
   return (
     <ScrollView
@@ -163,6 +195,45 @@ export function HomeScreen({
         <SearchBar value={query} onChange={onQueryChange} placeholder={tr(locale, "searchPlaceholder")} dark={dark} />
       </View>
 
+      {flashSaleProducts.length ? (
+        <View className={`mt-4 overflow-hidden rounded-3xl border ${dark ? "border-rose-700 bg-rose-950/40" : "border-rose-200 bg-rose-50"}`}>
+          <View className="flex-row items-center justify-between px-4 pt-4">
+            <Text className={`text-base font-black ${dark ? "text-rose-200" : "text-rose-700"}`}>{tr(locale, "flashSale")}</Text>
+            <Text className={`rounded-full px-2 py-1 text-[10px] font-black uppercase ${dark ? "bg-rose-700 text-white" : "bg-rose-600 text-white"}`}>
+              Live
+            </Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4 pb-4 pt-3">
+            {flashSaleProducts.map((product) => (
+              <Pressable
+                key={`flash-${product.id}`}
+                onPress={() => onOpenProduct(product)}
+                className={`mr-3 w-44 overflow-hidden rounded-2xl border ${dark ? "border-rose-700 bg-slate-900" : "border-rose-200 bg-white"}`}
+              >
+                {product.image_url ? (
+                  <Image source={{ uri: product.image_url }} className="h-24 w-full" resizeMode="cover" />
+                ) : (
+                  <View className={`h-24 w-full ${dark ? "bg-rose-900/50" : "bg-rose-100"}`} />
+                )}
+                <View className="p-3">
+                  <Text numberOfLines={1} className={`text-xs font-bold ${dark ? "text-slate-100" : "text-slate-800"}`}>
+                    {product.name}
+                  </Text>
+                  <Text className={`mt-1 text-sm font-black ${dark ? "text-rose-300" : "text-rose-600"}`}>
+                    {Number(product.price || 0).toLocaleString()} MMK
+                  </Text>
+                  {Number(product.base_price || 0) > Number(product.price || 0) ? (
+                    <Text className={`text-[11px] line-through ${dark ? "text-slate-500" : "text-slate-400"}`}>
+                      {Number(product.base_price || 0).toLocaleString()} MMK
+                    </Text>
+                  ) : null}
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <View className={`mt-4 rounded-3xl border p-3 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <Text className={`mb-2 text-sm font-black ${dark ? "text-slate-200" : "text-slate-700"}`}>{tr(locale, "categories")}</Text>
         <CategoryPills
@@ -210,6 +281,40 @@ export function HomeScreen({
           </View>
         )}
       </View>
+
+      <Modal visible={flashModalVisible} transparent animationType="fade" onRequestClose={() => setFlashModalVisible(false)}>
+        <View className="flex-1 items-center justify-center bg-slate-900/60 px-6">
+          <View className={`w-full rounded-3xl border p-5 ${dark ? "border-rose-700 bg-slate-900" : "border-rose-200 bg-white"}`}>
+            <View className="rounded-2xl bg-rose-600 px-4 py-3">
+              <Text className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white">Flash Sale</Text>
+              <Text className="mt-1 text-xl font-black text-white">Limited-time deals are live</Text>
+            </View>
+
+            <Text className={`mt-4 text-sm ${dark ? "text-slate-300" : "text-slate-600"}`}>
+              {flashSaleProducts.length} product(s) now have active flash discounts.
+            </Text>
+
+            <View className="mt-4 flex-row gap-3">
+              <Pressable
+                onPress={() => setFlashModalVisible(false)}
+                className={`flex-1 rounded-xl border px-4 py-2 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}
+              >
+                <Text className={`text-center text-sm font-bold ${dark ? "text-slate-200" : "text-slate-700"}`}>Later</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setFlashModalVisible(false);
+                  const topFlash = flashSaleProducts[0];
+                  if (topFlash) onOpenProduct(topFlash);
+                }}
+                className="flex-1 rounded-xl bg-rose-600 px-4 py-2"
+              >
+                <Text className="text-center text-sm font-black text-white">Shop Now</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }

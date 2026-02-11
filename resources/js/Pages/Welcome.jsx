@@ -1,4 +1,4 @@
-import { Link, usePage } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import LocaleSwitcher from "@/Components/LocaleSwitcher";
 
@@ -37,11 +37,14 @@ export default function Welcome({
     );
     const [activeSlide, setActiveSlide] = useState(0);
     const [pauseSlider, setPauseSlider] = useState(false);
+    const [showFlashModal, setShowFlashModal] = useState(false);
     const touchStartX = useRef(null);
     const cartCount = Number(auth?.cart_count || 0);
 
     const sliderItems = useMemo(() => {
-        const top = products.slice(0, 4);
+        const heroProducts = products.filter((product) => Boolean(product?.is_hero));
+        const regularProducts = products.filter((product) => !Boolean(product?.is_hero));
+        const top = [...heroProducts, ...regularProducts].slice(0, 4);
         if (top.length) return top;
         return [
             { id: "s1", name: "Smart Electronics", brand: { name: "Tech" }, slug: null },
@@ -107,6 +110,17 @@ export default function Welcome({
         });
     }, [products, search, activeCategory]);
 
+    const flashSaleProducts = useMemo(
+        () =>
+            products
+                .filter((product) => {
+                    const price = priceMeta(product);
+                    return price.flashSale && price.hasDiscount;
+                })
+                .slice(0, 10),
+        [products],
+    );
+
     const aiRecommendations = useMemo(() => {
         const pivot = activeItem || products[0];
         if (!pivot) return [];
@@ -136,6 +150,26 @@ export default function Welcome({
             .slice(0, 8)
             .map((entry) => entry.item);
     }, [activeItem, products]);
+
+    useEffect(() => {
+        if (flashSaleProducts.length === 0) {
+            setShowFlashModal(false);
+            return;
+        }
+
+        if (typeof window === "undefined") {
+            setShowFlashModal(true);
+            return;
+        }
+
+        const key = `flash-sale:${flashSaleProducts.map((item) => item.id).join("-")}`;
+        if (window.sessionStorage.getItem(key) === "1") {
+            return;
+        }
+
+        window.sessionStorage.setItem(key, "1");
+        setShowFlashModal(true);
+    }, [flashSaleProducts]);
 
     const getProductImage = (product) => {
         if (product?.image) return product.image;
@@ -356,6 +390,53 @@ export default function Welcome({
                     </div>
                 </section>
 
+                {flashSaleProducts.length > 0 && (
+                    <section className="space-y-4 rounded-3xl border border-rose-200 bg-gradient-to-r from-rose-50 via-orange-50 to-amber-50 p-4 shadow-sm sm:p-6">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-black text-slate-900 sm:text-2xl">Flash Sale</h2>
+                            <p className="rounded-full bg-rose-600 px-3 py-1 text-xs font-black uppercase tracking-wider text-white">
+                                Limited Time
+                            </p>
+                        </div>
+                        <p className="text-sm text-slate-600">
+                            Active discounts are live now. Open product details to buy at sale price.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                            {flashSaleProducts.map((product) => {
+                                const price = priceMeta(product);
+
+                                return (
+                                    <Link
+                                        href={route("product.show", { slug: product.slug })}
+                                        key={`flash-${product.id}`}
+                                        className="group overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-rose-300 hover:shadow-lg"
+                                    >
+                                        <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-rose-100 to-orange-100">
+                                            <img
+                                                src={getProductImage(product)}
+                                                alt={product.name}
+                                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                                loading="lazy"
+                                            />
+                                            <div className="absolute left-2 top-2 rounded-full bg-rose-600 px-2 py-1 text-[10px] font-extrabold text-white">
+                                                Flash Sale
+                                            </div>
+                                        </div>
+                                        <div className="p-3">
+                                            <h3 className="min-h-[40px] text-sm font-bold leading-tight text-slate-800">{product.name}</h3>
+                                            <div className="mt-2 flex items-end gap-2">
+                                                <p className="text-sm font-black text-rose-600">Ks {price.effective.toLocaleString()}</p>
+                                                <p className="text-xs text-slate-400 line-through">{price.base.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
+
                 <section className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-black text-slate-900 sm:text-2xl">{t("discover_products", "Discover Products")}</h2>
@@ -460,6 +541,44 @@ export default function Welcome({
                     </section>
                 )}
             </div>
+
+            {showFlashModal && flashSaleProducts.length > 0 && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/55 px-4">
+                    <div className="w-full max-w-md rounded-3xl border border-rose-200 bg-white p-6 shadow-2xl">
+                        <div className="rounded-2xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-3 text-white">
+                            <p className="text-[11px] font-extrabold uppercase tracking-[0.2em]">Flash Sale</p>
+                            <h3 className="mt-1 text-xl font-black">Deals are live now</h3>
+                        </div>
+
+                        <p className="mt-4 text-sm text-slate-600">
+                            {flashSaleProducts.length} product(s) are currently on flash sale.
+                        </p>
+
+                        <div className="mt-4 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowFlashModal(false)}
+                                className="flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                            >
+                                Later
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowFlashModal(false);
+                                    const target = flashSaleProducts[0];
+                                    if (target?.slug) {
+                                        router.visit(route("product.show", { slug: target.slug }));
+                                    }
+                                }}
+                                className="flex-1 rounded-xl bg-rose-600 px-4 py-2 text-sm font-extrabold text-white transition hover:bg-rose-700"
+                            >
+                                Shop Flash Sale
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

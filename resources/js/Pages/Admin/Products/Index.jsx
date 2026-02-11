@@ -35,6 +35,7 @@ export default function Index({ products }) {
                                 <th className="px-6 py-4 font-bold">Category</th>
                                 <th className="px-6 py-4 font-bold">Shop</th>
                                 <th className="px-6 py-4 font-bold">Variants</th>
+                                <th className="px-6 py-4 font-bold">Hero</th>
                                 <th className="px-6 py-4 font-bold">Price Range</th>
                                 <th className="px-6 py-4 font-bold">Total Stock</th>
                                 <th className="px-6 py-4 font-bold">Stock Status</th>
@@ -86,6 +87,25 @@ export default function Index({ products }) {
                                                     </div>
                                                 );
                                             })()}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    router.patch(
+                                                        route("admin.products.toggleHero", product.id),
+                                                        { is_hero: !Boolean(product.is_hero) },
+                                                        { preserveScroll: true },
+                                                    )
+                                                }
+                                                className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide transition ${
+                                                    product.is_hero
+                                                        ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                }`}
+                                            >
+                                                {product.is_hero ? "Hero On" : "Hero Off"}
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 text-sm font-bold text-slate-900">
                                             {(() => {
@@ -191,7 +211,7 @@ export default function Index({ products }) {
                             ) : (
                                 <tr>
                                     <td
-                                        colSpan="10"
+                                        colSpan="11"
                                         className="p-12 text-center text-slate-400 italic"
                                     >
                                         No products yet.

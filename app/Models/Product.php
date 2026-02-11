@@ -19,6 +19,11 @@ class Product extends Model
         'stock_level',
         'description',
         'image_path',
+        'is_hero',
+    ];
+
+    protected $casts = [
+        'is_hero' => 'boolean',
     ];
 
     // ၁။ ဆိုင်နဲ့ချိတ်မယ် (ပစ္စည်းတစ်ခုက ဆိုင်တစ်ဆိုင်မှာပဲ ရှိမယ်)

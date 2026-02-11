@@ -96,6 +96,7 @@ export function useCustomerApp() {
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const [notificationsUnreadCount, setNotificationsUnreadCount] = useState(0);
   const orderSnapshotRef = useRef<Map<number, string>>(new Map());
+  const flashSaleSnapshotRef = useRef("");
 
   const dark = theme === "dark";
 
@@ -108,8 +109,27 @@ export function useCustomerApp() {
 
       setCategories(nextCategories);
       setProducts(nextProducts);
+
+      const activeFlashIds = nextProducts
+        .filter((product) => {
+          const variants = product.active_variants?.length ? product.active_variants : product.variants || [];
+          const hasFlashSale = variants.some((variant) => variant.promotion?.type === "flash_sale");
+          const hasDiscount = Number(product.base_price ?? product.price ?? 0) > Number(product.price ?? 0);
+          return hasFlashSale && hasDiscount;
+        })
+        .map((product) => product.id)
+        .sort((a, b) => a - b);
+
+      const snapshot = activeFlashIds.join(",");
+      const previousSnapshot = flashSaleSnapshotRef.current;
+      flashSaleSnapshotRef.current = snapshot;
+
+      if (session?.token && previousSnapshot && snapshot && previousSnapshot !== snapshot) {
+        setNotificationsUnreadCount((current) => current + 1);
+        Alert.alert("Flash Sale", `${activeFlashIds.length} flash sale deal(s) are live now.`);
+      }
     },
-    [],
+    [session?.token],
   );
 
   const hydratePrivateData = useCallback(async (token: string) => {
@@ -1024,6 +1044,7 @@ export function useCustomerApp() {
     setCheckoutQrData("");
     setNotificationsUnreadCount(0);
     orderSnapshotRef.current.clear();
+    flashSaleSnapshotRef.current = "";
   }, [session?.token]);
 
   const toggleLocale = useCallback(async () => {

@@ -129,6 +129,7 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery|accoun
         Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
         Route::delete('/products/{product}', [AdminProductController::class, 'destroy'])->name('products.destroy');
+        Route::patch('/products/{product}/hero', [AdminProductController::class, 'toggleHero'])->name('products.toggleHero');
         Route::post('/orders/{order}/verify-slip', [OrderController::class, 'verifySlip'])->name('orders.verifySlip');
         Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
         Route::patch('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');

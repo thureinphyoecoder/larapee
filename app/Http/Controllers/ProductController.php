@@ -17,7 +17,7 @@ class ProductController extends Controller
             'variants' => fn ($query) => $query->where('is_active', true),
             'brand',
             'shop',
-        ])->latest()->get();
+        ])->orderByDesc('is_hero')->latest()->get();
 
         return Inertia::render('Welcome', [
             'products' => $products->map(fn (Product $product) => $this->serializeStorefrontProduct($product))->values(),
@@ -173,6 +173,7 @@ class ProductController extends Controller
             'price' => $effectivePrice,
             'base_price' => $basePrice,
             'has_discount' => $effectivePrice < $basePrice,
+            'is_hero' => (bool) ($product->is_hero ?? false),
             'stock_level' => (int) $product->stock_level,
             'description' => $product->description,
             'image_path' => $product->image_path,
