@@ -74,6 +74,7 @@ export type Product = {
   sold_count?: number;
   stock_level?: number;
   image_url?: string | null;
+  image_urls?: string[];
   description?: string | null;
   brand?: { id: number; name: string } | null;
   shop?: { id: number; name: string } | null;

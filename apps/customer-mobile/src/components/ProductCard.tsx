@@ -39,6 +39,12 @@ export function ProductCard({
   const effectivePrice = Number(firstVariant?.effective_price ?? product.price ?? firstVariant?.price ?? 0);
   const basePrice = Number(firstVariant?.base_price ?? product.base_price ?? firstVariant?.price ?? effectivePrice);
   const hasDiscount = Boolean(product.has_discount ?? effectivePrice < basePrice);
+  const discountPercent =
+    Number(firstVariant?.discount_percent ?? 0) > 0
+      ? Number(firstVariant?.discount_percent ?? 0)
+      : basePrice > 0
+        ? Math.max(0, ((basePrice - effectivePrice) / basePrice) * 100)
+        : 0;
   const stockLevel = Number(firstVariant?.stock_level ?? product.stock_level ?? 0);
   const inStock = stockLevel > 0;
   const promotionType = String(firstVariant?.promotion?.type || "").toLowerCase();
@@ -64,7 +70,9 @@ export function ProductCard({
 
           {hasDiscount ? (
             <View className="absolute right-2 top-2 rounded-full bg-rose-500 px-2 py-1">
-              <Text className="text-[10px] font-black text-white">{promotionLabel}</Text>
+              <Text className="text-[10px] font-black text-white">
+                {discountPercent > 0 ? `-${Math.round(discountPercent)}%` : promotionLabel}
+              </Text>
             </View>
           ) : null}
         </View>

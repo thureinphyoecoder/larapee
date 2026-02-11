@@ -24,6 +24,12 @@ type Props = {
 };
 
 const VARIANT_SWATCHES = ["#f97316", "#0ea5e9", "#22c55e", "#a855f7", "#ef4444", "#eab308", "#14b8a6", "#6366f1"];
+const FALLBACK_PALETTES: Array<[string, string]> = [
+  ["#f97316", "#fb7185"],
+  ["#0ea5e9", "#14b8a6"],
+  ["#8b5cf6", "#d946ef"],
+  ["#10b981", "#84cc16"],
+];
 
 function hashLabel(input: string) {
   let hash = 0;
@@ -32,6 +38,30 @@ function hashLabel(input: string) {
     hash |= 0;
   }
   return Math.abs(hash);
+}
+
+function toSvgPreview(label: string, primary: string, secondary: string) {
+  const safeLabel = (label || "P").slice(0, 1).toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${primary}" />
+        <stop offset="100%" stop-color="${secondary}" />
+      </linearGradient>
+    </defs>
+    <rect width="800" height="800" fill="url(#g)" />
+    <rect x="180" y="180" width="440" height="280" rx="34" fill="#ffffff33" />
+    <circle cx="260" cy="560" r="82" fill="#ffffff77" />
+    <circle cx="560" cy="580" r="66" fill="#ffffff55" />
+    <text x="400" y="445" text-anchor="middle" font-size="180" font-family="Arial" fill="#ffffffcc" font-weight="700">${safeLabel}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function buildFallbackGallery(product: Product | null): string[] {
+  if (!product) return [];
+  const label = product.name || "Product";
+  return FALLBACK_PALETTES.map(([primary, secondary]) => toSvgPreview(label, primary, secondary));
 }
 
 export function ProductDetailScreen({
@@ -62,18 +92,26 @@ export function ProductDetailScreen({
     [selectedVariantId, variants],
   );
   const galleryImages = useMemo(() => {
-    const dynamic = [product?.image_url].filter((item): item is string => Boolean(item));
-    const fallback = [
-      `https://placehold.co/600x600/F59E0B/FFFFFF?text=${encodeURIComponent(product?.name || "Product")}`,
-      "https://placehold.co/600x600/FB923C/FFFFFF?text=Detail+1",
-      "https://placehold.co/600x600/F97316/FFFFFF?text=Detail+2",
-    ];
-    return [...dynamic, ...fallback];
-  }, [product?.image_url, product?.name]);
+    const dynamic = [product?.image_url, ...(product?.image_urls || [])].filter((item): item is string => Boolean(item));
+    const generated = buildFallbackGallery(product);
+    const seen = new Set<string>();
+    const merged = [...dynamic, ...generated].filter((item) => {
+      if (seen.has(item)) return false;
+      seen.add(item);
+      return true;
+    });
+    return merged;
+  }, [product]);
   const firstVariantId = variants[0]?.id ?? null;
   const effectivePrice = Number(selectedVariant?.effective_price ?? product?.price ?? selectedVariant?.price ?? 0);
   const basePrice = Number(selectedVariant?.base_price ?? product?.base_price ?? selectedVariant?.price ?? effectivePrice);
   const hasDiscount = Boolean(product?.has_discount ?? effectivePrice < basePrice);
+  const discountPercent =
+    Number(selectedVariant?.discount_percent ?? 0) > 0
+      ? Number(selectedVariant?.discount_percent ?? 0)
+      : basePrice > 0
+        ? Math.max(0, ((basePrice - effectivePrice) / basePrice) * 100)
+        : 0;
   const stockLevel = Number(selectedVariant?.stock_level ?? product?.stock_level ?? 0);
   const totalPrice = effectivePrice * Math.max(1, qty);
   const ratingAverage = Number(product?.rating_summary?.average || 0);
@@ -194,6 +232,16 @@ export function ProductDetailScreen({
                 <Text className={`text-sm line-through ${dark ? "text-slate-500" : "text-slate-400"}`}>{formatMoney(basePrice * Math.max(1, qty))}</Text>
               ) : null}
             </View>
+            {hasDiscount ? (
+              <View className="mt-2 flex-row items-center gap-2">
+                <View className="rounded-full bg-rose-500 px-2 py-1">
+                  <Text className="text-[10px] font-black text-white">{`-${Math.max(1, Math.round(discountPercent))}%`}</Text>
+                </View>
+                <Text className={`text-[11px] font-semibold ${dark ? "text-slate-300" : "text-slate-600"}`}>
+                  {`Save ${formatMoney((basePrice - effectivePrice) * Math.max(1, qty))}`}
+                </Text>
+              </View>
+            ) : null}
 
             <View className="mt-3 flex-row items-center justify-between">
               <Text className={`text-xs font-semibold ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "inStock")}</Text>
