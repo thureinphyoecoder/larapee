@@ -38,6 +38,14 @@ export function OrderDetailScreen({
   const [actionType, setActionType] = useState<ActionType>("none");
   const [reason, setReason] = useState("");
   const status = String(order?.status || "").toLowerCase();
+  const trackingLevel =
+    status === "delivered" ? 4 : status === "shipped" ? 3 : status === "confirmed" ? 1 : 0;
+  const eta = useMemo(() => {
+    const base = order?.created_at ? new Date(order.created_at) : new Date();
+    if (Number.isNaN(base.getTime())) return "-";
+    base.setDate(base.getDate() + 3);
+    return base.toLocaleDateString();
+  }, [order?.created_at]);
 
   const canCancel = status === "pending";
   const canRefund = (status === "confirmed" || status === "shipped") && Boolean(order?.payment_slip_url);
@@ -202,6 +210,13 @@ export function OrderDetailScreen({
 
       <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "trackOrder")}</Text>
+        <View className="mt-3 flex-row items-center justify-between">
+          <Text className={`text-xs font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>Order ID: #{order?.id || "-"}</Text>
+          <Text className={`text-xs font-bold ${dark ? "text-emerald-300" : "text-emerald-600"}`}>ETA: {eta}</Text>
+        </View>
+        <View className="mt-4">
+          <TrackingTimeline dark={dark} level={trackingLevel} />
+        </View>
         <View className="mt-3 gap-2">
           <InfoRow dark={dark} label={tr(locale, "statusLabel")} value={status === "delivered" ? "Delivered" : status === "shipped" ? "On the way" : "Preparing"} />
           <InfoRow
@@ -279,6 +294,43 @@ export function OrderDetailScreen({
       {actionMessage ? <Text className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{actionMessage}</Text> : null}
       {busy ? <Text className={`mt-4 text-center text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Loading...</Text> : null}
     </ScrollView>
+  );
+}
+
+function TrackingTimeline({ dark, level }: { dark: boolean; level: number }) {
+  const steps = [
+    { label: "Confirmed", icon: "checkmark-done" as const },
+    { label: "Shipped", icon: "cube-outline" as const },
+    { label: "Out for Delivery", icon: "car-outline" as const },
+    { label: "Delivered", icon: "home-outline" as const },
+  ];
+
+  return (
+    <View>
+      <View className="flex-row items-center">
+        {steps.map((step, index) => {
+          const done = level > index;
+          const lineDone = level > index + 1;
+          return (
+            <View key={step.label} className="flex-1 flex-row items-center">
+              <View className={`h-7 w-7 items-center justify-center rounded-full ${done ? "bg-emerald-500" : dark ? "bg-slate-700" : "bg-slate-300"}`}>
+                <Ionicons name={step.icon} size={13} color="#fff" />
+              </View>
+              {index < steps.length - 1 ? (
+                <View className={`h-1 flex-1 ${lineDone ? "bg-emerald-500" : dark ? "bg-slate-700" : "bg-slate-300"}`} />
+              ) : null}
+            </View>
+          );
+        })}
+      </View>
+      <View className="mt-2 flex-row">
+        {steps.map((step) => (
+          <Text key={`label-${step.label}`} className={`flex-1 text-center text-[10px] font-semibold ${dark ? "text-slate-300" : "text-slate-600"}`}>
+            {step.label}
+          </Text>
+        ))}
+      </View>
+    </View>
   );
 }
 

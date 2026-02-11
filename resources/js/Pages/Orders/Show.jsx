@@ -90,6 +90,20 @@ export default function Show({ order }) {
     };
 
     const status = (liveOrder?.status || order.status || "pending").toString().toLowerCase();
+    const trackingLevel =
+        status === "delivered" ? 4 : status === "shipped" ? 3 : status === "confirmed" ? 1 : 0;
+    const eta = (() => {
+        const base = order?.created_at ? new Date(order.created_at) : new Date();
+        if (Number.isNaN(base.getTime())) return "-";
+        base.setDate(base.getDate() + 3);
+        return base.toLocaleDateString();
+    })();
+    const trackingSteps = [
+        { key: "confirmed", label: "Order Confirmed", icon: "✓" },
+        { key: "shipped", label: "Order Shipped", icon: "📦" },
+        { key: "out", label: "Out for Delivery", icon: "🚚" },
+        { key: "delivered", label: "Order Delivered", icon: "🏠" },
+    ];
 
     return (
         <AuthenticatedLayout>
@@ -188,6 +202,38 @@ export default function Show({ order }) {
                     <h4 className="font-bold text-gray-700 mb-3 uppercase text-xs tracking-wider">
                         Order Tracking
                     </h4>
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-slate-50 px-4 py-3">
+                        <p className="text-sm font-semibold text-slate-700">Order ID: #{order.id}</p>
+                        <p className="text-sm font-semibold text-emerald-600">Expected Arrival: {eta}</p>
+                        <p className="text-sm font-semibold text-orange-600">Tracking ID: {order.invoice_no || `TRK-${order.id}`}</p>
+                    </div>
+
+                    <div className="mb-6">
+                        <div className="flex items-center">
+                            {trackingSteps.map((step, idx) => {
+                                const done = trackingLevel > idx;
+                                const lineDone = trackingLevel > idx + 1;
+                                return (
+                                    <React.Fragment key={step.key}>
+                                        <div className={`h-8 w-8 shrink-0 rounded-full text-white flex items-center justify-center text-sm font-bold ${done ? "bg-emerald-500" : "bg-slate-400"}`}>
+                                            {step.icon}
+                                        </div>
+                                        {idx < trackingSteps.length - 1 && (
+                                            <div className={`h-1 flex-1 ${lineDone ? "bg-emerald-500" : "bg-slate-300"}`} />
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </div>
+                        <div className="mt-2 grid grid-cols-4 gap-2">
+                            {trackingSteps.map((step) => (
+                                <p key={`${step.key}-label`} className="text-center text-[11px] font-semibold text-slate-600">
+                                    {step.label}
+                                </p>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="md:col-span-2 bg-slate-50 rounded-xl border p-4">
                             {(status === "shipped" || status === "delivered") && liveOrder?.delivery_lat && liveOrder?.delivery_lng ? (
