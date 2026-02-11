@@ -129,6 +129,22 @@ export default function Checkout({ cartItems, user }) {
             );
         };
 
+        const promptThenRequest = () => {
+            Swal.fire({
+                title: "Location Access",
+                text: "အနီးစပ်ဆုံးလိပ်စာကို အလိုအလျောက်ဖြည့်ရန် Location ကို Allow လုပ်ပေးပါ။",
+                icon: "info",
+                showCancelButton: true,
+                confirmButtonText: "Allow Location",
+                cancelButtonText: "Cancel",
+                confirmButtonColor: "#0284c7",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    requestLocation();
+                }
+            });
+        };
+
         if (navigator.permissions?.query) {
             navigator.permissions
                 .query({ name: "geolocation" })
@@ -138,13 +154,17 @@ export default function Checkout({ cartItems, user }) {
                         setLocationMessage("");
                         return;
                     }
+                    if (permissionStatus.state === "prompt") {
+                        promptThenRequest();
+                        return;
+                    }
                     requestLocation();
                 })
-                .catch(() => requestLocation());
+                .catch(() => promptThenRequest());
             return;
         }
 
-        requestLocation();
+        promptThenRequest();
     };
 
     return (

@@ -5,6 +5,7 @@ import TextInput from "@/Components/TextInput";
 import { Transition } from "@headlessui/react";
 import { Link, useForm, usePage } from "@inertiajs/react";
 import { useState } from "react";
+import Swal from "sweetalert2";
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -104,6 +105,22 @@ export default function UpdateProfileInformation({
             );
         };
 
+        const promptThenRequest = () => {
+            Swal.fire({
+                title: "Location Access",
+                text: "Profile လိပ်စာကို အလိုအလျောက်ဖြည့်ရန် Location ကို Allow လုပ်ပေးပါ။",
+                icon: "info",
+                showCancelButton: true,
+                confirmButtonText: "Allow Location",
+                cancelButtonText: "Cancel",
+                confirmButtonColor: "#0284c7",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    requestLocation();
+                }
+            });
+        };
+
         if (navigator.permissions?.query) {
             navigator.permissions
                 .query({ name: "geolocation" })
@@ -113,13 +130,17 @@ export default function UpdateProfileInformation({
                         setLocationMessage("");
                         return;
                     }
+                    if (permissionStatus.state === "prompt") {
+                        promptThenRequest();
+                        return;
+                    }
                     requestLocation();
                 })
-                .catch(() => requestLocation());
+                .catch(() => promptThenRequest());
             return;
         }
 
-        requestLocation();
+        promptThenRequest();
     };
 
     return (
