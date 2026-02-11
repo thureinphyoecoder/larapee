@@ -21,7 +21,6 @@ type Props = {
   onSelectCategory: (id: number | null) => void;
   onAddToCart: (product: Product) => void;
   onOpenProduct: (product: Product) => void;
-  onOpenOrders: () => void;
   onOpenSupport: () => void;
   onRefresh: () => void;
 };
@@ -40,17 +39,12 @@ export function HomeScreen({
   onSelectCategory,
   onAddToCart,
   onOpenProduct,
-  onOpenOrders,
   onOpenSupport,
   onRefresh,
 }: Props) {
   const sliderItems = useMemo(() => products.slice(0, 4), [products]);
   const [activeSlide, setActiveSlide] = useState(0);
   const featuredProduct = sliderItems[activeSlide] ?? products[0] ?? null;
-  const inStockCount = useMemo(
-    () => products.filter((item) => (item.stock_level ?? 0) > 0).length,
-    [products],
-  );
   const [heroWidth, setHeroWidth] = useState(0);
   const heroScrollRef = useRef<ScrollView | null>(null);
   const slideBackgrounds = [
@@ -167,44 +161,6 @@ export function HomeScreen({
         ) : null}
       </View>
 
-      <View className="mt-4 flex-row flex-wrap justify-between gap-y-3">
-        <DashCard
-          dark={dark}
-          label={tr(locale, "discoverProducts")}
-          value={String(products.length)}
-          onPress={featuredProduct ? () => onOpenProduct(featuredProduct) : undefined}
-        />
-        <DashCard
-          dark={dark}
-          label={tr(locale, "categories")}
-          value={String(categories.length)}
-          onPress={() => onSelectCategory(null)}
-        />
-        <DashCard
-          dark={dark}
-          label={tr(locale, "inStock")}
-          value={String(inStockCount)}
-        />
-        <DashCard
-          dark={dark}
-          label={tr(locale, "tabsOrders")}
-          value="View"
-          onPress={onOpenOrders}
-        />
-      </View>
-
-      <View className="mt-4 flex-row flex-wrap justify-between gap-y-3">
-        <QuickCard
-          dark={dark}
-          title={tr(locale, "discoverProducts")}
-          action={tr(locale, "viewDetails")}
-          onPress={featuredProduct ? () => onOpenProduct(featuredProduct) : undefined}
-        />
-        <QuickCard dark={dark} title={tr(locale, "tabsOrders")} action={tr(locale, "ordersSubtitle")} onPress={onOpenOrders} />
-        <QuickCard dark={dark} title={tr(locale, "tabsSupport")} action={tr(locale, "supportSubtitle")} onPress={onOpenSupport} />
-        <QuickCard dark={dark} title={tr(locale, "tabsCart")} action={`${tr(locale, "pullToRefresh")}...`} />
-      </View>
-
       <View className="mt-5">
         <SearchBar value={query} onChange={onQueryChange} placeholder={tr(locale, "searchPlaceholder")} dark={dark} />
       </View>
@@ -266,51 +222,5 @@ function StatPill({ label, value }: { label: string; value: string }) {
       <Text className="text-[10px] font-bold uppercase tracking-wide text-white/75">{label}</Text>
       <Text className="text-lg font-black text-white">{value}</Text>
     </View>
-  );
-}
-
-function DashCard({
-  dark,
-  label,
-  value,
-  onPress,
-}: {
-  dark: boolean;
-  label: string;
-  value: string;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress}
-      className={`w-[48.7%] rounded-2xl border p-3 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
-    >
-      <Text className={`text-[10px] font-bold uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>{label}</Text>
-      <Text className={`mt-2 text-xl font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{value}</Text>
-    </Pressable>
-  );
-}
-
-function QuickCard({
-  dark,
-  title,
-  action,
-  onPress,
-}: {
-  dark: boolean;
-  title: string;
-  action: string;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress}
-      className={`w-[48.7%] rounded-2xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
-    >
-      <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{title}</Text>
-      <Text className={`mt-2 text-xs font-semibold ${dark ? "text-slate-400" : "text-slate-500"}`}>{action}</Text>
-    </Pressable>
   );
 }

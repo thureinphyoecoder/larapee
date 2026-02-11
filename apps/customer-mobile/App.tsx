@@ -195,7 +195,6 @@ export default function App() {
           onSelectCategory={app.catalog.setActiveCategoryId}
           onAddToCart={(product) => void app.catalog.addToCart(product)}
           onOpenProduct={(product) => void app.catalog.openProductDetail(product)}
-          onOpenOrders={() => app.setActiveTab("orders")}
           onOpenSupport={() => app.setActiveTab("support")}
           onRefresh={() => void app.refreshAll()}
         />
@@ -281,6 +280,8 @@ export default function App() {
           onSaveProfile={() => void app.account.saveProfile()}
           onToggleLocale={() => void app.account.toggleLocale()}
           onToggleTheme={() => void app.account.toggleTheme()}
+          onOpenOrders={() => app.setActiveTab("orders")}
+          onOpenSupport={() => app.setActiveTab("support")}
           onLogout={() => void app.account.logout()}
         />
       ) : null}

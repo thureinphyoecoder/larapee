@@ -39,6 +39,8 @@ type Props = {
   onSaveProfile: () => void;
   onToggleLocale: () => void;
   onToggleTheme: () => void;
+  onOpenOrders: () => void;
+  onOpenSupport: () => void;
   onLogout: () => void;
 };
 
@@ -74,6 +76,8 @@ export function AccountScreen({
   onSaveProfile,
   onToggleLocale,
   onToggleTheme,
+  onOpenOrders,
+  onOpenSupport,
   onLogout,
 }: Props) {
   const [addressFocused, setAddressFocused] = useState(false);
@@ -251,6 +255,18 @@ export function AccountScreen({
         <Pressable onPress={onSaveProfile} disabled={profileBusy} className={`mt-4 rounded-xl py-3 ${profileBusy ? "bg-slate-300" : "bg-orange-600"}`}>
           <Text className="text-center text-sm font-black text-white">{profileBusy ? tr(locale, "savingProfile") : tr(locale, "saveProfile")}</Text>
         </Pressable>
+      </View>
+
+      <View className={`mt-3 rounded-2xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+        <Text className={`text-sm font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>Quick Access</Text>
+        <View className="mt-3 flex-row gap-2">
+          <Pressable onPress={onOpenOrders} className={`flex-1 rounded-xl px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
+            <Text className={`text-center text-xs font-black ${dark ? "text-slate-100" : "text-slate-800"}`}>{tr(locale, "tabsOrders")}</Text>
+          </Pressable>
+          <Pressable onPress={onOpenSupport} className={`flex-1 rounded-xl px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
+            <Text className={`text-center text-xs font-black ${dark ? "text-slate-100" : "text-slate-800"}`}>{tr(locale, "tabsSupport")}</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View className={`mt-3 rounded-2xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
