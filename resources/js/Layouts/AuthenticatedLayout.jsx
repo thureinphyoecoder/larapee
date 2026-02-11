@@ -216,7 +216,6 @@ export default function AuthenticatedLayout({ header, children }) {
             { label: "🏠 Dashboard", route: "dashboard" },
             { label: "🧾 My Orders", route: "orders.index" },
             { label: "💬 Support Chat", route: "support.index" },
-            { label: "👤 Profile", route: "profile.edit" },
         ],
     };
 
