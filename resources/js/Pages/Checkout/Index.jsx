@@ -78,37 +78,73 @@ export default function Checkout({ cartItems, user }) {
             setLocationMessage("");
             return;
         }
+        if (!window.isSecureContext) {
+            setLocationError("Location ကိုအသုံးပြုရန် HTTPS (သို့) localhost မှ ဖွင့်ထားရပါမယ်။");
+            setLocationMessage("");
+            return;
+        }
 
-        setLocating(true);
-        setLocationError("");
-        setLocationMessage("");
+        const requestLocation = () => {
+            setLocating(true);
+            setLocationError("");
+            setLocationMessage("");
 
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
 
-                try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-                    );
-                    const payload = await response.json();
-                    const resolvedAddress = payload?.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                    setData("address", resolvedAddress);
-                    setLocationMessage("လက်ရှိတည်နေရာလိပ်စာကို ဖြည့်ပြီးပါပြီ။");
-                } catch {
-                    setData("address", `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-                    setLocationMessage("Coordinates ဖြင့် လိပ်စာဖြည့်ပြီးပါပြီ။");
-                } finally {
+                    try {
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+                        );
+                        const payload = await response.json();
+                        const resolvedAddress = payload?.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        setData("address", resolvedAddress);
+                        setLocationMessage("လက်ရှိတည်နေရာလိပ်စာကို ဖြည့်ပြီးပါပြီ။");
+                    } catch {
+                        setData("address", `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+                        setLocationMessage("Coordinates ဖြင့် လိပ်စာဖြည့်ပြီးပါပြီ။");
+                    } finally {
+                        setLocating(false);
+                    }
+                },
+                (error) => {
                     setLocating(false);
-                }
-            },
-            () => {
-                setLocating(false);
-                setLocationError("Location permission မရပါ (သို့) တည်နေရာ မရရှိပါ။");
-            },
-            { enableHighAccuracy: true, timeout: 12000, maximumAge: 10000 },
-        );
+                    if (error?.code === 1) {
+                        setLocationError("Location permission ပိတ်ထားပါတယ်။ Browser Site Settings မှာ Allow Location လုပ်ပြီး ပြန်စမ်းပါ။");
+                        return;
+                    }
+                    if (error?.code === 2) {
+                        setLocationError("လက်ရှိတည်နေရာ မရရှိပါ။ GPS/Network ကို စစ်ပြီး ပြန်စမ်းပါ။");
+                        return;
+                    }
+                    if (error?.code === 3) {
+                        setLocationError("တည်နေရာရယူချိန်ကျော်သွားပါတယ်။ ပြန်စမ်းပါ။");
+                        return;
+                    }
+                    setLocationError("Location permission မရပါ (သို့) တည်နေရာ မရရှိပါ။");
+                },
+                { enableHighAccuracy: true, timeout: 18000, maximumAge: 0 },
+            );
+        };
+
+        if (navigator.permissions?.query) {
+            navigator.permissions
+                .query({ name: "geolocation" })
+                .then((permissionStatus) => {
+                    if (permissionStatus.state === "denied") {
+                        setLocationError("Location permission ကို browser မှာ block လုပ်ထားပါတယ်။ Site Settings > Location > Allow ပြောင်းပြီး ပြန်စမ်းပါ။");
+                        setLocationMessage("");
+                        return;
+                    }
+                    requestLocation();
+                })
+                .catch(() => requestLocation());
+            return;
+        }
+
+        requestLocation();
     };
 
     return (
