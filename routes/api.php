@@ -28,6 +28,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::prefix('auth')->name('auth.')->group(function () {
             Route::get('/me', [AuthController::class, 'me'])->name('me');
+            Route::patch('/me', [AuthController::class, 'updateMe'])->name('me.update');
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
 
@@ -42,6 +43,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+        Route::post('/orders/{order}/cancel', [OrderController::class, 'customerCancel'])->name('orders.cancel');
+        Route::post('/orders/{order}/refund', [OrderController::class, 'requestRefund'])->name('orders.refund');
+        Route::post('/orders/{order}/return', [OrderController::class, 'requestReturn'])->name('orders.return');
         Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
         Route::patch('/orders/{order}/delivery-location', [OrderController::class, 'updateDeliveryLocation'])->name('orders.delivery-location');
         Route::post('/orders/{order}/shipment-proof', [OrderController::class, 'uploadShipmentProof'])->name('orders.shipment-proof');

@@ -117,6 +117,113 @@ class OrderController extends Controller
         ], 201);
     }
 
+    public function customerCancel(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+        $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']);
+
+        if ($isStaff || (int) $order->user_id !== (int) $user->id) {
+            abort(403);
+        }
+
+        if ($order->status !== 'pending') {
+            return response()->json([
+                'message' => 'Only pending orders can be cancelled.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'cancel_reason' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        $order->update([
+            'status' => 'cancelled',
+            'cancel_reason' => $validated['cancel_reason'],
+            'cancelled_at' => now(),
+        ]);
+
+        $this->restockOrderItemsAction->execute($order);
+        event(new \App\Events\OrderStatusUpdated($order));
+
+        return response()->json([
+            'message' => 'Order cancelled.',
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+        ]);
+    }
+
+    public function requestRefund(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+        $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']);
+
+        if ($isStaff || (int) $order->user_id !== (int) $user->id) {
+            abort(403);
+        }
+
+        if (! $order->payment_slip) {
+            return response()->json([
+                'message' => 'Payment slip required for refund.',
+            ], 422);
+        }
+
+        if (! in_array($order->status, ['confirmed', 'shipped'], true)) {
+            return response()->json([
+                'message' => 'Refund not available for this status.',
+            ], 422);
+        }
+
+        $order->update([
+            'status' => 'refund_requested',
+            'refund_requested_at' => now(),
+        ]);
+
+        event(new \App\Events\OrderStatusUpdated($order));
+
+        return response()->json([
+            'message' => 'Refund requested.',
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+        ]);
+    }
+
+    public function requestReturn(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+        $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']);
+
+        if ($isStaff || (int) $order->user_id !== (int) $user->id) {
+            abort(403);
+        }
+
+        if ($order->status !== 'delivered') {
+            return response()->json([
+                'message' => 'Return available only after delivered.',
+            ], 422);
+        }
+
+        if ($order->delivered_at && now()->diffInDays($order->delivered_at) > 7) {
+            return response()->json([
+                'message' => 'Return window expired (7 days).',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'return_reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $order->update([
+            'status' => 'return_requested',
+            'return_requested_at' => now(),
+            'return_reason' => $validated['return_reason'],
+        ]);
+
+        event(new \App\Events\OrderStatusUpdated($order));
+
+        return response()->json([
+            'message' => 'Return requested.',
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+        ]);
+    }
+
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order): JsonResponse
     {
         $actor = $request->user();
