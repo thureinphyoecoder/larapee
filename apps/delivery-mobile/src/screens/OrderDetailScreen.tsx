@@ -1,7 +1,6 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Image, Linking, Modal, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import { ActivityIndicator, Image, Linking, Modal, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { type Locale, tr } from "../i18n/strings";
@@ -65,16 +64,8 @@ export function OrderDetailScreen({
 
   async function openInMaps() {
     if (!coordinates) return;
-    const label = encodeURIComponent(`Order ${order.id} Delivery Location`);
-    const latLng = `${coordinates.latitude},${coordinates.longitude}`;
-    const nativeUrl =
-      Platform.OS === "ios"
-        ? `http://maps.apple.com/?ll=${latLng}&q=${label}`
-        : `geo:${latLng}?q=${latLng}(${label})`;
-    const webFallback = `https://www.google.com/maps/search/?api=1&query=${latLng}`;
-
-    const supported = await Linking.canOpenURL(nativeUrl);
-    await Linking.openURL(supported ? nativeUrl : webFallback);
+    const osmUrl = `https://www.openstreetmap.org/?mlat=${coordinates.latitude}&mlon=${coordinates.longitude}#map=16/${coordinates.latitude}/${coordinates.longitude}`;
+    await Linking.openURL(osmUrl);
   }
 
   return (
@@ -117,18 +108,12 @@ export function OrderDetailScreen({
           </View>
 
           {coordinates ? (
-            <View className="mt-3 overflow-hidden rounded-2xl">
-              <MapView
-                style={{ width: "100%", height: 240 }}
-                initialRegion={{
-                  ...coordinates,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }}
-                mapType="standard"
-              >
-                <Marker coordinate={coordinates} title="Delivery Location" />
-              </MapView>
+            <View className={`mt-3 rounded-xl px-3 py-3 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
+              <Text className={`text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>Lat: {coordinates.latitude.toFixed(6)}</Text>
+              <Text className={`mt-1 text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>Lng: {coordinates.longitude.toFixed(6)}</Text>
+              <Text className={`mt-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>
+                OpenStreetMap link ကိုနှိပ်ပြီး browser/map app မှာတန်းကြည့်နိုင်ပါတယ်။
+              </Text>
             </View>
           ) : (
             <Text className={`mt-2 text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "locationMissing")}</Text>
