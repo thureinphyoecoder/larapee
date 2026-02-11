@@ -1,5 +1,6 @@
+import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, useWindowDimensions, View } from "react-native";
 import type { Locale } from "../types/domain";
 import { tr } from "../i18n/strings";
 
@@ -35,92 +36,105 @@ export function LoginScreen({
   onSubmitRegister,
 }: Props) {
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [remember, setRemember] = useState(true);
+  const { width } = useWindowDimensions();
+  const wide = width >= 860;
 
   return (
-    <View className="flex-1 justify-center bg-slate-100 px-5 py-8">
-      <View className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
-        <View className="relative overflow-hidden bg-orange-600 px-6 py-6">
-          <View className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-white/20" />
-          <View className="absolute -left-8 -bottom-10 h-24 w-24 rounded-full bg-amber-300/40" />
-          <Text className="text-3xl font-black tracking-tight text-white">{tr(locale, "appName")}</Text>
-          <Text className="mt-2 text-sm text-orange-100">{tr(locale, "appTagline")}</Text>
+    <View className="flex-1 items-center justify-center bg-orange-500 px-4 py-8">
+      <View className={`w-full max-w-5xl overflow-hidden rounded-2xl border border-black/5 bg-white shadow-xl ${wide ? "flex-row" : ""}`}>
+        <View className={`${wide ? "w-[45%]" : "w-full"} items-center justify-center bg-orange-600 px-6 py-10`}>
+          <Text className="text-5xl font-black italic tracking-tight text-white">{tr(locale, "appName")}</Text>
+          <Text className="mt-3 text-center text-xl text-orange-100">{tr(locale, "appTagline")}</Text>
+          <Ionicons name="cart-outline" size={88} color="#93c5fd" style={{ marginTop: 22 }} />
         </View>
 
-        <View className="p-6">
-          <View>
-            <View className="rounded-xl bg-slate-100 p-1">
-              <View className="flex-row">
-                <Pressable onPress={() => setMode("login")} className={`flex-1 rounded-lg py-2 ${mode === "login" ? "bg-orange-600" : "bg-transparent"}`}>
-                  <Text className={`text-center text-xs font-black ${mode === "login" ? "text-white" : "text-slate-600"}`}>Login</Text>
-                </Pressable>
-                <Pressable onPress={() => setMode("register")} className={`flex-1 rounded-lg py-2 ${mode === "register" ? "bg-orange-600" : "bg-transparent"}`}>
-                  <Text className={`text-center text-xs font-black ${mode === "register" ? "text-white" : "text-slate-600"}`}>Register</Text>
-                </Pressable>
-              </View>
-            </View>
-            <Text className="mt-3 text-xl font-black text-slate-900">{mode === "login" ? tr(locale, "loginTitle") : "Create Account"}</Text>
-            <Text className="mt-1 text-sm text-slate-500">{mode === "login" ? tr(locale, "loginSubtitle") : "Create a new customer account to continue."}</Text>
-          </View>
+        <View className={`${wide ? "w-[55%]" : "w-full"} bg-slate-50 p-7`}>
+          <Text className="text-4xl font-black text-slate-900">{mode === "login" ? "Login" : "Create Account"}</Text>
 
-          <View className="mt-6 gap-3">
-            {mode === "register" ? (
-              <View>
-                <Text className="mb-1 text-xs font-bold text-slate-500">{tr(locale, "name")}</Text>
-                <TextInput
-                  value={registerName}
-                  onChangeText={onRegisterNameChange}
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-slate-900"
-                  placeholder="Your Name"
-                  placeholderTextColor="#94a3b8"
-                />
-              </View>
-            ) : null}
-            <View>
-              <Text className="mb-1 text-xs font-bold text-slate-500">{tr(locale, "email")}</Text>
+          {mode === "register" ? (
+            <View className="mt-4">
+              <Text className="mb-1 text-xs font-bold text-slate-500">{tr(locale, "name")}</Text>
               <TextInput
-                value={email}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                onChangeText={onEmailChange}
-                className="rounded-xl border border-slate-200 px-4 py-3 text-slate-900"
-                placeholder="customer@email.com"
+                value={registerName}
+                onChangeText={onRegisterNameChange}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
+                placeholder="Your Name"
                 placeholderTextColor="#94a3b8"
               />
             </View>
+          ) : null}
 
-            <View>
-              <Text className="mb-1 text-xs font-bold text-slate-500">{tr(locale, "password")}</Text>
+          <View className="mt-4">
+            <Text className="mb-1 text-xs font-bold text-slate-500">{tr(locale, "email")}</Text>
+            <TextInput
+              value={email}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              onChangeText={onEmailChange}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
+              placeholder="Email Address"
+              placeholderTextColor="#94a3b8"
+            />
+          </View>
+
+          <View className="mt-3">
+            <Text className="mb-1 text-xs font-bold text-slate-500">{tr(locale, "password")}</Text>
+            <TextInput
+              value={password}
+              secureTextEntry
+              onChangeText={onPasswordChange}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
+              placeholder="Password"
+              placeholderTextColor="#94a3b8"
+            />
+          </View>
+
+          {mode === "register" ? (
+            <View className="mt-3">
+              <Text className="mb-1 text-xs font-bold text-slate-500">Confirm Password</Text>
               <TextInput
-                value={password}
+                value={registerConfirmPassword}
                 secureTextEntry
-                onChangeText={onPasswordChange}
-                className="rounded-xl border border-slate-200 px-4 py-3 text-slate-900"
-                placeholder="••••••••"
+                onChangeText={onRegisterConfirmPasswordChange}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
+                placeholder="Confirm Password"
                 placeholderTextColor="#94a3b8"
               />
             </View>
-            {mode === "register" ? (
-              <View>
-                <Text className="mb-1 text-xs font-bold text-slate-500">Confirm Password</Text>
-                <TextInput
-                  value={registerConfirmPassword}
-                  secureTextEntry
-                  onChangeText={onRegisterConfirmPasswordChange}
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-slate-900"
-                  placeholder="••••••••"
-                  placeholderTextColor="#94a3b8"
-                />
-              </View>
-            ) : null}
+          ) : (
+            <View className="mt-3 flex-row items-center justify-between">
+              <Pressable onPress={() => setRemember((current) => !current)} className="flex-row items-center gap-2">
+                <View className={`h-5 w-5 items-center justify-center rounded border ${remember ? "border-orange-600 bg-orange-600" : "border-slate-400 bg-transparent"}`}>
+                  {remember ? <Ionicons name="checkmark" size={13} color="#fff" /> : null}
+                </View>
+                <Text className="text-xs text-slate-600">မှတ်ထားမည်</Text>
+              </Pressable>
+              <Text className="text-xs font-semibold text-orange-500">Forgot your password?</Text>
+            </View>
+          )}
 
-            {error ? <Text className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">{error}</Text> : null}
+          {error ? <Text className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">{error}</Text> : null}
 
-            <Pressable onPress={mode === "login" ? onSubmitLogin : onSubmitRegister} disabled={busy} className="rounded-xl bg-orange-600 py-3">
-              <Text className="text-center text-sm font-black text-white">{busy ? tr(locale, "signingIn") : mode === "login" ? tr(locale, "signIn") : "Create Account"}</Text>
-            </Pressable>
+          <Pressable onPress={mode === "login" ? onSubmitLogin : onSubmitRegister} disabled={busy} className="mt-4 rounded-xl bg-orange-500 py-3">
+            <Text className="text-center text-lg font-black uppercase text-white">{busy ? tr(locale, "signingIn") : mode === "login" ? "Log In" : "Create Account"}</Text>
+          </Pressable>
+
+          <View className="mt-3 flex-row items-center">
+            <View className="h-px flex-1 bg-slate-300" />
+            <Text className="mx-3 text-xs text-slate-400">OR</Text>
+            <View className="h-px flex-1 bg-slate-300" />
           </View>
 
-          <Text className="mt-5 text-xs text-slate-500">{tr(locale, "demoHint")}</Text>
+          {mode === "login" ? (
+            <Pressable onPress={() => setMode("register")} className="mt-3 rounded-xl border border-slate-300 bg-white py-3">
+              <Text className="text-center text-lg font-semibold text-slate-700">Create new account</Text>
+            </Pressable>
+          ) : (
+            <Pressable onPress={() => setMode("login")} className="mt-3 rounded-xl border border-slate-300 bg-white py-3">
+              <Text className="text-center text-lg font-semibold text-slate-700">Back to login</Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </View>
