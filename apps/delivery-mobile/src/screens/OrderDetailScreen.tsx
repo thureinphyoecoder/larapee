@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Image, Linking, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Image, Linking, Modal, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -32,8 +32,17 @@ export function OrderDetailScreen({
   const [showItems, setShowItems] = useState(false);
   const [proofLoading, setProofLoading] = useState(false);
   const [proofLoadFailed, setProofLoadFailed] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const dark = theme === "dark";
   const insets = useSafeAreaInsets();
+  const proofUrls = useMemo(() => {
+    if (order.delivery_proof_urls?.length) {
+      return order.delivery_proof_urls;
+    }
+
+    return order.delivery_proof_url ? [order.delivery_proof_url] : [];
+  }, [order.delivery_proof_url, order.delivery_proof_urls]);
 
   const coordinates = useMemo(() => {
     if (order.delivery_lat === null || order.delivery_lng === null) {
@@ -173,11 +182,11 @@ export function OrderDetailScreen({
 
         <View className={`rounded-3xl border p-4 ${dark ? "border-slate-800 bg-slate-900/95" : "border-white bg-white"}`}>
           <Text className={`text-sm font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>Delivery Proof</Text>
-          {order.delivery_proof_url ? (
-            <View className={`mt-3 overflow-hidden rounded-2xl border ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-slate-100"}`}>
+          {proofUrls.length ? (
+            <View className={`mt-3 overflow-hidden rounded-2xl border p-2 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-slate-100"}`}>
               <Image
-                source={{ uri: order.delivery_proof_url }}
-                className="h-64 w-full"
+                source={{ uri: proofUrls[Math.min(viewerIndex, proofUrls.length - 1)] }}
+                className="h-64 w-full rounded-xl"
                 resizeMode="cover"
                 onLoadStart={() => {
                   setProofLoading(true);
@@ -199,12 +208,61 @@ export function OrderDetailScreen({
                   <Text className="text-center text-sm font-semibold text-white">Proof image မဖွင့်နိုင်ပါ။ Connection/URL ကိုစစ်ပြီး refresh ပြန်လုပ်ပါ။</Text>
                 </View>
               ) : null}
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2" contentContainerStyle={{ gap: 8 }}>
+                {proofUrls.map((uri, index) => (
+                  <Pressable
+                    key={`${uri}-${index}`}
+                    onPress={() => {
+                      setViewerIndex(index);
+                      setViewerOpen(true);
+                    }}
+                    className={`overflow-hidden rounded-xl border ${index === viewerIndex ? "border-cyan-400" : dark ? "border-slate-700" : "border-slate-300"}`}
+                  >
+                    <Image source={{ uri }} className="h-16 w-16" resizeMode="cover" />
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <Text className={`mt-2 text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>{proofUrls.length} image(s)</Text>
             </View>
           ) : (
             <Text className={`mt-2 text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>ပို့ဆောင်ပုံ မတင်ရသေးပါ။</Text>
           )}
         </View>
       </ScrollView>
+
+      <Modal visible={viewerOpen} animationType="fade" transparent onRequestClose={() => setViewerOpen(false)}>
+        <View className="flex-1 bg-black/95">
+          <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 12 }} className="flex-row items-center justify-between">
+            <Text className="text-sm font-bold text-white">
+              Proof {Math.min(viewerIndex + 1, proofUrls.length)} / {proofUrls.length}
+            </Text>
+            <Pressable onPress={() => setViewerOpen(false)} className="rounded-full bg-white/20 px-3 py-1">
+              <Text className="text-sm font-bold text-white">Close</Text>
+            </Pressable>
+          </View>
+
+          <View className="mt-4 flex-1 items-center justify-center px-3">
+            {proofUrls[viewerIndex] ? <Image source={{ uri: proofUrls[viewerIndex] }} className="h-full w-full" resizeMode="contain" /> : null}
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: Math.max(insets.bottom + 14, 18), gap: 8 }}
+          >
+            {proofUrls.map((uri, index) => (
+              <Pressable
+                key={`${uri}-viewer-${index}`}
+                className={`overflow-hidden rounded-lg border ${index === viewerIndex ? "border-cyan-400" : "border-white/30"}`}
+                onPress={() => setViewerIndex(index)}
+              >
+                <Image source={{ uri }} className="h-16 w-16" resizeMode="cover" />
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }

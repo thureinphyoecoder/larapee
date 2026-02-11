@@ -42,6 +42,7 @@ export type Order = {
   created_at: string | null;
   payment_slip_url: string | null;
   delivery_proof_url: string | null;
+  delivery_proof_urls?: string[];
   delivery_lat: number | null;
   delivery_lng: number | null;
   delivery_updated_at: string | null;

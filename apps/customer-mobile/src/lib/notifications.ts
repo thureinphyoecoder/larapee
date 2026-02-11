@@ -8,6 +8,10 @@ let notificationModuleCache: NotificationModule | null | undefined;
 let handlerConfigured = false;
 let channelConfigured = false;
 
+function isExpoGoRuntime(): boolean {
+  return Constants.appOwnership === "expo";
+}
+
 function getNotificationModule(): NotificationModule | null {
   if (notificationModuleCache !== undefined) {
     return notificationModuleCache;
@@ -49,7 +53,7 @@ export async function ensureNotificationPermission(): Promise<boolean> {
       importance: Notifications.AndroidImportance?.HIGH ?? 4,
       vibrationPattern: [0, 250, 200, 250],
       lightColor: "#ea580c",
-      sound: CUSTOM_SOUND,
+      sound: isExpoGoRuntime() ? "default" : CUSTOM_SOUND,
       lockscreenVisibility: Notifications.AndroidNotificationVisibility?.PUBLIC ?? 1,
     });
     await Notifications.setNotificationChannelAsync("orders", {
@@ -57,7 +61,7 @@ export async function ensureNotificationPermission(): Promise<boolean> {
       importance: Notifications.AndroidImportance?.MAX ?? 5,
       vibrationPattern: [0, 250, 180, 250, 180, 250],
       lightColor: "#f97316",
-      sound: CUSTOM_SOUND,
+      sound: isExpoGoRuntime() ? "default" : CUSTOM_SOUND,
       lockscreenVisibility: Notifications.AndroidNotificationVisibility?.PUBLIC ?? 1,
     });
     channelConfigured = true;
@@ -85,7 +89,7 @@ export async function showLocalNotification(title: string, body: string): Promis
     content: {
       title,
       body,
-      sound: CUSTOM_SOUND,
+      sound: isExpoGoRuntime() ? "default" : CUSTOM_SOUND,
       priority: Notifications.AndroidNotificationPriority?.MAX ?? 5,
       channelId: Platform.OS === "android" ? "orders" : undefined,
     },
@@ -106,6 +110,13 @@ export async function registerForRemotePushToken(): Promise<{ token: string | nu
 
   if (!Constants.isDevice) {
     return { token: null, error: "Physical device is required for remote push token." };
+  }
+
+  if (isExpoGoRuntime()) {
+    return {
+      token: null,
+      error: "Expo Go runtime does not support remote push token. Use development build.",
+    };
   }
 
   const projectId =

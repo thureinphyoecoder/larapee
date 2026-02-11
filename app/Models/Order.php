@@ -123,6 +123,11 @@ class Order extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function deliveryProofs()
+    {
+        return $this->hasMany(OrderDeliveryProof::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function approvalRequests()
     {
         return $this->hasMany(ApprovalRequest::class);

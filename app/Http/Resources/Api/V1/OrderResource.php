@@ -29,6 +29,7 @@ class OrderResource extends JsonResource
             'cancel_reason' => $this->cancel_reason,
             'payment_slip_url' => $this->payment_slip ? Storage::disk('public')->url($this->payment_slip) : null,
             'delivery_proof_url' => $this->delivery_proof_path ? Storage::disk('public')->url($this->delivery_proof_path) : null,
+            'delivery_proof_urls' => $this->resolveDeliveryProofUrls(),
             'delivery_lat' => $this->delivery_lat !== null ? (float) $this->delivery_lat : null,
             'delivery_lng' => $this->delivery_lng !== null ? (float) $this->delivery_lng : null,
             'delivery_updated_at' => $this->toIsoString($this->delivery_updated_at),
@@ -41,6 +42,23 @@ class OrderResource extends JsonResource
             'shop' => $this->whenLoaded('shop', fn () => new ShopResource($this->shop)),
             'items' => $this->whenLoaded('items', fn () => OrderItemResource::collection($this->items)),
         ];
+    }
+
+    private function resolveDeliveryProofUrls(): array
+    {
+        if ($this->relationLoaded('deliveryProofs') && $this->deliveryProofs->isNotEmpty()) {
+            return $this->deliveryProofs
+                ->map(fn ($proof) => Storage::disk('public')->url($proof->path))
+                ->filter(fn ($url) => is_string($url) && $url !== '')
+                ->values()
+                ->all();
+        }
+
+        if ($this->delivery_proof_path) {
+            return [Storage::disk('public')->url($this->delivery_proof_path)];
+        }
+
+        return [];
     }
 
     private function toIsoString(mixed $value): ?string

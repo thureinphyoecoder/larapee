@@ -43,7 +43,7 @@ export const orderService = {
       token,
       body: formData,
       isFormData: true,
-      timeoutMs: 25000,
+      timeoutMs: 120000,
     });
   },
 

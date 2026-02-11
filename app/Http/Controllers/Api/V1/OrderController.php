@@ -31,7 +31,7 @@ class OrderController extends Controller
         $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']);
 
         $orders = Order::query()
-            ->with(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])
+            ->with(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])
             ->when(! $isStaff, fn ($q) => $q->where('user_id', $user->id))
             ->latest('id')
             ->paginate((int) request('per_page', 20))
@@ -58,7 +58,7 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
         ]);
     }
 
@@ -84,7 +84,7 @@ class OrderController extends Controller
             if ($existingOrder) {
                 return response()->json([
                     'message' => 'Order already processed for this idempotency key.',
-                    'data' => new OrderResource($existingOrder->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+                    'data' => new OrderResource($existingOrder->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
                 ]);
             }
         }
@@ -151,7 +151,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Order cancelled.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
         ]);
     }
 
@@ -185,7 +185,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Refund requested.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
         ]);
     }
 
@@ -224,7 +224,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Return requested.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
         ]);
     }
 
@@ -316,7 +316,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Order status updated.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
         ]);
     }
 
@@ -341,7 +341,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Delivery location updated.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
         ]);
     }
 
@@ -352,13 +352,52 @@ class OrderController extends Controller
         $this->authorizeStaffOrderAccess($actor, $order);
 
         $validated = $request->validate([
-            'delivery_proof' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
+            'delivery_proof' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
+            'delivery_proofs' => ['nullable', 'array', 'max:50'],
+            'delivery_proofs.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
         ]);
 
-        $path = $validated['delivery_proof']->store('delivery-proofs', 'public');
+        $files = [];
+        if ($request->hasFile('delivery_proofs')) {
+            $uploaded = $request->file('delivery_proofs');
+            if (is_array($uploaded)) {
+                $files = array_values($uploaded);
+            } elseif ($uploaded) {
+                $files = [$uploaded];
+            }
+        } elseif (!empty($validated['delivery_proof'])) {
+            $files = [$validated['delivery_proof']];
+        }
+
+        if (empty($files)) {
+            return response()->json([
+                'message' => 'At least one delivery proof image is required.',
+            ], 422);
+        }
+
+        $paths = [];
+        foreach ($files as $file) {
+            $paths[] = $file->store('delivery-proofs', 'public');
+        }
+
+        $primaryPath = $paths[0] ?? null;
+        $existingCount = (int) $order->deliveryProofs()->count();
+        $proofRows = [];
+        foreach ($paths as $index => $path) {
+            $proofRows[] = [
+                'path' => $path,
+                'sort_order' => $existingCount + $index,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (!empty($proofRows)) {
+            $order->deliveryProofs()->insert($proofRows);
+        }
 
         $order->update([
-            'delivery_proof_path' => $path,
+            'delivery_proof_path' => $primaryPath ?: $order->delivery_proof_path,
             'status' => 'shipped',
             'shipped_at' => now(),
         ]);
@@ -367,7 +406,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Delivery proof uploaded. Order marked as shipped.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
         ]);
     }
 

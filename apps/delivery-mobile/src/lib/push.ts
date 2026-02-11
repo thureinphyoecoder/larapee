@@ -13,6 +13,10 @@ let notificationModuleCache: NotificationModule | null | undefined;
 let handlerConfigured = false;
 let channelConfigured = false;
 
+function isExpoGoRuntime(): boolean {
+  return Constants.appOwnership === "expo";
+}
+
 function getNotificationModule(): NotificationModule | null {
   if (notificationModuleCache !== undefined) {
     return notificationModuleCache;
@@ -59,7 +63,7 @@ export async function ensureNotificationPermission(): Promise<boolean> {
       importance: Notifications.AndroidImportance?.MAX ?? 5,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#16A34A",
-      sound: CUSTOM_SOUND,
+      sound: isExpoGoRuntime() ? "default" : CUSTOM_SOUND,
     });
     channelConfigured = true;
   }
@@ -89,7 +93,7 @@ export async function scheduleLocalNotification(title: string, body: string): Pr
     content: {
       title,
       body,
-      sound: CUSTOM_SOUND,
+      sound: isExpoGoRuntime() ? "default" : CUSTOM_SOUND,
       channelId: Platform.OS === "android" ? "orders" : undefined,
       priority: Notifications.AndroidNotificationPriority?.MAX,
     },
@@ -118,6 +122,13 @@ export async function registerForRemotePushAsync(): Promise<PushRegistrationResu
     return {
       token: null,
       error: "Remote push သည် emulator/simulator မဟုတ်ပဲ physical phone မှာပဲ စမ်းသပ်နိုင်ပါတယ်။",
+    };
+  }
+
+  if (isExpoGoRuntime()) {
+    return {
+      token: null,
+      error: "Expo Go runtime မှာ remote push token မရပါ။ development build ဖြင့် run လုပ်ပါ။",
     };
   }
 

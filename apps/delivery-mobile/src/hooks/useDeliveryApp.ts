@@ -269,29 +269,28 @@ export function useDeliveryApp() {
       const pickResult = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.8,
-        allowsMultipleSelection: false,
+        allowsMultipleSelection: true,
+        selectionLimit: 50,
       });
 
       if (pickResult.canceled || !pickResult.assets.length) {
         return;
       }
 
-      const asset = pickResult.assets[0];
-      if (!asset) {
-        return;
-      }
-
       const formData = new FormData();
-      formData.append("delivery_proof", {
-        uri: asset.uri,
-        type: asset.mimeType ?? "image/jpeg",
-        name: asset.fileName ?? `delivery-proof-${Date.now()}.jpg`,
-      } as never);
+      const selectedAssets = pickResult.assets.slice(0, 50);
+      selectedAssets.forEach((asset, index) => {
+        formData.append("delivery_proofs[]", {
+          uri: asset.uri,
+          type: asset.mimeType ?? "image/jpeg",
+          name: asset.fileName ?? `delivery-proof-${Date.now()}-${index + 1}.jpg`,
+        } as never);
+      });
 
       const result = await orderService.uploadShipmentProof(apiBaseUrl, token, selectedOrder.id, formData);
       setSelectedOrder(normalizeOrderUrls(apiBaseUrl, result.data));
       await loadOrders();
-      Alert.alert(tr(locale, "locationUpdatedTitle"), tr(locale, "proofUploadedMessage"));
+      Alert.alert(tr(locale, "locationUpdatedTitle"), `${tr(locale, "proofUploadedMessage")} (${selectedAssets.length})`);
     } catch (err) {
       Alert.alert(tr(locale, "uploadFailedTitle"), err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -528,10 +527,18 @@ function normalizeApiBaseUrl(url: string): string {
 }
 
 function normalizeOrderUrls(baseUrl: string, order: Order): Order {
+  const normalizedMainProof = toAbsolutePublicUrl(baseUrl, order.delivery_proof_url);
+  const normalizedProofs = (order.delivery_proof_urls ?? [])
+    .map((value) => toAbsolutePublicUrl(baseUrl, value))
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
+
   return {
     ...order,
     payment_slip_url: toAbsolutePublicUrl(baseUrl, order.payment_slip_url),
-    delivery_proof_url: toAbsolutePublicUrl(baseUrl, order.delivery_proof_url),
+    delivery_proof_url: normalizedMainProof,
+    delivery_proof_urls: normalizedProofs.length
+      ? normalizedProofs
+      : (normalizedMainProof ? [normalizedMainProof] : []),
   };
 }
 
