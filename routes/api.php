@@ -43,6 +43,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
+        Route::patch('/orders/{order}/delivery-location', [OrderController::class, 'updateDeliveryLocation'])->name('orders.delivery-location');
+        Route::post('/orders/{order}/shipment-proof', [OrderController::class, 'uploadShipmentProof'])->name('orders.shipment-proof');
         Route::post('/orders/{order}/approval-requests', [ApprovalRequestController::class, 'store'])->name('orders.approvals.store');
         Route::post('/orders/{order}/financial-adjustments', [FinancialAdjustmentController::class, 'store'])->name('orders.adjustments.store');
         Route::patch('/approval-requests/{approvalRequest}/approve', [ApprovalRequestController::class, 'approve'])->name('approvals.approve');

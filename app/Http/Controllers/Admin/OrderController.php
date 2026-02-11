@@ -311,7 +311,9 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, Order $order)
     {
-        $this->authorizeStaffOrderAccess($request->user(), $order);
+        $user = $request->user();
+        abort_unless($user && $user->hasAnyRole(['admin', 'manager']), 403);
+        $this->authorizeStaffOrderAccess($user, $order);
 
         $request->validate([
             'status' => 'required|in:pending,confirmed,shipped,delivered,cancelled,refund_requested,refunded,return_requested,returned'
@@ -471,7 +473,9 @@ class OrderController extends Controller
 
     public function verifySlip(Order $order)
     {
-        $this->authorizeStaffOrderAccess(request()->user(), $order);
+        $user = request()->user();
+        abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'accountant']), 403);
+        $this->authorizeStaffOrderAccess($user, $order);
 
         if (!$order->payment_slip) {
             return back()->withErrors(['slip' => 'Payment slip not found.']);

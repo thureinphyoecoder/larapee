@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
+use App\Support\Payroll\PayrollCalculator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -14,6 +15,11 @@ use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
+    public function __construct(
+        private readonly PayrollCalculator $payrollCalculator,
+    ) {
+    }
+
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::query()->create([
@@ -57,8 +63,31 @@ class AuthController extends Controller
 
     public function me(): JsonResponse
     {
+        $user = request()->user()?->load(['roles', 'profile', 'shop', 'payrollProfile']);
+        $month = now()->format('Y-m');
+        $salaryPreview = null;
+
+        if ($user && $user->hasAnyRole(['delivery', 'sales', 'manager', 'accountant', 'technician', 'cashier', 'admin'])) {
+            $salaryPreview = $this->payrollCalculator
+                ->calculate(collect([$user]), $month)
+                ->first();
+        }
+
         return response()->json([
-            'user' => new UserResource(request()->user()->load('roles')),
+            'user' => new UserResource($user),
+            'profile' => [
+                'shop_name' => $user?->shop?->name,
+                'phone_number' => $user?->profile?->phone_number,
+                'address' => $user?->profile?->address_line_1,
+            ],
+            'salary_preview' => $salaryPreview ? [
+                'month' => $month,
+                'net_salary' => (float) ($salaryPreview['totals']['net'] ?? 0),
+                'gross_salary' => (float) ($salaryPreview['totals']['gross'] ?? 0),
+                'deduction' => (float) ($salaryPreview['totals']['deduction'] ?? 0),
+                'worked_days' => (int) ($salaryPreview['attendance']['days'] ?? 0),
+                'expected_days' => (int) ($salaryPreview['attendance']['expected_days'] ?? 0),
+            ] : null,
         ]);
     }
 

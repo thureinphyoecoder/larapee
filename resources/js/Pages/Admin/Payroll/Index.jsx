@@ -1,5 +1,5 @@
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head, router, useForm } from "@inertiajs/react";
+import { Head, Link, router, useForm } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 
 export default function PayrollIndex({ month, rows = [], summary = {}, previewReleaseDate }) {
@@ -96,6 +96,12 @@ function PayrollRow({ row, month }) {
                     <p className="text-sm text-slate-500">{row.role} {row.shop ? `• ${row.shop}` : ""}</p>
                 </div>
                 <div className="text-right">
+                    <Link
+                        href={route("admin.payroll.slip", { user: row.user_id, month })}
+                        className="inline-flex rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                        Print Slip
+                    </Link>
                     <p className="text-xs uppercase tracking-wider text-slate-500">Net Salary</p>
                     <p className="text-xl font-black text-slate-900">{Number(row.totals?.net || 0).toLocaleString()} MMK</p>
                     <p className={`text-xs font-semibold ${row.payout ? "text-emerald-700" : "text-amber-700"}`}>

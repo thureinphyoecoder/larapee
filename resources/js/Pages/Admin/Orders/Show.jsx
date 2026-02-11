@@ -34,6 +34,8 @@ function buildOsmEmbedUrl(lat, lng) {
 export default function Show({ order }) {
     const { auth } = usePage().props;
     const role = auth?.role || "user";
+    const canAccessPaymentSlip = ["admin", "manager", "accountant"].includes(role);
+    const canManageOrderStatus = ["admin", "manager"].includes(role);
     const [liveOrder, setLiveOrder] = useState(order);
     const [showSlip, setShowSlip] = useState(false);
     const [deliveryProof, setDeliveryProof] = useState(null);
@@ -180,26 +182,28 @@ export default function Show({ order }) {
                         </div>
                     </div>
 
-                    <div className="mt-5 flex flex-wrap gap-2">
-                        {status === "pending" && (
-                            <ActionButton tone="green" onClick={() => confirmAndRun("confirmed")} label="Confirm Order" />
-                        )}
-                        {status === "confirmed" && (
-                            <ActionButton tone="blue" onClick={() => confirmAndRun("shipped")} label="Mark Shipped" />
-                        )}
-                        {status === "shipped" && (
-                            <ActionButton tone="indigo" onClick={() => confirmAndRun("delivered")} label="Mark Delivered" />
-                        )}
-                        {status === "refund_requested" && (
-                            <ActionButton tone="violet" onClick={() => confirmAndRun("refunded")} label="Mark Refunded" />
-                        )}
-                        {status === "return_requested" && (
-                            <ActionButton tone="amber" onClick={() => confirmAndRun("returned")} label="Mark Returned" />
-                        )}
-                        {!['cancelled', 'returned', 'refunded', 'delivered'].includes(status) && (
-                            <ActionButton tone="red" onClick={() => confirmAndRun("cancelled")} label="Cancel Order" />
-                        )}
-                    </div>
+                    {canManageOrderStatus && (
+                        <div className="mt-5 flex flex-wrap gap-2">
+                            {status === "pending" && (
+                                <ActionButton tone="green" onClick={() => confirmAndRun("confirmed")} label="Confirm Order" />
+                            )}
+                            {status === "confirmed" && (
+                                <ActionButton tone="blue" onClick={() => confirmAndRun("shipped")} label="Mark Shipped" />
+                            )}
+                            {status === "shipped" && (
+                                <ActionButton tone="indigo" onClick={() => confirmAndRun("delivered")} label="Mark Delivered" />
+                            )}
+                            {status === "refund_requested" && (
+                                <ActionButton tone="violet" onClick={() => confirmAndRun("refunded")} label="Mark Refunded" />
+                            )}
+                            {status === "return_requested" && (
+                                <ActionButton tone="amber" onClick={() => confirmAndRun("returned")} label="Mark Returned" />
+                            )}
+                            {!['cancelled', 'returned', 'refunded', 'delivered'].includes(status) && (
+                                <ActionButton tone="red" onClick={() => confirmAndRun("cancelled")} label="Cancel Order" />
+                            )}
+                        </div>
+                    )}
                 </section>
 
                 <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -305,58 +309,62 @@ export default function Show({ order }) {
                             </div>
                         </div>
 
-                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h3 className="text-lg font-black text-slate-900">Payment Slip</h3>
-                            {liveOrder?.payment_slip ? (
-                                <button
-                                    type="button"
-                                    onClick={() => setShowSlip(true)}
-                                    className="mt-3 block w-full"
-                                >
-                                    <img
-                                        src={`/storage/${liveOrder.payment_slip}`}
-                                        className="w-full rounded-xl border hover:opacity-90 transition"
-                                        alt="Payment Slip"
-                                    />
-                                </button>
-                            ) : (
-                                <div className="mt-3 h-40 rounded-xl border bg-slate-50 flex items-center justify-center text-sm text-slate-400">
-                                    No slip uploaded
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h3 className="text-lg font-black text-slate-900">Slip Verification</h3>
-                            <div className="mt-3 space-y-2 text-sm text-slate-700">
-                                <p><span className="font-semibold">Verdict:</span> {liveOrder?.slip_verdict || "Not checked"}</p>
-                                <p><span className="font-semibold">Score:</span> {liveOrder?.slip_score ?? "-"}</p>
-                                <p className="text-xs text-slate-400">
-                                    Checked at: {liveOrder?.slip_checked_at ? new Date(liveOrder.slip_checked_at).toLocaleString() : "Not available"}
-                                </p>
+                        {canAccessPaymentSlip && (
+                            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <h3 className="text-lg font-black text-slate-900">Payment Slip</h3>
+                                {liveOrder?.payment_slip ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowSlip(true)}
+                                        className="mt-3 block w-full"
+                                    >
+                                        <img
+                                            src={`/storage/${liveOrder.payment_slip}`}
+                                            className="w-full rounded-xl border hover:opacity-90 transition"
+                                            alt="Payment Slip"
+                                        />
+                                    </button>
+                                ) : (
+                                    <div className="mt-3 h-40 rounded-xl border bg-slate-50 flex items-center justify-center text-sm text-slate-400">
+                                        No slip uploaded
+                                    </div>
+                                )}
                             </div>
-                            <button
-                                className="mt-4 rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white hover:bg-orange-700 disabled:opacity-50"
-                                disabled={!liveOrder?.payment_slip}
-                                onClick={() =>
-                                    Swal.fire({
-                                        title: "Verify slip?",
-                                        text: "This will run OCR and rules.",
-                                        icon: "warning",
-                                        showCancelButton: true,
-                                        confirmButtonText: "Run verify",
-                                    }).then((result) => {
-                                        if (!result.isConfirmed) return;
-                                        router.post(route("admin.orders.verifySlip", order.id), {}, {
-                                            preserveScroll: true,
-                                            onSuccess: () => Swal.fire("Done", "Slip verification completed.", "success"),
-                                        });
-                                    })
-                                }
-                            >
-                                Verify Slip
-                            </button>
-                        </div>
+                        )}
+
+                        {canAccessPaymentSlip && (
+                            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <h3 className="text-lg font-black text-slate-900">Slip Verification</h3>
+                                <div className="mt-3 space-y-2 text-sm text-slate-700">
+                                    <p><span className="font-semibold">Verdict:</span> {liveOrder?.slip_verdict || "Not checked"}</p>
+                                    <p><span className="font-semibold">Score:</span> {liveOrder?.slip_score ?? "-"}</p>
+                                    <p className="text-xs text-slate-400">
+                                        Checked at: {liveOrder?.slip_checked_at ? new Date(liveOrder.slip_checked_at).toLocaleString() : "Not available"}
+                                    </p>
+                                </div>
+                                <button
+                                    className="mt-4 rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white hover:bg-orange-700 disabled:opacity-50"
+                                    disabled={!liveOrder?.payment_slip}
+                                    onClick={() =>
+                                        Swal.fire({
+                                            title: "Verify slip?",
+                                            text: "This will run OCR and rules.",
+                                            icon: "warning",
+                                            showCancelButton: true,
+                                            confirmButtonText: "Run verify",
+                                        }).then((result) => {
+                                            if (!result.isConfirmed) return;
+                                            router.post(route("admin.orders.verifySlip", order.id), {}, {
+                                                preserveScroll: true,
+                                                onSuccess: () => Swal.fire("Done", "Slip verification completed.", "success"),
+                                            });
+                                        })
+                                    }
+                                >
+                                    Verify Slip
+                                </button>
+                            </div>
+                        )}
 
                         {["admin", "manager", "delivery"].includes(role) && (
                             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -411,7 +419,7 @@ export default function Show({ order }) {
                 </section>
             </div>
 
-            {showSlip && liveOrder?.payment_slip && (
+            {canAccessPaymentSlip && showSlip && liveOrder?.payment_slip && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setShowSlip(false)}>
                     <div className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
                         <div className="mb-3 flex items-center justify-between">

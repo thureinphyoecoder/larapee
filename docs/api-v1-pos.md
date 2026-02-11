@@ -28,6 +28,12 @@ Auth: Bearer token (Laravel Sanctum personal access token)
   - Cart checkout: `{ phone, address, shop_id?, payment_slip? }`
   - Direct checkout: `{ phone, address, shop_id?, payment_slip?, items:[{variant_id,quantity}] }`
 - `PATCH /orders/{order}/status` (staff roles only)
+- `PATCH /orders/{order}/delivery-location` (admin/manager/delivery)
+- `POST /orders/{order}/shipment-proof` (admin/manager/delivery)
+
+### Delivery status policy
+- `delivery` role can only set status to `shipped` or `delivered`.
+- `cancelled` status can be set only by `admin` or `manager`.
 
 ## Customers (auth staff)
 - `GET /customers`

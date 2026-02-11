@@ -13,6 +13,7 @@ use App\Models\ApprovalRequest;
 use App\Models\Order;
 use App\Services\Governance\AuditLogger;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
@@ -122,6 +123,19 @@ class OrderController extends Controller
         $previousStatus = $order->status;
         $nextStatus = $request->string('status')->toString();
         $approvalRequestId = $request->integer('approval_request_id') ?: null;
+        $this->authorizeStaffOrderAccess($actor, $order);
+
+        if ($actor?->hasRole('delivery') && ! in_array($nextStatus, ['shipped', 'delivered'], true)) {
+            return response()->json([
+                'message' => 'Delivery staff can only update to shipped or delivered.',
+            ], 403);
+        }
+
+        if ($nextStatus === 'cancelled' && !($actor?->hasAnyRole(['admin', 'manager']) ?? false)) {
+            return response()->json([
+                'message' => 'Only admin or manager can cancel orders.',
+            ], 403);
+        }
 
         if (in_array($nextStatus, ['refund_requested', 'refunded'], true)) {
             $isFinanceApprover = $actor?->hasAnyRole(['admin', 'manager', 'accountant']) ?? false;
@@ -181,5 +195,71 @@ class OrderController extends Controller
             'message' => 'Order status updated.',
             'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
         ]);
+    }
+
+    public function updateDeliveryLocation(Request $request, Order $order): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor && $actor->hasAnyRole(['admin', 'manager', 'delivery']), 403);
+        $this->authorizeStaffOrderAccess($actor, $order);
+
+        $validated = $request->validate([
+            'delivery_lat' => ['required', 'numeric', 'between:-90,90'],
+            'delivery_lng' => ['required', 'numeric', 'between:-180,180'],
+        ]);
+
+        $order->update([
+            'delivery_lat' => (float) $validated['delivery_lat'],
+            'delivery_lng' => (float) $validated['delivery_lng'],
+            'delivery_updated_at' => now(),
+        ]);
+
+        event(new \App\Events\OrderStatusUpdated($order));
+
+        return response()->json([
+            'message' => 'Delivery location updated.',
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+        ]);
+    }
+
+    public function uploadShipmentProof(Request $request, Order $order): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor && $actor->hasAnyRole(['admin', 'manager', 'delivery']), 403);
+        $this->authorizeStaffOrderAccess($actor, $order);
+
+        $validated = $request->validate([
+            'delivery_proof' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
+        ]);
+
+        $path = $validated['delivery_proof']->store('delivery-proofs', 'public');
+
+        $order->update([
+            'delivery_proof_path' => $path,
+            'status' => 'shipped',
+            'shipped_at' => now(),
+        ]);
+
+        event(new \App\Events\OrderStatusUpdated($order));
+
+        return response()->json([
+            'message' => 'Delivery proof uploaded. Order marked as shipped.',
+            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+        ]);
+    }
+
+    private function authorizeStaffOrderAccess($user, Order $order): void
+    {
+        if (!$user || !method_exists($user, 'hasRole')) {
+            abort(403);
+        }
+
+        if ($user->hasRole('admin')) {
+            return;
+        }
+
+        if ($user->hasRole('manager')) {
+            abort_if((int) $order->shop_id !== (int) $user->shop_id, 403);
+        }
     }
 }

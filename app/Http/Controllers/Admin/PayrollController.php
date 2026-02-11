@@ -138,4 +138,21 @@ class PayrollController extends Controller
         return back()->with('success', 'Salary payout recorded.');
     }
 
+    public function slip(Request $request, User $user): Response
+    {
+        $actor = $request->user();
+        abort_unless($actor && $actor->hasAnyRole(['admin', 'accountant']), 403);
+
+        $month = $this->payrollCalculator->normalizeMonth((string) $request->string('month')->toString());
+
+        $user->load(['roles:id,name', 'shop:id,name', 'payrollProfile']);
+        $row = $this->payrollCalculator->calculate(collect([$user]), $month)->first();
+
+        return Inertia::render('Admin/Payroll/Slip', [
+            'month' => $month,
+            'row' => $row,
+            'generatedAt' => now()->toDateTimeString(),
+        ]);
+    }
+
 }
