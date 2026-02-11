@@ -1,8 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const TOKEN_KEY = "larapos.delivery.token";
-const THEME_KEY = "larapos.delivery.theme";
-const LANGUAGE_KEY = "larapos.delivery.language";
+const TOKEN_KEY = "larapee.delivery.token";
+const THEME_KEY = "larapee.delivery.theme";
+const LANGUAGE_KEY = "larapee.delivery.language";
 
 export async function getStoredToken(): Promise<string | null> {
   return AsyncStorage.getItem(TOKEN_KEY);

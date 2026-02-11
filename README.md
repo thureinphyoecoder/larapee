@@ -1,6 +1,6 @@
-# LaraPOS – Full Stack POS & Web Application Platform
+# LaraPee – Full Stack POS & Web Application Platform
 
-LaraPOS is a full-stack web application platform built with Laravel, React (Inertia.js), Docker, and PostgreSQL/MySQL.  
+LaraPee is a full-stack web application platform built with Laravel, React (Inertia.js), Docker, and PostgreSQL/MySQL.  
 It is designed using production-level architecture principles to demonstrate scalable backend design, modern frontend integration, and containerized development environments.
 
 This project reflects real-world backend and full-stack engineering practices.
@@ -9,7 +9,7 @@ This project reflects real-world backend and full-stack engineering practices.
 
 ## Overview
 
-LaraPOS provides a structured backend system and web interface foundation for building POS systems, dashboards, or business management applications.
+LaraPee provides a structured backend system and web interface foundation for building POS systems, dashboards, or business management applications.
 
 It uses Laravel as the core backend framework, React with Inertia.js for the frontend, and Docker for environment consistency and deployment readiness.
 

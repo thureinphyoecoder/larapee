@@ -16,7 +16,7 @@
 
 ### Local Cron
 ```bash
-*/30 * * * * mysqldump --single-transaction --quick --lock-tables=false larapos | gzip > /var/backups/larapee/local/db-$(date +\%Y\%m\%d-\%H\%M).sql.gz
+*/30 * * * * mysqldump --single-transaction --quick --lock-tables=false larapee | gzip > /var/backups/larapee/local/db-$(date +\%Y\%m\%d-\%H\%M).sql.gz
 15 23 * * * tar -C /var/www/storage/app/public -c . | zstd -T0 -19 -o /var/backups/larapee/local/public-uploads-$(date +\%Y\%m\%d-\%H\%M).tar.zst
 ```
 

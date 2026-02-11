@@ -27,7 +27,7 @@ export const receiptService = {
       : ["No line items"];
 
     return [
-      "LaraPOS Receipt",
+      "LaraPee Receipt",
       RECEIPT_SEPARATOR,
       `Order: ${orderCode}`,
       `Status: ${payload.order.status}`,

@@ -1,4 +1,4 @@
-# LaraPOS Electron Client
+# LaraPee Electron Client
 
 Enterprise desktop POS scaffold built with Electron + React + TypeScript.
 

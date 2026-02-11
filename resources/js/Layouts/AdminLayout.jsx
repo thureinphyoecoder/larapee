@@ -107,7 +107,7 @@ export default function AdminLayout({ children, header }) {
 
     const unreadCount = notifications.filter((n) => !n.isRead).length;
     const notificationStorageKey = user?.id
-        ? `larapos_admin_notifications_${user.id}_${role}`
+        ? `larapee_admin_notifications_${user.id}_${role}`
         : null;
 
     const markNotificationAsRead = (notificationId) => {

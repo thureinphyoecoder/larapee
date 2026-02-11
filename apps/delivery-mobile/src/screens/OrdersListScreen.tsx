@@ -26,7 +26,7 @@ const STATUS_TABS: Array<{ key: StatusTab; label: string }> = [
   { key: "shipped", label: "Shipped" },
   { key: "delivered", label: "Delivered" },
 ];
-const COMPANY_NAME = "LaraPOS Smart";
+const COMPANY_NAME = "LaraPee Smart";
 
 export function OrdersListScreen({
   locale,

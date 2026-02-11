@@ -1,4 +1,4 @@
-# LaraPOS Delivery Mobile (React Native)
+# LaraPee Delivery Mobile (React Native)
 
 Delivery staff အတွက် React Native + NativeWind MVP app ဖြစ်ပါတယ်။
 

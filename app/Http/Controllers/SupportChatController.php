@@ -158,7 +158,7 @@ class SupportChatController extends Controller
         }
 
         $bot = User::firstOrCreate(
-            ['email' => 'support.bot@larapos.com'],
+            ['email' => 'support.bot@larapee.com'],
             [
                 'name' => 'Support Bot',
                 'password' => bcrypt(Str::random(40)),

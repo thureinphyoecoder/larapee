@@ -1,8 +1,8 @@
 {
-  "name": "larapos-pos-electron",
+  "name": "larapee-pos-electron",
   "version": "0.1.0",
   "private": true,
-  "description": "Enterprise POS desktop client for LaraPOS",
+  "description": "Enterprise POS desktop client for LaraPee",
   "main": "dist-electron/main.js",
   "type": "module",
   "scripts": {

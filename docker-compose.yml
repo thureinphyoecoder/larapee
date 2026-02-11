@@ -4,19 +4,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: larapos-app
+    container_name: larapee-app
     ports:
       - "5173:5173"
     volumes:
       - .:/var/www
     networks:
-      - larapos-network
+      - larapee-network
 
   reverb:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: larapos-reverb
+    container_name: larapee-reverb
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
     ports:
       - "8080:8080"
@@ -25,12 +25,12 @@ services:
     depends_on:
       - app
     networks:
-      - larapos-network
+      - larapee-network
 
 
   web:
     image: nginx:alpine
-    container_name: larapos-web
+    container_name: larapee-web
     ports:
       - "8001:80"
     volumes:
@@ -39,13 +39,13 @@ services:
     depends_on:
       - app
     networks:
-      - larapos-network
+      - larapee-network
 
   # Python Analytics
   analytics:
     build:
       context: ./analytics
-    container_name: larapos-analytics
+    container_name: larapee-analytics
     ports:
       - "5000:5000"
     volumes:
@@ -54,36 +54,36 @@ services:
       - db
       - rabbitmq
     networks:
-      - larapos-network
+      - larapee-network
 
   # MySQL Database
   db:
     image: mysql:8.0
-    container_name: larapos-db
+    container_name: larapee-db
     environment:
-      MYSQL_DATABASE: larapos
-      MYSQL_USER: larapos_user
-      MYSQL_PASSWORD: larapos_pass
+      MYSQL_DATABASE: larapee
+      MYSQL_USER: larapee_user
+      MYSQL_PASSWORD: larapee_pass
       MYSQL_ROOT_PASSWORD: root_password
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql # 🎯 ဒါက data ကို စက်ထဲမှာ အသေသိမ်းပေးမှာပါ
     networks:
-      - larapos-network
+      - larapee-network
 
   # Message Broker (RabbitMQ)
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: larapos-rabbitmq
+    container_name: larapee-rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
     networks:
-      - larapos-network
+      - larapee-network
 volumes:
   db_data:
 
 networks:
-  larapos-network:
+  larapee-network:
     driver: bridge

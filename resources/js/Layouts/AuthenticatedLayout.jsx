@@ -48,7 +48,7 @@ export default function AuthenticatedLayout({ header, children }) {
         return rtf.format(Math.round(diffMs / (24 * 60 * 60 * 1000)), "day");
     };
     const notificationStorageKey = user?.id
-        ? `larapos_user_notifications_${user.id}`
+        ? `larapee_user_notifications_${user.id}`
         : null;
 
     const markNotificationAsRead = (notificationId) => {

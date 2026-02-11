@@ -22,7 +22,7 @@ function createWindow(): void {
     // Keep POS layout stable by preventing shrink below initial viewport.
     minWidth: initialWidth,
     minHeight: initialHeight,
-    title: "LaraPOS Enterprise Desktop",
+    title: "LaraPee Enterprise Desktop",
     webPreferences: {
       // Security baseline: isolate renderer from Node runtime.
       contextIsolation: true,
@@ -125,7 +125,7 @@ ipcMain.handle("receipt:print", async (_event, payload: { text: string; silent?:
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>LaraPOS Receipt</title>
+    <title>LaraPee Receipt</title>
     <style>
       body {
         margin: 0;

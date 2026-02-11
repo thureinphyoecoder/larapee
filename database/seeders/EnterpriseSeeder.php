@@ -39,7 +39,7 @@ class EnterpriseSeeder extends Seeder
 
         // ၂။ Super Admin (Verify ပါ တစ်ခါတည်း လုပ်ပေးထားတယ်)
         $admin = User::updateOrCreate(
-            ['email' => 'admin@larapos.com'],
+            ['email' => 'admin@larapee.com'],
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('password'),
@@ -90,7 +90,7 @@ class EnterpriseSeeder extends Seeder
 
             // ၅။ Manager (Verify ပါပြီးသား)
             $manager = User::updateOrCreate(
-                ['email' => 'manager.' . Str::slug($v['name']) . '@larapos.com'],
+                ['email' => 'manager.' . Str::slug($v['name']) . '@larapee.com'],
                 [
                     'name' => $v['name'] . ' Manager',
                     'password' => Hash::make('password'),
@@ -103,7 +103,7 @@ class EnterpriseSeeder extends Seeder
 
             // ၆။ Sales (အရောင်းဝန်ထမ်း)
             $sales = User::updateOrCreate(
-                ['email' => 'sales.' . Str::slug($v['name']) . '@larapos.com'],
+                ['email' => 'sales.' . Str::slug($v['name']) . '@larapee.com'],
                 [
                     'name' => $v['name'] . ' Sales',
                     'password' => Hash::make('password'),
@@ -115,7 +115,7 @@ class EnterpriseSeeder extends Seeder
             $staffSeedUsers[] = ['user' => $sales, 'role' => 'sales', 'shop_name' => $shop->name];
 
             $accountant = User::updateOrCreate(
-                ['email' => 'accountant.' . Str::slug($v['name']) . '@larapos.com'],
+                ['email' => 'accountant.' . Str::slug($v['name']) . '@larapee.com'],
                 [
                     'name' => $v['name'] . ' Accountant',
                     'password' => Hash::make('password'),
@@ -127,7 +127,7 @@ class EnterpriseSeeder extends Seeder
             $staffSeedUsers[] = ['user' => $accountant, 'role' => 'accountant', 'shop_name' => $shop->name];
 
             $technician = User::updateOrCreate(
-                ['email' => 'technician.' . Str::slug($v['name']) . '@larapos.com'],
+                ['email' => 'technician.' . Str::slug($v['name']) . '@larapee.com'],
                 [
                     'name' => $v['name'] . ' Technician',
                     'password' => Hash::make('password'),
@@ -140,7 +140,7 @@ class EnterpriseSeeder extends Seeder
 
             // ၇။ Delivery (ပစ္စည်းပို့ဝန်ထမ်း)
             $delivery = User::updateOrCreate(
-                ['email' => 'delivery.' . Str::slug($v['name']) . '@larapos.com'],
+                ['email' => 'delivery.' . Str::slug($v['name']) . '@larapee.com'],
                 [
                     'name' => $v['name'] . ' Delivery',
                     'password' => Hash::make('password'),
@@ -276,7 +276,7 @@ class EnterpriseSeeder extends Seeder
 
         // ၈။ Customer Users (seed for orders)
         $customer = User::updateOrCreate(
-            ['email' => 'customer@larapos.com'],
+            ['email' => 'customer@larapee.com'],
             [
                 'name' => 'Sample Customer',
                 'password' => Hash::make('password'),

@@ -36,9 +36,9 @@ const DEFAULT_OFFLINE_STATUS: OfflineStatus = {
   pending: 0,
   lastSyncAt: null,
 };
-const LAST_RECEIPT_KEY = "larapos.pos.last_receipt";
-const DEVICE_SIM_MODE_KEY = "larapos.pos.device_sim_mode";
-const NOTIFICATION_SOUND_KEY = "larapos.pos.notification_sound";
+const LAST_RECEIPT_KEY = "larapee.pos.last_receipt";
+const DEVICE_SIM_MODE_KEY = "larapee.pos.device_sim_mode";
+const NOTIFICATION_SOUND_KEY = "larapee.pos.notification_sound";
 const SEARCH_DEBOUNCE_MS = 280;
 
 export default function App() {

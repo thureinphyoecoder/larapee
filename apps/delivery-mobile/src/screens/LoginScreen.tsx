@@ -24,7 +24,7 @@ export function LoginScreen(props: LoginScreenProps) {
       <View className="absolute -right-16 top-40 h-48 w-48 rounded-full bg-indigo-400/20" />
 
       <View className="rounded-3xl border border-white/20 bg-slate-900/90 p-5">
-        <Text className="text-3xl font-black text-white">LaraPOS Delivery</Text>
+        <Text className="text-3xl font-black text-white">LaraPee Delivery</Text>
         <Text className="mt-1 text-sm text-slate-300">{tr(locale, "loginSubtitle")}</Text>
         <Text className="mt-1 text-xs font-bold text-sky-300">{release}</Text>
 
