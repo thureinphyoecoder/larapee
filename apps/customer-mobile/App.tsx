@@ -261,6 +261,11 @@ export default function App() {
           onProfileStateChange={app.account.setProfileState}
           onProfilePostalCodeChange={app.account.setProfilePostalCode}
           onUploadProfilePhoto={(uri) => void app.account.uploadProfilePhoto(uri)}
+          onProfileAddressResolved={({ address, city, state }) => {
+            app.account.setProfileAddress(address);
+            if (typeof city === "string") app.account.setProfileCity(city);
+            if (typeof state === "string") app.account.setProfileState(state);
+          }}
           onSaveProfile={() => void app.account.saveProfile()}
           onToggleLocale={() => void app.account.toggleLocale()}
           onToggleTheme={() => void app.account.toggleTheme()}
