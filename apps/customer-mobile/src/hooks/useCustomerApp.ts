@@ -447,16 +447,27 @@ export function useCustomerApp() {
     setCheckoutError("");
 
     try {
-      await placeOrderFromCart(API_BASE_URL, session.token, {
+      const createdOrder = await placeOrderFromCart(API_BASE_URL, session.token, {
         phone: checkoutPhone.trim(),
         address: checkoutAddress.trim(),
         paymentSlipUri: checkoutSlipUri,
       });
       await hydratePrivateData(session.token);
+      if (createdOrder?.id) {
+        try {
+          const fullOrder = await fetchOrderDetail(API_BASE_URL, session.token, createdOrder.id);
+          setDetailOrder(fullOrder);
+          setDetailView("order");
+        } catch {
+          setDetailOrder(createdOrder);
+          setDetailView("order");
+        }
+      } else {
+        setDetailView("none");
+      }
       setCheckoutSlipUri(null);
       setCheckoutQrData("");
       setCheckoutError("");
-      setDetailView("none");
       setActiveTab("orders");
     } catch (error) {
       if (error instanceof ApiError) {

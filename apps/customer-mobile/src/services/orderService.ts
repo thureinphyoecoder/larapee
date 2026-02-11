@@ -23,7 +23,7 @@ export type CheckoutPayload = {
   paymentSlipUri?: string | null;
 };
 
-export async function placeOrderFromCart(baseUrl: string, token: string, payload: CheckoutPayload = {}): Promise<void> {
+export async function placeOrderFromCart(baseUrl: string, token: string, payload: CheckoutPayload = {}): Promise<CustomerOrder> {
   const formData = new FormData();
 
   if (payload.phone?.trim()) {
@@ -45,13 +45,15 @@ export async function placeOrderFromCart(baseUrl: string, token: string, payload
     } as any);
   }
 
-  await requestFormData({
+  const response = await requestFormData<{ data: CustomerOrder }>({
     baseUrl,
     path: "/orders",
     method: "POST",
     token,
     body: formData,
   });
+
+  return response.data;
 }
 
 export async function fetchOrderDetail(baseUrl: string, token: string, orderId: number): Promise<CustomerOrder> {

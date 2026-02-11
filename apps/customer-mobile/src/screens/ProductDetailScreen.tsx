@@ -56,7 +56,6 @@ export function ProductDetailScreen({
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<"details" | "comments" | "reviews">("details");
   const [reviewRating, setReviewRating] = useState<number>(5);
-  const [reviewComment, setReviewComment] = useState("");
   const [commentDraft, setCommentDraft] = useState("");
   const selectedVariant = useMemo(
     () => variants.find((variant) => variant.id === selectedVariantId) ?? variants[0],
@@ -91,7 +90,6 @@ export function ProductDetailScreen({
     setSelectedImageIndex(0);
     setTab("details");
     setReviewRating(5);
-    setReviewComment("");
     setCommentDraft("");
   }, [firstVariantId, product?.id]);
 
@@ -340,17 +338,8 @@ export function ProductDetailScreen({
                       </Pressable>
                     ))}
                   </View>
-                  <TextInput
-                    value={reviewComment}
-                    onChangeText={setReviewComment}
-                    multiline
-                    numberOfLines={3}
-                    placeholder={tr(locale, "reviewPlaceholder")}
-                    placeholderTextColor={dark ? "#64748b" : "#94a3b8"}
-                    className={`mt-2 rounded-xl border px-3 py-3 text-sm ${dark ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
-                  />
                   <Pressable
-                    onPress={() => onSubmitReview(reviewRating, reviewComment)}
+                    onPress={() => onSubmitReview(reviewRating, "")}
                     disabled={reviewBusy}
                     className={`mt-2 rounded-xl py-2 ${reviewBusy ? "bg-slate-300" : "bg-orange-600"}`}
                   >

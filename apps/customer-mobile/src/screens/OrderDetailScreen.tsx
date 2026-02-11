@@ -74,6 +74,17 @@ export function OrderDetailScreen({
       </View>
 
       <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+        <View className={`mb-4 rounded-2xl border p-4 ${dark ? "border-slate-600 bg-slate-800" : "border-slate-200 bg-slate-50"}`}>
+          <Text className={`text-[11px] font-black uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>Receipt</Text>
+          <Text className={`mt-1 text-lg font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{order?.receipt_no || order?.invoice_no || `#${order?.id || "-"}`}</Text>
+          <View className="mt-2 gap-1">
+            <InfoRow dark={dark} label="Order ID" value={`#${order?.id || "-"}`} />
+            <InfoRow dark={dark} label="Invoice" value={order?.invoice_no || "-"} />
+            <InfoRow dark={dark} label="Job No" value={order?.job_no || "-"} />
+            <InfoRow dark={dark} label="Date" value={formatDate(order?.created_at || null)} />
+          </View>
+        </View>
+
         <View className="flex-row items-start justify-between">
           <View>
             <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{order?.invoice_no || `Order #${order?.id || "-"}`}</Text>
