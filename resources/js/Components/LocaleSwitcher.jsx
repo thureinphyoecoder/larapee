@@ -21,7 +21,7 @@ export default function LocaleSwitcher({ compact = false }) {
                 <select
                     value={locale}
                     onChange={(e) => onChangeLocale(e.target.value)}
-                    className="h-8 rounded-md border border-slate-300 bg-white px-2 pr-2 text-xs font-semibold text-slate-700 shadow-sm outline-none transition focus:border-slate-400"
+                    className="h-8 rounded-md border border-slate-300 bg-white pl-2 pr-8 text-xs font-semibold text-slate-700 shadow-sm outline-none transition focus:border-slate-400 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                     aria-label={label}
                 >
                     <option value="en">English</option>

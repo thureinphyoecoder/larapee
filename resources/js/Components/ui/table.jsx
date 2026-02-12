@@ -5,15 +5,15 @@ export function Table({ className, ...props }) {
 }
 
 export function TableHeader({ className, ...props }) {
-    return <thead className={cn("bg-slate-50 text-slate-600", className)} {...props} />;
+    return <thead className={cn("bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }) {
-    return <tbody className={cn("divide-y divide-slate-100", className)} {...props} />;
+    return <tbody className={cn("divide-y divide-slate-100 dark:divide-slate-800", className)} {...props} />;
 }
 
 export function TableRow({ className, ...props }) {
-    return <tr className={cn("hover:bg-slate-50/70 transition", className)} {...props} />;
+    return <tr className={cn("hover:bg-slate-50/70 transition dark:hover:bg-slate-800/50", className)} {...props} />;
 }
 
 export function TableHead({ className, ...props }) {

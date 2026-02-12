@@ -17,8 +17,8 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-white border border-slate-200 rounded-2xl p-5">
-                        <h3 className="font-black text-slate-900">Retry Failed Job</h3>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700">
+                        <h3 className="font-black text-slate-900 dark:text-slate-100">Retry Failed Job</h3>
                         <form
                             className="mt-4 flex gap-3"
                             onSubmit={(e) => {
@@ -27,7 +27,7 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                             }}
                         >
                             <select
-                                className="flex-1 border border-slate-300 rounded-xl px-3 py-2.5"
+                                className="flex-1 rounded-xl border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                 value={retryForm.data.failed_job_id}
                                 onChange={(e) => retryForm.setData("failed_job_id", e.target.value)}
                                 required
@@ -37,12 +37,12 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                                     <option key={job.id} value={job.id}>#{job.id} [{job.queue}] {job.failed_at}</option>
                                 ))}
                             </select>
-                            <button className="bg-slate-900 text-white rounded-xl px-4 font-bold">Retry</button>
+                            <button className="rounded-xl bg-slate-900 px-4 font-bold text-white dark:bg-slate-100 dark:text-slate-900">Retry</button>
                         </form>
                     </div>
 
-                    <div className="bg-white border border-slate-200 rounded-2xl p-5">
-                        <h3 className="font-black text-slate-900">Run Daily Close</h3>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700">
+                        <h3 className="font-black text-slate-900 dark:text-slate-100">Run Daily Close</h3>
                         <form
                             className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3"
                             onSubmit={(e) => {
@@ -52,7 +52,7 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                         >
                             <input
                                 type="date"
-                                className="border border-slate-300 rounded-xl px-3 py-2.5"
+                                className="rounded-xl border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                 value={closeForm.data.date}
                                 onChange={(e) => closeForm.setData("date", e.target.value)}
                             />
@@ -60,19 +60,19 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                                 type="number"
                                 min="1"
                                 placeholder="Shop ID (optional)"
-                                className="border border-slate-300 rounded-xl px-3 py-2.5"
+                                className="rounded-xl border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                 value={closeForm.data.shop_id}
                                 onChange={(e) => closeForm.setData("shop_id", e.target.value)}
                             />
-                            <button className="bg-orange-600 text-white rounded-xl px-4 font-bold">Run</button>
+                            <button className="rounded-xl bg-orange-600 px-4 font-bold text-white">Run</button>
                         </form>
                     </div>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-2xl overflow-x-auto">
-                    <h3 className="font-black text-slate-900 p-5 pb-0">Queued Jobs</h3>
+                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700">
+                    <h3 className="p-5 pb-0 font-black text-slate-900 dark:text-slate-100">Queued Jobs</h3>
                     <table className="w-full text-sm mt-3">
-                        <thead className="text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                        <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
                             <tr>
                                 <th className="px-4 py-3 text-left">ID</th>
                                 <th className="px-4 py-3 text-left">Queue</th>
@@ -82,21 +82,21 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                         </thead>
                         <tbody>
                             {jobs.map((job) => (
-                                <tr key={job.id} className="border-b border-slate-100">
-                                    <td className="px-4 py-3">#{job.id}</td>
-                                    <td className="px-4 py-3">{job.queue}</td>
-                                    <td className="px-4 py-3">{job.attempts}</td>
-                                    <td className="px-4 py-3">{new Date(Number(job.available_at) * 1000).toLocaleString()}</td>
+                                <tr key={job.id} className="border-b border-slate-100 dark:border-slate-800">
+                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">#{job.id}</td>
+                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{job.queue}</td>
+                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{job.attempts}</td>
+                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{new Date(Number(job.available_at) * 1000).toLocaleString()}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-2xl overflow-x-auto">
-                    <h3 className="font-black text-slate-900 p-5 pb-0">Job Batches</h3>
+                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700">
+                    <h3 className="p-5 pb-0 font-black text-slate-900 dark:text-slate-100">Job Batches</h3>
                     <table className="w-full text-sm mt-3">
-                        <thead className="text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                        <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
                             <tr>
                                 <th className="px-4 py-3 text-left">Batch</th>
                                 <th className="px-4 py-3 text-left">Total</th>
@@ -107,12 +107,12 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                         </thead>
                         <tbody>
                             {batches.map((row) => (
-                                <tr key={row.id} className="border-b border-slate-100">
-                                    <td className="px-4 py-3">{row.name}</td>
-                                    <td className="px-4 py-3">{row.total_jobs}</td>
-                                    <td className="px-4 py-3">{row.pending_jobs}</td>
-                                    <td className="px-4 py-3">{row.failed_jobs}</td>
-                                    <td className="px-4 py-3">{new Date(Number(row.created_at) * 1000).toLocaleString()}</td>
+                                <tr key={row.id} className="border-b border-slate-100 dark:border-slate-800">
+                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{row.name}</td>
+                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{row.total_jobs}</td>
+                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{row.pending_jobs}</td>
+                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{row.failed_jobs}</td>
+                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{new Date(Number(row.created_at) * 1000).toLocaleString()}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -125,14 +125,14 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
 
 function Metric({ label, value, tone = "slate" }) {
     const tones = {
-        slate: "text-slate-900 border-slate-200",
-        rose: "text-rose-700 border-rose-200",
-        emerald: "text-emerald-700 border-emerald-200",
+        slate: "text-slate-900 border-slate-200 dark:text-slate-100 dark:border-slate-700",
+        rose: "text-rose-700 border-rose-200 dark:text-rose-300 dark:border-rose-500/40",
+        emerald: "text-emerald-700 border-emerald-200 dark:text-emerald-300 dark:border-emerald-500/40",
     };
 
     return (
-        <div className={`bg-white border rounded-2xl p-4 ${tones[tone] || tones.slate}`}>
-            <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
+        <div className={`bg-white border rounded-2xl p-4 shadow-sm ${tones[tone] || tones.slate}`}>
+            <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</p>
             <p className="mt-2 text-xl font-black">{value}</p>
         </div>
     );

@@ -42,9 +42,9 @@ export default function PayrollIndex({ month, rows = { data: [] }, summary = {},
                     <CardContent className="p-6">
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <div>
-                                <p className="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">HR Console</p>
-                                <h1 className="mt-1 text-2xl font-black text-slate-900">Payroll Settlement</h1>
-                                <p className="mt-1 text-sm text-slate-500">Modern table + action dialogs for fast manager workflow.</p>
+                                <p className="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold dark:text-slate-500">HR Console</p>
+                                <h1 className="mt-1 text-2xl font-black text-slate-900 dark:text-slate-100">Payroll Settlement</h1>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Modern table + action dialogs for fast manager workflow.</p>
                             </div>
                             <form
                                 onSubmit={(e) => {
@@ -74,7 +74,7 @@ export default function PayrollIndex({ month, rows = { data: [] }, summary = {},
                                     <option value="100">100</option>
                                 </Select>
                                 <Input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} />
-                                <Button size="md" className="bg-slate-700 hover:bg-slate-600">Load</Button>
+                                <Button size="md" className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white">Load</Button>
                             </form>
                         </div>
                         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -82,7 +82,7 @@ export default function PayrollIndex({ month, rows = { data: [] }, summary = {},
                             <Kpi label="Page Net Salary" value={formatMMK(summary.total_net)} tone="slate" />
                             <Kpi label="Page Payout Done" value={`${numberValue(summary.paid_count)} (${paidRate}%)`} tone="sky" />
                         </div>
-                        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                             Suggested slip preview date: {previewReleaseDate || "-"}.
                         </div>
                     </CardContent>
@@ -92,7 +92,7 @@ export default function PayrollIndex({ month, rows = { data: [] }, summary = {},
                     {staffRows.length ? (
                         <PayrollTable rows={staffRows} month={month} />
                     ) : (
-                        <CardContent className="py-12 text-center text-slate-400">No payroll staff found.</CardContent>
+                        <CardContent className="py-12 text-center text-slate-400 dark:text-slate-500">No payroll staff found.</CardContent>
                     )}
                     <Pagination rows={rows} onChange={(page) => reload({ page })} />
                 </Card>
@@ -106,7 +106,7 @@ function PayrollTable({ rows, month }) {
         <div className="overflow-x-auto">
             <Table className="min-w-[980px]">
                 <TableHeader>
-                    <TableRow className="hover:bg-slate-50">
+                    <TableRow className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                         <TableHead>Staff</TableHead>
                         <TableHead>Attendance</TableHead>
                         <TableHead>Breakdown</TableHead>
@@ -135,35 +135,35 @@ function PayrollTableRow({ row, month }) {
         <>
             <TableRow className="align-top">
                 <TableCell>
-                    <p className="font-bold text-slate-900">{row.name}</p>
-                    <p className="text-xs text-slate-500">{row.role} {row.shop ? `• ${row.shop}` : ""}</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{row.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{row.role} {row.shop ? `• ${row.shop}` : ""}</p>
                 </TableCell>
-                <TableCell className="text-xs text-slate-700">
+                <TableCell className="text-xs text-slate-700 dark:text-slate-300">
                     <p>Days: <b>{numberValue(attendance.days)}</b> / {numberValue(attendance.expected_days)}</p>
                     <p>Absence: <b>{numberValue(attendance.absence_days)}</b></p>
                     <p>Worked: <b>{formatWorkedMinutes(attendance.worked_minutes)}</b></p>
                 </TableCell>
-                <TableCell className="text-xs text-slate-700">
+                <TableCell className="text-xs text-slate-700 dark:text-slate-300">
                     <p>Bonus: <b>{formatMMK(totals.attendance_bonus)}</b></p>
                     <p>Performance: <b>{formatMMK(totals.performance_bonus)}</b></p>
                     <p>Deduction: <b>{formatMMK(totals.absence_deduction)}</b></p>
                 </TableCell>
-                <TableCell className="text-right font-black text-slate-900">{formatMMK(totals.net)}</TableCell>
+                <TableCell className="text-right font-black text-slate-900 dark:text-slate-100">{formatMMK(totals.net)}</TableCell>
                 <TableCell>
                     <Badge variant={paid ? "success" : "warning"}>{paid ? "Paid" : "Pending"}</Badge>
-                    {paid && <p className="mt-1 text-[11px] text-slate-500">{new Date(row.payout.paid_at).toLocaleString()}</p>}
+                    {paid && <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{new Date(row.payout.paid_at).toLocaleString()}</p>}
                 </TableCell>
                 <TableCell>
                     <div className="flex flex-wrap justify-end gap-2">
                         <Link
                             href={route("admin.payroll.slip", { user: row.user_id, month })}
-                            className="inline-flex h-8 items-center rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                            className="inline-flex h-8 items-center rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                         >
                             Slip
                         </Link>
-                        <Button size="sm" variant="secondary" onClick={() => setActiveDialog("profile")}>Template</Button>
-                        <Button size="sm" variant="outline" onClick={() => setActiveDialog("adjustment")}>Adjustment</Button>
-                        <Button size="sm" className="bg-slate-700 hover:bg-slate-600" onClick={() => setActiveDialog("payout")}>Payout</Button>
+                        <Button size="sm" variant="secondary" className="dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700" onClick={() => setActiveDialog("profile")}>Template</Button>
+                        <Button size="sm" variant="outline" className="dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800" onClick={() => setActiveDialog("adjustment")}>Adjustment</Button>
+                        <Button size="sm" className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white" onClick={() => setActiveDialog("payout")}>Payout</Button>
                     </div>
                 </TableCell>
             </TableRow>
@@ -211,7 +211,7 @@ function ProfileDialog({ row, month, open, onOpenChange }) {
                     <Field label="OT Rate / Hour" value={form.data.overtime_rate_per_hour} onChange={(v) => form.setData("overtime_rate_per_hour", v)} />
                     <DialogFooter>
                         <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button className="bg-slate-700 hover:bg-slate-600" disabled={form.processing}>{form.processing ? "Saving..." : "Save Template"}</Button>
+                        <Button className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white" disabled={form.processing}>{form.processing ? "Saving..." : "Save Template"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -262,13 +262,13 @@ function AdjustmentDialog({ row, month, open, onOpenChange }) {
                         <Label>Reason</Label>
                         <Input value={form.data.reason} onChange={(e) => form.setData("reason", e.target.value)} required />
                     </div>
-                    <label className="inline-flex items-center gap-2 text-xs text-slate-600">
+                    <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                         <input type="checkbox" checked={form.data.is_recurring} onChange={(e) => form.setData("is_recurring", e.target.checked)} />
                         Recurring monthly
                     </label>
                     <DialogFooter>
                         <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button className="bg-slate-700 hover:bg-slate-600" disabled={form.processing}>{form.processing ? "Saving..." : "Add Adjustment"}</Button>
+                        <Button className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white" disabled={form.processing}>{form.processing ? "Saving..." : "Add Adjustment"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -317,7 +317,7 @@ function PayoutDialog({ row, month, open, onOpenChange }) {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button className="bg-slate-700 hover:bg-slate-600" disabled={form.processing}>{form.processing ? "Saving..." : "Mark as Paid"}</Button>
+                        <Button className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white" disabled={form.processing}>{form.processing ? "Saving..." : "Mark as Paid"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -336,12 +336,12 @@ function Field({ label, value, onChange }) {
 
 function Kpi({ label, value, tone = "slate" }) {
     const tones = {
-        slate: "border-slate-200 text-slate-800",
-        sky: "border-slate-200 text-slate-700",
+        slate: "border-slate-200 text-slate-800 dark:border-slate-700 dark:text-slate-100",
+        sky: "border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-100",
     };
     return (
-        <div className={`rounded-xl border bg-white p-4 ${tones[tone] || tones.slate}`}>
-            <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
+        <div className={`rounded-xl border bg-white p-4 dark:bg-slate-900 ${tones[tone] || tones.slate}`}>
+            <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</p>
             <p className="mt-2 text-xl font-black">{value}</p>
         </div>
     );
@@ -356,14 +356,14 @@ function Pagination({ rows, onChange }) {
     const hasNext = Boolean(rows.next_page_url);
 
     return (
-        <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-4 py-3">
-            <p className="text-xs text-slate-500">
+        <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
                 Showing {from} - {to}
             </p>
             <div className="flex items-center gap-2">
-                <Button size="sm" variant="secondary" disabled={!hasPrev} onClick={() => onChange(current - 1)}>Previous</Button>
-                <span className="text-xs text-slate-500">Page {current}</span>
-                <Button size="sm" variant="secondary" disabled={!hasNext} onClick={() => onChange(current + 1)}>Next</Button>
+                <Button size="sm" variant="secondary" className="dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700" disabled={!hasPrev} onClick={() => onChange(current - 1)}>Previous</Button>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Page {current}</span>
+                <Button size="sm" variant="secondary" className="dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700" disabled={!hasNext} onClick={() => onChange(current + 1)}>Next</Button>
             </div>
         </div>
     );
@@ -371,9 +371,9 @@ function Pagination({ rows, onChange }) {
 
 function SlipItem({ label, value }) {
     return (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-wider text-slate-500">{label}</p>
-            <p className="mt-1 font-semibold text-slate-800">{value}</p>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+            <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</p>
+            <p className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{value}</p>
         </div>
     );
 }

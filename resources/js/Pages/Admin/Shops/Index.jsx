@@ -65,31 +65,31 @@ export default function Index({ shops = [] }) {
             <Head title="Admin Shops" />
 
             <div className="space-y-6">
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
-                    <h3 className="font-black text-slate-900 mb-4 text-lg">Create Shop</h3>
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                    <h3 className="mb-4 text-lg font-black text-slate-900 dark:text-slate-100">Create Shop</h3>
                     <form onSubmit={createShop} className="flex flex-col sm:flex-row gap-3">
                         <input
-                            className="flex-1 border border-slate-300 rounded-xl px-3 py-2.5"
+                            className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                             placeholder="Shop name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
                         />
-                        <button className="bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-orange-700 transition">
+                        <button className="rounded-xl bg-orange-600 px-4 py-2.5 font-bold text-white transition hover:bg-orange-700">
                             Create
                         </button>
                     </form>
                 </div>
 
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-orange-50">
-                        <h3 className="font-black text-slate-900 text-lg">Shops</h3>
+                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                    <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-orange-50 p-6 dark:border-slate-800 dark:from-slate-900 dark:to-slate-800">
+                        <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Shops</h3>
                     </div>
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
-                            <thead className="bg-slate-50">
-                                <tr className="text-slate-500 text-[11px] uppercase tracking-widest border-b border-slate-100">
+                            <thead className="bg-slate-50 dark:bg-slate-800">
+                                <tr className="border-b border-slate-100 text-[11px] uppercase tracking-widest text-slate-500 dark:border-slate-700 dark:text-slate-400">
                                     <th className="px-6 py-4 font-bold">Name</th>
                                     <th className="px-6 py-4 font-bold">Products</th>
                                     <th className="px-6 py-4 font-bold">Staff</th>
@@ -97,7 +97,7 @@ export default function Index({ shops = [] }) {
                                     <th className="px-6 py-4 font-bold">Action</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {shops?.length ? (
                                     shops.map((shop) => {
                                         const hasLinks =
@@ -106,22 +106,22 @@ export default function Index({ shops = [] }) {
                                             Number(shop.orders_count || 0) > 0;
 
                                         return (
-                                            <tr key={shop.id} className="hover:bg-orange-50/30 transition">
+                                            <tr key={shop.id} className="transition hover:bg-orange-50/30 dark:hover:bg-slate-800/50">
                                                 <td className="px-6 py-4">
                                                     {editingId === shop.id ? (
                                                         <input
-                                                            className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm"
+                                                            className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                             value={editingName}
                                                             onChange={(e) => setEditingName(e.target.value)}
                                                             autoFocus
                                                         />
                                                     ) : (
-                                                        <span className="font-semibold text-slate-700 text-sm">{shop.name}</span>
+                                                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{shop.name}</span>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-slate-600">{shop.products_count}</td>
-                                                <td className="px-6 py-4 text-sm text-slate-600">{shop.users_count}</td>
-                                                <td className="px-6 py-4 text-sm text-slate-600">{shop.orders_count}</td>
+                                                <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{shop.products_count}</td>
+                                                <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{shop.users_count}</td>
+                                                <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{shop.orders_count}</td>
                                                 <td className="px-6 py-4 text-sm">
                                                     <div className="flex items-center gap-2">
                                                         {editingId === shop.id ? (
@@ -140,7 +140,7 @@ export default function Index({ shops = [] }) {
                                                                         setEditingId(null);
                                                                         setEditingName("");
                                                                     }}
-                                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100"
+                                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                                                                     title="Cancel"
                                                                 >
                                                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -184,7 +184,7 @@ export default function Index({ shops = [] }) {
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan="5" className="p-12 text-center text-slate-400 italic">
+                                        <td colSpan="5" className="p-12 text-center italic text-slate-400 dark:text-slate-500">
                                             No shops yet.
                                         </td>
                                     </tr>

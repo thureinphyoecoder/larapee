@@ -462,8 +462,8 @@ export default function AdminLayout({ children, header }) {
             style={{ fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif' }}
         >
             {/* Sidebar */}
-            <aside className={`w-64 hidden h-full fixed md:flex flex-col border-r shadow-sm ${isDark ? "bg-slate-900 text-slate-200 border-slate-800" : "bg-white text-slate-700 border-slate-200"}`}>
-                <div className={`p-6 border-b ${isDark ? "border-slate-800" : "border-slate-200"}`}>
+            <aside className={`w-72 hidden h-full fixed md:flex flex-col border-r shadow-sm ${isDark ? "bg-[#0b1220]/95 text-slate-200 border-white/10 backdrop-blur" : "bg-white text-slate-700 border-slate-200"}`}>
+                <div className={`px-6 py-7 border-b ${isDark ? "border-white/10" : "border-slate-200"}`}>
                     <Link
                         href="/"
                         className={`text-2xl font-black tracking-tight ${isDark ? "text-slate-100" : "text-slate-800"}`}
@@ -475,7 +475,7 @@ export default function AdminLayout({ children, header }) {
                     </p>
                 </div>
 
-                <nav className="flex-1 px-4 py-5 space-y-2 overflow-y-auto">
+                <nav className="flex-1 px-4 py-6 space-y-3 overflow-y-auto">
                     {navGroups.map((group) => {
                         const hasActiveLink = group.links.some((link) => isLinkActive(link));
                         const isOpen = Boolean(openGroups[group.id]);
@@ -483,40 +483,45 @@ export default function AdminLayout({ children, header }) {
                         return (
                             <div
                                 key={group.id}
-                                className={`rounded-2xl border ${isDark ? "border-slate-700 bg-slate-800/60" : "border-slate-200 bg-slate-50/80"}`}
+                                className={`rounded-2xl border ${isDark ? "border-white/10 bg-white/[0.03]" : "border-slate-200 bg-slate-50/80"}`}
                             >
                                 <button
                                     type="button"
                                     onClick={() => toggleNavGroup(group.id)}
-                                className={`w-full px-3 py-2.5 flex items-center justify-between rounded-2xl text-xs font-black uppercase tracking-[0.16em] transition ${
+                                className={`w-full px-4 py-3 flex items-center justify-between rounded-2xl text-xs font-black uppercase tracking-[0.16em] transition ${
                                         hasActiveLink
                                             ? isDark
-                                                ? "text-white bg-slate-700"
+                                                ? "text-white bg-white/[0.08]"
                                                 : "text-slate-800 bg-slate-200"
                                             : isDark
-                                                ? "text-slate-300 hover:text-white hover:bg-slate-800"
+                                                ? "text-slate-300 hover:text-white hover:bg-white/[0.06]"
                                                 : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
                                     }`}
                                 >
                                     <span>{group.label}</span>
-                                    <span className={`text-[11px] transition-transform ${isOpen ? "rotate-180" : ""}`}>
-                                        ▼
-                                    </span>
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20"
+                                        fill="none"
+                                        className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                                    >
+                                        <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
                                 </button>
 
                                 {isOpen && (
-                                    <div className="pb-2 px-2 space-y-1">
+                                    <div className="pb-3 px-2 space-y-1.5">
                                         {group.links.map((link) => (
                                             <Link
                                                 key={link.route}
                                                 href={route(link.route)}
-                                                className={`block px-3 py-2 rounded-xl text-sm font-bold transition ${
+                                                className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition ${
                                                     isLinkActive(link)
                                                         ? isDark
-                                                            ? "bg-slate-700 text-white border border-slate-600"
+                                                            ? "bg-white/[0.1] text-white border border-white/10"
                                                             : "bg-slate-200 text-slate-800 border border-slate-300"
                                                         : isDark
-                                                            ? "text-slate-300 hover:text-white hover:bg-slate-800 border border-transparent"
+                                                            ? "text-slate-300 hover:text-white hover:bg-white/[0.06] border border-transparent"
                                                             : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
                                                 }`}
                                             >
@@ -530,7 +535,7 @@ export default function AdminLayout({ children, header }) {
                     })}
                 </nav>
 
-                <div className={`p-4 border-t ${isDark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-slate-50"}`}>
+                <div className={`p-4 border-t ${isDark ? "border-white/10 bg-[#0b1220]" : "border-slate-200 bg-slate-50"}`}>
                     <p className={`text-sm font-semibold truncate ${isDark ? "text-slate-100" : "text-slate-800"}`}>
                         {primaryIdentity}
                     </p>
@@ -543,7 +548,7 @@ export default function AdminLayout({ children, header }) {
                         as="button"
                         className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-black uppercase tracking-widest transition ${
                             isDark
-                                ? "border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700"
+                                ? "border-white/10 bg-white/[0.06] text-slate-100 hover:bg-white/[0.12]"
                                 : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
                         }`}
                     >
@@ -553,8 +558,8 @@ export default function AdminLayout({ children, header }) {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 md:ms-64 flex flex-col min-h-screen">
-                <header className={`h-20 backdrop-blur border-b px-6 sticky top-0 z-50 ${isDark ? "bg-slate-900/90 border-slate-800" : "bg-white/90 border-slate-200"}`}>
+            <div className="flex-1 md:ms-72 flex flex-col min-h-screen">
+                <header className={`h-20 backdrop-blur border-b px-6 sticky top-0 z-50 ${isDark ? "bg-[#0b1220]/80 border-white/10" : "bg-white/90 border-slate-200"}`}>
                     <div className="h-full grid grid-cols-[auto,1fr,auto] items-center gap-6">
                         <div className={`text-lg font-black whitespace-nowrap ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                             {header || "Admin"}
@@ -588,7 +593,7 @@ export default function AdminLayout({ children, header }) {
                                             type="text"
                                             className={`h-11 w-full rounded-full border ps-11 pe-4 text-sm shadow-sm transition focus:outline-none focus:ring-2 ${
                                                 isDark
-                                                    ? "border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-amber-500 focus:bg-slate-800 focus:ring-amber-400/20"
+                                                    ? "border-white/10 bg-white/[0.04] text-slate-100 placeholder:text-slate-400 focus:border-cyan-400/70 focus:bg-white/[0.06] focus:ring-cyan-400/20"
                                                     : "border-slate-200 bg-slate-50 text-slate-700 placeholder:text-slate-400 focus:border-orange-300 focus:bg-white focus:ring-orange-100"
                                             }`}
                                             placeholder="Search products, SKU, order ID, phone, customer..."
@@ -607,7 +612,7 @@ export default function AdminLayout({ children, header }) {
 
                         <div className="flex items-center gap-4 justify-self-end">
                         {canTrackAttendance && role !== "admin" && (
-                            <div className="hidden lg:flex items-center gap-2 border border-slate-200 rounded-xl px-2 py-1 bg-white shadow-sm">
+                            <div className={`hidden lg:flex items-center gap-2 border rounded-xl px-2 py-1 shadow-sm ${isDark ? "border-white/10 bg-white/[0.04]" : "border-slate-200 bg-white"}`}>
                                 {attendance?.is_checked_in ? (
                                     <button
                                         onClick={() => submitAttendance("out")}
@@ -638,7 +643,7 @@ export default function AdminLayout({ children, header }) {
                                 href={route("admin.support.index")}
                                 className={`hidden sm:inline-flex px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border ${
                                     isDark
-                                        ? "border-slate-700 text-slate-200 hover:bg-slate-800"
+                                        ? "border-white/10 text-slate-200 hover:bg-white/[0.06]"
                                         : "border-slate-200 text-slate-600 hover:bg-slate-100"
                                 }`}
                             >
@@ -652,9 +657,9 @@ export default function AdminLayout({ children, header }) {
                             aria-label="Theme"
                             value={themeMode}
                             onChange={(e) => setThemeMode(e.target.value)}
-                            className={`h-9 rounded-lg border px-2 text-xs font-semibold ${
+                            className={`h-9 rounded-lg border pl-2 pr-8 text-xs font-semibold ${
                                 isDark
-                                    ? "border-slate-700 bg-slate-800 text-slate-100"
+                                    ? "border-white/10 bg-white/[0.04] text-slate-100"
                                     : "border-slate-300 bg-white text-slate-700"
                             }`}
                         >
@@ -669,7 +674,7 @@ export default function AdminLayout({ children, header }) {
                                 onClick={() => setShowNoti(!showNoti)}
                                 className={`p-2 transition rounded-full focus:outline-none ${
                                     isDark
-                                        ? "text-slate-300 hover:text-amber-300 hover:bg-slate-800"
+                                        ? "text-slate-300 hover:text-cyan-300 hover:bg-white/[0.06]"
                                         : "text-slate-500 hover:text-orange-600 hover:bg-slate-100"
                                 }`}
                             >
@@ -705,13 +710,13 @@ export default function AdminLayout({ children, header }) {
                                         onClick={() => setShowNoti(false)}
                                     ></div>
                                     <div className={`absolute right-0 mt-3 w-80 rounded-2xl shadow-2xl border py-2 z-20 overflow-hidden animate-in fade-in zoom-in duration-200 ${
-                                        isDark ? "bg-slate-900 border-slate-700" : "bg-white border-slate-100"
+                                        isDark ? "bg-[#0c1526] border-white/10" : "bg-white border-slate-100"
                                     }`}>
-                                        <div className={`px-4 py-2 border-b flex justify-between items-center ${isDark ? "border-slate-800" : "border-slate-50"}`}>
+                                        <div className={`px-4 py-2 border-b flex justify-between items-center ${isDark ? "border-white/10" : "border-slate-50"}`}>
                                             <span className={`font-bold ${isDark ? "text-slate-100" : "text-slate-700"}`}>
                                                 Notifications
                                             </span>
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${isDark ? "bg-amber-300/20 text-amber-300" : "bg-orange-100 text-orange-600"}`}>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${isDark ? "bg-cyan-400/15 text-cyan-300" : "bg-orange-100 text-orange-600"}`}>
                                                 Recent
                                             </span>
                                         </div>
@@ -724,7 +729,7 @@ export default function AdminLayout({ children, header }) {
                                                         onClick={() => openNotification(n)}
                                                         className={`w-full text-left px-4 py-3 border-b last:border-0 cursor-pointer ${
                                                             isDark
-                                                                ? `hover:bg-slate-800 border-slate-800 ${!n.isRead ? "bg-sky-500/10" : ""}`
+                                                                ? `hover:bg-white/[0.06] border-white/10 ${!n.isRead ? "bg-cyan-400/10" : ""}`
                                                                 : `hover:bg-slate-50 border-slate-50 ${!n.isRead ? "bg-blue-50/30" : ""}`
                                                         }`}
                                                     >
@@ -747,7 +752,7 @@ export default function AdminLayout({ children, header }) {
                                             onClick={() => setNotifications([])}
                                             className={`w-full py-2 text-xs font-bold transition uppercase tracking-widest ${
                                                 isDark
-                                                    ? "text-slate-400 hover:text-amber-300 bg-slate-800/60"
+                                                    ? "text-slate-400 hover:text-cyan-300 bg-white/[0.04]"
                                                     : "text-slate-400 hover:text-orange-600 bg-slate-50/50"
                                             }`}
                                         >
@@ -762,7 +767,7 @@ export default function AdminLayout({ children, header }) {
                     </div>
                 </header>
 
-                <main className={`flex-1 p-6 md:p-8 ${isDark ? "bg-slate-950" : ""}`}>{children}</main>
+                <main className={`flex-1 p-6 md:p-8 ${isDark ? "bg-transparent" : ""}`}>{children}</main>
             </div>
         </div>
     );

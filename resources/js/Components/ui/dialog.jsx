@@ -27,7 +27,7 @@ export function Dialog({ open, onOpenChange, children }) {
 
 export function DialogContent({ className, children }) {
     return (
-        <div className={cn("relative z-10 w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl", className)}>
+        <div className={cn("relative z-10 w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900", className)}>
             {children}
         </div>
     );
@@ -38,11 +38,11 @@ export function DialogHeader({ className, ...props }) {
 }
 
 export function DialogTitle({ className, ...props }) {
-    return <h4 className={cn("text-base font-black text-slate-900", className)} {...props} />;
+    return <h4 className={cn("text-base font-black text-slate-900 dark:text-slate-100", className)} {...props} />;
 }
 
 export function DialogDescription({ className, ...props }) {
-    return <p className={cn("mt-1 text-xs text-slate-500", className)} {...props} />;
+    return <p className={cn("mt-1 text-xs text-slate-500 dark:text-slate-400", className)} {...props} />;
 }
 
 export function DialogFooter({ className, ...props }) {

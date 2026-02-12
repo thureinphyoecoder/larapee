@@ -76,17 +76,25 @@ export default function Index({
         <AdminLayout header="Users & Staff">
             <Head title="Admin Users" />
 
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                <div className="flex gap-2">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
                     <Link
                         href={route("admin.users.index", { type: "staff", search: query || undefined })}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold border ${type === "staff" ? "bg-orange-50 text-orange-600 border-orange-200" : "bg-white text-slate-600 border-slate-200"}`}
+                        className={`rounded-lg px-4 py-2 text-sm font-semibold border ${
+                            type === "staff"
+                                ? "bg-white text-slate-900 border-slate-200 dark:bg-slate-200 dark:text-slate-900 dark:border-slate-200"
+                                : "bg-transparent text-slate-600 border-transparent dark:text-slate-300"
+                        }`}
                     >
                         Staff
                     </Link>
                     <Link
                         href={route("admin.users.index", { type: "customers", search: query || undefined })}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold border ${type === "customers" ? "bg-orange-50 text-orange-600 border-orange-200" : "bg-white text-slate-600 border-slate-200"}`}
+                        className={`rounded-lg px-4 py-2 text-sm font-semibold border ${
+                            type === "customers"
+                                ? "bg-white text-slate-900 border-slate-200 dark:bg-slate-200 dark:text-slate-900 dark:border-slate-200"
+                                : "bg-transparent text-slate-600 border-transparent dark:text-slate-300"
+                        }`}
                     >
                         Customers
                     </Link>
@@ -102,26 +110,26 @@ export default function Index({
                     <input
                         type="text"
                         placeholder="Search name or email..."
-                        className="border rounded-lg px-3 py-2 text-sm w-64"
+                        className="w-64 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
-                    <button className="bg-slate-800 text-white px-3 py-2 rounded-lg text-sm">
+                    <button className="rounded-lg bg-slate-800 px-3 py-2 text-sm text-white dark:bg-slate-100 dark:text-slate-900">
                         Search
                     </button>
                 </form>
             </div>
 
             {type === "staff" && canManageUsers && (
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
-                    <h3 className="font-bold text-slate-800 mb-4">
+                <div className="mb-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                    <h3 className="mb-4 font-bold text-slate-800 dark:text-slate-100">
                         Create Staff
                     </h3>
                     <form onSubmit={createStaff} className="grid grid-cols-1 md:grid-cols-5 gap-4">
                         <input
                             type="text"
                             placeholder="Name"
-                            className="border rounded-lg px-3 py-2"
+                            className="rounded-lg border border-slate-300 bg-white pl-3 pr-8 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                             value={form.name}
                             onChange={(e) => setForm({ ...form, name: e.target.value })}
                             required
@@ -129,7 +137,7 @@ export default function Index({
                         <input
                             type="email"
                             placeholder="Email"
-                            className="border rounded-lg px-3 py-2"
+                            className="rounded-lg border border-slate-300 bg-white pl-3 pr-8 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                             value={form.email}
                             onChange={(e) => setForm({ ...form, email: e.target.value })}
                             required
@@ -137,12 +145,12 @@ export default function Index({
                         <input
                             type="password"
                             placeholder="Password (optional)"
-                            className="border rounded-lg px-3 py-2"
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                             value={form.password}
                             onChange={(e) => setForm({ ...form, password: e.target.value })}
                         />
                         <select
-                            className="border rounded-lg px-3 py-2"
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                             value={form.role}
                             onChange={(e) => setForm({ ...form, role: e.target.value })}
                         >
@@ -153,7 +161,7 @@ export default function Index({
                             ))}
                         </select>
                         <select
-                            className="border rounded-lg px-3 py-2"
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                             value={form.shop_id}
                             onChange={(e) => setForm({ ...form, shop_id: e.target.value })}
                             disabled={!staffRoles.includes(form.role)}
@@ -166,7 +174,7 @@ export default function Index({
                             ))}
                         </select>
                         <div className="md:col-span-5">
-                            <button className="bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold">
+                            <button className="rounded-lg bg-orange-600 px-4 py-2 font-semibold text-white">
                                 Create
                             </button>
                         </div>
@@ -174,9 +182,9 @@ export default function Index({
                 </div>
             )}
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="p-6 border-b border-slate-50">
-                    <h3 className="font-bold text-slate-800">
+            <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                <div className="border-b border-slate-50 p-6 dark:border-slate-800">
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100">
                         {type === "staff" ? "Staff" : "Customers"}
                     </h3>
                 </div>
@@ -184,7 +192,7 @@ export default function Index({
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="text-slate-400 text-[11px] uppercase tracking-widest border-b border-slate-50">
+                            <tr className="border-b border-slate-50 text-[11px] uppercase tracking-widest text-slate-400 dark:border-slate-800 dark:text-slate-500">
                                 <th className="px-6 py-4 font-bold">Name</th>
                                 <th className="px-6 py-4 font-bold">Email</th>
                                 <th className="px-6 py-4 font-bold">Role</th>
@@ -193,25 +201,25 @@ export default function Index({
                                 <th className="px-6 py-4 font-bold">Action</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50">
+                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                             {rows.length ? (
                                 rows.map((user) => {
                                     const currentRole = user.roles?.[0]?.name || "customer";
                                     return (
                                         <tr
                                             key={user.id}
-                                            className="hover:bg-slate-50/80 transition"
+                                            className="transition hover:bg-slate-50/80 dark:hover:bg-slate-800/50"
                                         >
-                                            <td className="px-6 py-4 font-semibold text-slate-700 text-sm">
+                                            <td className="px-6 py-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
                                                 {user.name}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-slate-600">
+                                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
                                                 {user.email}
                                             </td>
                                             <td className="px-6 py-4 text-sm">
                                                 {type === "staff" && canManageUsers ? (
                                                     <select
-                                                        className="border rounded-lg px-2 py-1"
+                                                        className="rounded-lg border border-slate-300 bg-white pl-2 pr-8 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                         defaultValue={currentRole}
                                                         onChange={(e) =>
                                                             updateUser(user.id, e.target.value, user.shop_id)
@@ -224,7 +232,7 @@ export default function Index({
                                                         ))}
                                                     </select>
                                                 ) : (
-                                                    <span className="text-slate-500">
+                                                    <span className="text-slate-500 dark:text-slate-400">
                                                         {currentRole}
                                                     </span>
                                                 )}
@@ -234,7 +242,7 @@ export default function Index({
                                                     <td className="px-6 py-4 text-sm">
                                                         {canManageUsers ? (
                                                             <select
-                                                                className="border rounded-lg px-2 py-1"
+                                                                className="rounded-lg border border-slate-300 bg-white pl-2 pr-8 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                                 defaultValue={user.shop_id || ""}
                                                                 onChange={(e) =>
                                                                     updateUser(user.id, currentRole, e.target.value)
@@ -252,17 +260,17 @@ export default function Index({
                                                             <span>{user.shop?.name || "Not assigned"}</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm text-slate-600">
+                                                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
                                                         {Math.floor((user.attendance_today?.worked_minutes || 0) / 60)}h {(user.attendance_today?.worked_minutes || 0) % 60}m
-                                                        <span className={`ms-2 px-2 py-0.5 rounded-full text-[10px] font-bold ${user.attendance_today?.checked_in ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                                                        <span className={`ms-2 px-2 py-0.5 rounded-full text-[10px] font-bold ${user.attendance_today?.checked_in ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"}`}>
                                                             {user.attendance_today?.checked_in ? "On Duty" : "Off"}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm text-slate-500">
+                                                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                                                         <div className="flex items-center gap-2">
                                                             <Link
                                                                 href={route("admin.users.show", user.id)}
-                                                                className="inline-flex items-center rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                                                className="inline-flex items-center rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                                                             >
                                                                 View
                                                             </Link>
@@ -292,11 +300,11 @@ export default function Index({
                                                 </>
                                             )}
                                             {type !== "staff" && (
-                                                <td className="px-6 py-4 text-sm text-slate-500">
+                                                <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                                                     <div className="flex items-center gap-2">
                                                         <Link
                                                             href={route("admin.users.show", user.id)}
-                                                            className="inline-flex items-center rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                                            className="inline-flex items-center rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                                                         >
                                                             View
                                                         </Link>
@@ -331,7 +339,7 @@ export default function Index({
                                 <tr>
                                     <td
                                         colSpan={type === "staff" ? 6 : 4}
-                                        className="p-12 text-center text-slate-400 italic"
+                                        className="p-12 text-center text-slate-400 italic dark:text-slate-500"
                                     >
                                         No users found.
                                     </td>
@@ -351,7 +359,7 @@ export default function Index({
                             className={`px-3 py-1 rounded border text-sm ${
                                 link.active
                                     ? "bg-orange-600 text-white border-orange-600"
-                                    : "bg-white text-slate-600 border-slate-200"
+                                    : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
                             } ${!link.url ? "opacity-50 pointer-events-none" : ""}`}
                         >
                             {sanitizePaginationLabel(link.label)}
