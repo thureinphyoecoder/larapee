@@ -32,7 +32,7 @@ function PaginationLinks({ links }) {
                     href={link.url || "#"}
                     className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
                         link.active
-                            ? "border-cyan-500/80 bg-cyan-500/15 text-cyan-200"
+                            ? "border-orange-400/80 bg-orange-500/15 text-orange-700 dark:text-orange-200"
                             : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:bg-slate-800/70"
                     } ${!link.url ? "pointer-events-none opacity-40" : ""}`}
                 >
@@ -50,12 +50,12 @@ function TabButton({ active, onClick, label, count }) {
             onClick={onClick}
             className={`inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold transition whitespace-nowrap ${
                 active
-                    ? "border-cyan-400 text-slate-900 dark:text-cyan-200"
+                    ? "border-orange-400 text-slate-900 dark:text-orange-200"
                     : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
         >
             <span>{label}</span>
-            <span className={`text-[11px] ${active ? "text-cyan-500 dark:text-cyan-300" : "text-slate-400 dark:text-slate-500"}`}>{count}</span>
+            <span className={`text-[11px] ${active ? "text-orange-500 dark:text-orange-300" : "text-slate-400 dark:text-slate-500"}`}>{count}</span>
         </button>
     );
 }
@@ -96,7 +96,7 @@ function Input(props) {
     return (
         <input
             {...props}
-            className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-500/30 ${props.className || ""}`}
+            className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/30 ${props.className || ""}`}
         />
     );
 }
@@ -105,7 +105,7 @@ function Select({ options, ...props }) {
     return (
         <select
             {...props}
-            className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-500/30 ${props.className || ""}`}
+            className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/30 ${props.className || ""}`}
         >
             {options.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -242,7 +242,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
             <div className="mx-auto max-w-[1400px] space-y-5">
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/65 dark:backdrop-blur">
                     <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
                             <FaWallet className="h-6 w-6" />
                         </div>
                         <div>
@@ -256,9 +256,9 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                             <p className="text-xs font-semibold tracking-wide text-slate-500 dark:text-slate-400">Orders</p>
                             <p className="mt-1 text-3xl font-black text-slate-900 dark:text-slate-100">{rows.length}</p>
                         </div>
-                        <div className="rounded-2xl border border-cyan-200 bg-gradient-to-b from-cyan-50 to-white p-4 dark:border-cyan-500/30 dark:from-cyan-500/10 dark:to-slate-900/70">
-                            <p className="text-xs font-semibold tracking-wide text-cyan-700 dark:text-cyan-300">Gross</p>
-                            <p className="mt-1 text-3xl font-black text-cyan-800 dark:text-cyan-200">{totals.gross.toLocaleString()} MMK</p>
+                        <div className="rounded-2xl border border-orange-200 bg-gradient-to-b from-orange-50 to-white p-4 dark:border-orange-500/30 dark:from-orange-500/10 dark:to-slate-900/70">
+                            <p className="text-xs font-semibold tracking-wide text-orange-700 dark:text-orange-300">Gross</p>
+                            <p className="mt-1 text-3xl font-black text-orange-800 dark:text-orange-200">{totals.gross.toLocaleString()} MMK</p>
                         </div>
                         <div className="rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white p-4 dark:border-amber-500/30 dark:from-amber-500/10 dark:to-slate-900/70">
                             <p className="text-xs font-semibold tracking-wide text-amber-700 dark:text-amber-300">Refund Risk</p>
@@ -275,7 +275,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                             placeholder="Invoice / Receipt / Customer"
                         />
                         <Select options={STATUS_OPTIONS} value={status} onChange={(event) => setStatus(event.target.value)} />
-                        <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white dark:bg-slate-200 dark:text-slate-900">
+                        <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-500">
                             <FaFilter className="h-3.5 w-3.5" />
                             Filter
                         </button>
@@ -343,7 +343,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                             <button
                                 type="button"
                                 onClick={() => setModal({ open: true, type: "approval" })}
-                                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white"
+                                className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white hover:bg-orange-500"
                             >
                                 <FaPenToSquare className="h-3.5 w-3.5" />
                                 New Request
@@ -390,7 +390,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                             <button
                                 type="button"
                                 onClick={() => setModal({ open: true, type: "adjustment" })}
-                                className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white dark:bg-white dark:text-slate-900"
+                                className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white hover:bg-orange-500"
                             >
                                 <FaSackDollar className="h-3.5 w-3.5" />
                                 New Adjustment
@@ -452,7 +452,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                                         <tr key={row.id} className="border-b border-slate-100 dark:border-slate-800">
                                             <td className="py-3 text-xs text-slate-500 dark:text-slate-400">{new Date(row.created_at).toLocaleString()}</td>
                                             <td className="py-3 font-semibold text-slate-800 dark:text-slate-100">{row.order?.invoice_no || row.order_id}</td>
-                                            <td className="py-3 uppercase text-indigo-600 dark:text-indigo-300">{row.event_type}</td>
+                                            <td className="py-3 uppercase text-orange-600 dark:text-orange-300">{row.event_type}</td>
                                             <td className="py-3 font-bold text-slate-800 dark:text-slate-100">{Number(row.amount).toLocaleString()} {row.currency || "MMK"}</td>
                                             <td className="py-3"><span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-300">{row.status}</span></td>
                                             <td className="py-3 text-slate-600 dark:text-slate-300">{row.actor?.name || "system"}</td>
@@ -518,7 +518,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                     </div>
 
                     <button
-                        className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-black text-white disabled:opacity-60 dark:bg-white dark:text-slate-900"
+                        className="w-full rounded-xl bg-orange-600 py-2.5 text-sm font-black text-white hover:bg-orange-500 disabled:opacity-60"
                         disabled={quickForm.processing}
                     >
                         {quickForm.processing ? "Saving..." : "Save"}
@@ -575,7 +575,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                     </div>
 
                     <button
-                        className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-black text-white disabled:opacity-60"
+                        className="w-full rounded-xl bg-orange-600 py-2.5 text-sm font-black text-white hover:bg-orange-500 disabled:opacity-60"
                         disabled={approvalForm.processing}
                     >
                         {approvalForm.processing ? "Submitting..." : "Submit"}
@@ -649,7 +649,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                     </div>
 
                     <button
-                        className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-black text-white disabled:opacity-60 dark:bg-white dark:text-slate-900"
+                        className="w-full rounded-xl bg-orange-600 py-2.5 text-sm font-black text-white hover:bg-orange-500 disabled:opacity-60"
                         disabled={adjustmentForm.processing}
                     >
                         {adjustmentForm.processing ? "Saving..." : "Save"}

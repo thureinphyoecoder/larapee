@@ -74,13 +74,13 @@ export default function PayrollIndex({ month, rows = { data: [] }, summary = {},
                                     <option value="100">100</option>
                                 </Select>
                                 <Input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} />
-                                <Button size="md" className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white">Load</Button>
+                                <Button size="md" className="bg-orange-600 hover:bg-orange-500 text-white dark:bg-orange-500 dark:text-white dark:hover:bg-orange-400">Load</Button>
                             </form>
                         </div>
                         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <Kpi label="Staff Count" value={numberValue(summary.staff_count)} />
-                            <Kpi label="Page Net Salary" value={formatMMK(summary.total_net)} tone="slate" />
-                            <Kpi label="Page Payout Done" value={`${numberValue(summary.paid_count)} (${paidRate}%)`} tone="sky" />
+                            <Kpi label="Page Net Salary" value={formatMMK(summary.total_net)} tone="orange" />
+                            <Kpi label="Page Payout Done" value={`${numberValue(summary.paid_count)} (${paidRate}%)`} tone="amber" />
                         </div>
                         <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                             Suggested slip preview date: {previewReleaseDate || "-"}.
@@ -163,7 +163,7 @@ function PayrollTableRow({ row, month }) {
                         </Link>
                         <Button size="sm" variant="secondary" className="dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700" onClick={() => setActiveDialog("profile")}>Template</Button>
                         <Button size="sm" variant="outline" className="dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800" onClick={() => setActiveDialog("adjustment")}>Adjustment</Button>
-                        <Button size="sm" className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white" onClick={() => setActiveDialog("payout")}>Payout</Button>
+                        <Button size="sm" className="bg-orange-600 hover:bg-orange-500 text-white dark:bg-orange-500 dark:text-white dark:hover:bg-orange-400" onClick={() => setActiveDialog("payout")}>Payout</Button>
                     </div>
                 </TableCell>
             </TableRow>
@@ -211,7 +211,7 @@ function ProfileDialog({ row, month, open, onOpenChange }) {
                     <Field label="OT Rate / Hour" value={form.data.overtime_rate_per_hour} onChange={(v) => form.setData("overtime_rate_per_hour", v)} />
                     <DialogFooter>
                         <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white" disabled={form.processing}>{form.processing ? "Saving..." : "Save Template"}</Button>
+                        <Button className="bg-orange-600 hover:bg-orange-500 text-white dark:bg-orange-500 dark:text-white dark:hover:bg-orange-400" disabled={form.processing}>{form.processing ? "Saving..." : "Save Template"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -268,7 +268,7 @@ function AdjustmentDialog({ row, month, open, onOpenChange }) {
                     </label>
                     <DialogFooter>
                         <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white" disabled={form.processing}>{form.processing ? "Saving..." : "Add Adjustment"}</Button>
+                        <Button className="bg-orange-600 hover:bg-orange-500 text-white dark:bg-orange-500 dark:text-white dark:hover:bg-orange-400" disabled={form.processing}>{form.processing ? "Saving..." : "Add Adjustment"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -317,7 +317,7 @@ function PayoutDialog({ row, month, open, onOpenChange }) {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white" disabled={form.processing}>{form.processing ? "Saving..." : "Mark as Paid"}</Button>
+                        <Button className="bg-orange-600 hover:bg-orange-500 text-white dark:bg-orange-500 dark:text-white dark:hover:bg-orange-400" disabled={form.processing}>{form.processing ? "Saving..." : "Mark as Paid"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -337,7 +337,8 @@ function Field({ label, value, onChange }) {
 function Kpi({ label, value, tone = "slate" }) {
     const tones = {
         slate: "border-slate-200 text-slate-800 dark:border-slate-700 dark:text-slate-100",
-        sky: "border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-100",
+        orange: "border-orange-200 text-orange-800 dark:border-orange-500/30 dark:text-orange-200",
+        amber: "border-amber-200 text-amber-800 dark:border-amber-500/30 dark:text-amber-200",
     };
     return (
         <div className={`rounded-xl border bg-white p-4 dark:bg-slate-900 ${tones[tone] || tones.slate}`}>
