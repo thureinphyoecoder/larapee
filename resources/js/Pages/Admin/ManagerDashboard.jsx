@@ -30,10 +30,10 @@ export default function ManagerDashboard({
             <Head title="Manager Dashboard" />
 
             <div className="space-y-6">
-                <div className="rounded-3xl bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-700 text-white p-6 shadow">
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/70">Shop Manager Console</p>
+                <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-stone-100 via-slate-100 to-zinc-100 text-slate-800 p-6 shadow-sm">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Shop Manager Console</p>
                     <h2 className="mt-2 text-2xl font-black">{shop?.name || "Shop"} Operations Overview</h2>
-                    <p className="mt-2 text-sm text-white/80">
+                    <p className="mt-2 text-sm text-slate-600">
                         End-of-day report ကို ဒီနေရာကနေတင်ပြီး Super Admin ကို တန်းမြင်အောင်လုပ်ပါ။
                     </p>
                 </div>
@@ -54,7 +54,7 @@ export default function ManagerDashboard({
                                     <div className="w-24 text-xs text-slate-500">{new Date(d.date).toLocaleDateString()}</div>
                                     <div className="flex-1 h-2.5 bg-slate-100 rounded">
                                         <div
-                                            className="h-2.5 bg-emerald-500 rounded"
+                                            className="h-2.5 bg-slate-500 rounded"
                                             style={{ width: `${Math.min(100, Number(d.total) / 2000)}%` }}
                                         ></div>
                                     </div>

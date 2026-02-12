@@ -26,23 +26,49 @@ class PayrollController extends Controller
         abort_unless($actor && $actor->hasAnyRole(['admin', 'accountant']), 403);
 
         $month = $this->payrollCalculator->normalizeMonth((string) $request->string('month')->toString());
+        $search = trim((string) $request->string('q')->toString());
+        $perPage = min(100, max(10, (int) $request->integer('per_page', 25)));
 
         $staffRoles = ['manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician'];
-        $staff = User::query()
+        $staffQuery = User::query()
             ->with(['roles:id,name', 'shop:id,name', 'payrollProfile'])
             ->whereHas('roles', fn ($q) => $q->whereIn('name', $staffRoles))
-            ->orderBy('name')
-            ->get(['id', 'name', 'email', 'shop_id']);
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($subQuery) use ($search): void {
+                    $subQuery
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('name');
 
-        $rows = $this->payrollCalculator->calculate($staff, $month);
+        $staffPage = $staffQuery
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $rows = $this->payrollCalculator->calculate($staffPage->getCollection(), $month);
         [, $to] = $this->payrollCalculator->monthRange($month);
 
         return Inertia::render('Admin/Payroll/Index', [
             'month' => $month,
-            'rows' => $rows,
+            'filters' => [
+                'q' => $search,
+                'per_page' => $perPage,
+            ],
+            'rows' => [
+                'data' => $rows->values(),
+                'links' => $staffPage->linkCollection(),
+                'next_page_url' => $staffPage->nextPageUrl(),
+                'prev_page_url' => $staffPage->previousPageUrl(),
+                'current_page' => $staffPage->currentPage(),
+                'per_page' => $staffPage->perPage(),
+                'from' => $staffPage->firstItem(),
+                'to' => $staffPage->lastItem(),
+            ],
             'previewReleaseDate' => $to->copy()->subDays(3)->toDateString(),
             'summary' => [
-                'staff_count' => $rows->count(),
+                'staff_count' => $staffPage->total(),
+                'page_staff_count' => $rows->count(),
                 'total_net' => (float) $rows->sum(fn ($r) => $r['totals']['net'] ?? 0),
                 'paid_count' => $rows->filter(fn ($r) => !empty($r['payout']))->count(),
             ],

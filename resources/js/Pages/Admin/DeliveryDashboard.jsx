@@ -11,8 +11,8 @@ export default function DeliveryDashboard({ stats, deliveryOrders = [], shop }) 
             <Head title="Rider Dashboard" />
 
             <div className="space-y-6">
-                <div className="rounded-2xl bg-gradient-to-r from-sky-700 to-cyan-500 text-white p-6 shadow">
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/70">
+                <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-100 to-stone-100 text-slate-800 p-6 shadow-sm">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                         Rider Hub
                     </p>
                     <h2 className="mt-2 text-2xl font-black">
@@ -33,7 +33,7 @@ export default function DeliveryDashboard({ stats, deliveryOrders = [], shop }) 
                         <h3 className="font-bold text-slate-800">Delivery Actions</h3>
                         <Link
                             href={route("admin.orders.index")}
-                            className="text-xs font-bold text-sky-600 uppercase tracking-widest"
+                            className="text-xs font-bold text-slate-600 uppercase tracking-widest"
                         >
                             Open Delivery Orders
                         </Link>

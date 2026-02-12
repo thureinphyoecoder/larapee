@@ -10,13 +10,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Head, Link, router, useForm } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 
-export default function PayrollIndex({ month, rows = [], summary = {}, previewReleaseDate }) {
+export default function PayrollIndex({ month, rows = { data: [] }, summary = {}, filters = {}, previewReleaseDate }) {
     const [period, setPeriod] = useState(month);
+    const [search, setSearch] = useState(filters?.q || "");
+    const [perPage, setPerPage] = useState(String(filters?.per_page || rows?.per_page || 25));
+    const staffRows = rows?.data || [];
     const paidRate = useMemo(() => {
-        const total = numberValue(summary.staff_count);
+        const total = numberValue(summary.page_staff_count || summary.staff_count);
         if (!total) return 0;
         return Math.round((numberValue(summary.paid_count) / total) * 100);
     }, [summary]);
+
+    const reload = (next = {}) => {
+        router.get(
+            route("admin.payroll.index"),
+            {
+                month: next.month ?? period,
+                q: (next.q ?? search) || undefined,
+                per_page: next.per_page ?? perPage,
+                page: next.page,
+            },
+            { preserveState: true, replace: true, preserveScroll: true },
+        );
+    };
 
     return (
         <AdminLayout header="Payroll & HR">
@@ -33,31 +49,52 @@ export default function PayrollIndex({ month, rows = [], summary = {}, previewRe
                             <form
                                 onSubmit={(e) => {
                                     e.preventDefault();
-                                    router.get(route("admin.payroll.index"), { month: period }, { preserveState: true, replace: true });
+                                    reload({ month: period, page: 1 });
                                 }}
-                                className="flex items-center gap-2"
+                                className="flex flex-wrap items-center gap-2"
                             >
+                                <Input
+                                    type="search"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search staff by name or email"
+                                    className="w-64"
+                                />
+                                <Select
+                                    value={perPage}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setPerPage(value);
+                                        reload({ per_page: value, page: 1 });
+                                    }}
+                                    className="w-24"
+                                >
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </Select>
                                 <Input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} />
-                                <Button size="md">Load</Button>
+                                <Button size="md" className="bg-slate-700 hover:bg-slate-600">Load</Button>
                             </form>
                         </div>
                         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <Kpi label="Staff Count" value={numberValue(summary.staff_count)} />
-                            <Kpi label="Total Net Salary" value={formatMMK(summary.total_net)} tone="emerald" />
-                            <Kpi label="Payout Done" value={`${numberValue(summary.paid_count)} (${paidRate}%)`} tone="sky" />
+                            <Kpi label="Page Net Salary" value={formatMMK(summary.total_net)} tone="slate" />
+                            <Kpi label="Page Payout Done" value={`${numberValue(summary.paid_count)} (${paidRate}%)`} tone="sky" />
                         </div>
-                        <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-700">
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                             Suggested slip preview date: {previewReleaseDate || "-"}.
                         </div>
                     </CardContent>
                 </Card>
 
                 <Card className="overflow-hidden">
-                    {rows.length ? (
-                        <PayrollTable rows={rows} month={month} />
+                    {staffRows.length ? (
+                        <PayrollTable rows={staffRows} month={month} />
                     ) : (
                         <CardContent className="py-12 text-center text-slate-400">No payroll staff found.</CardContent>
                     )}
+                    <Pagination rows={rows} onChange={(page) => reload({ page })} />
                 </Card>
             </div>
         </AdminLayout>
@@ -124,9 +161,9 @@ function PayrollTableRow({ row, month }) {
                         >
                             Slip
                         </Link>
-                        <Button size="sm" onClick={() => setActiveDialog("profile")}>Template</Button>
-                        <Button size="sm" variant="info" onClick={() => setActiveDialog("adjustment")}>Adjustment</Button>
-                        <Button size="sm" variant="success" onClick={() => setActiveDialog("payout")}>Payout</Button>
+                        <Button size="sm" variant="secondary" onClick={() => setActiveDialog("profile")}>Template</Button>
+                        <Button size="sm" variant="outline" onClick={() => setActiveDialog("adjustment")}>Adjustment</Button>
+                        <Button size="sm" className="bg-slate-700 hover:bg-slate-600" onClick={() => setActiveDialog("payout")}>Payout</Button>
                     </div>
                 </TableCell>
             </TableRow>
@@ -174,7 +211,7 @@ function ProfileDialog({ row, month, open, onOpenChange }) {
                     <Field label="OT Rate / Hour" value={form.data.overtime_rate_per_hour} onChange={(v) => form.setData("overtime_rate_per_hour", v)} />
                     <DialogFooter>
                         <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button disabled={form.processing}>{form.processing ? "Saving..." : "Save Template"}</Button>
+                        <Button className="bg-slate-700 hover:bg-slate-600" disabled={form.processing}>{form.processing ? "Saving..." : "Save Template"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -231,7 +268,7 @@ function AdjustmentDialog({ row, month, open, onOpenChange }) {
                     </label>
                     <DialogFooter>
                         <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button variant="info" disabled={form.processing}>{form.processing ? "Saving..." : "Add Adjustment"}</Button>
+                        <Button className="bg-slate-700 hover:bg-slate-600" disabled={form.processing}>{form.processing ? "Saving..." : "Add Adjustment"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -280,7 +317,7 @@ function PayoutDialog({ row, month, open, onOpenChange }) {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button variant="success" disabled={form.processing}>{form.processing ? "Saving..." : "Mark as Paid"}</Button>
+                        <Button className="bg-slate-700 hover:bg-slate-600" disabled={form.processing}>{form.processing ? "Saving..." : "Mark as Paid"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -299,14 +336,35 @@ function Field({ label, value, onChange }) {
 
 function Kpi({ label, value, tone = "slate" }) {
     const tones = {
-        slate: "border-slate-200 text-slate-900",
-        emerald: "border-emerald-200 text-emerald-700",
-        sky: "border-sky-200 text-sky-700",
+        slate: "border-slate-200 text-slate-800",
+        sky: "border-slate-200 text-slate-700",
     };
     return (
         <div className={`rounded-xl border bg-white p-4 ${tones[tone] || tones.slate}`}>
             <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
             <p className="mt-2 text-xl font-black">{value}</p>
+        </div>
+    );
+}
+
+function Pagination({ rows, onChange }) {
+    if (!rows) return null;
+    const current = Number(rows.current_page || 1);
+    const from = rows.from || 0;
+    const to = rows.to || 0;
+    const hasPrev = Boolean(rows.prev_page_url);
+    const hasNext = Boolean(rows.next_page_url);
+
+    return (
+        <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-4 py-3">
+            <p className="text-xs text-slate-500">
+                Showing {from} - {to}
+            </p>
+            <div className="flex items-center gap-2">
+                <Button size="sm" variant="secondary" disabled={!hasPrev} onClick={() => onChange(current - 1)}>Previous</Button>
+                <span className="text-xs text-slate-500">Page {current}</span>
+                <Button size="sm" variant="secondary" disabled={!hasNext} onClick={() => onChange(current + 1)}>Next</Button>
+            </div>
         </div>
     );
 }

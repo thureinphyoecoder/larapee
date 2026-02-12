@@ -1,12 +1,12 @@
 import { cn } from "@/lib/utils";
 
 const variants = {
-    default: "bg-slate-900 text-white hover:bg-slate-800",
+    default: "bg-slate-700 text-white hover:bg-slate-600",
     secondary: "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
     outline: "border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50",
-    success: "bg-emerald-600 text-white hover:bg-emerald-500",
-    info: "bg-indigo-600 text-white hover:bg-indigo-500",
-    danger: "bg-rose-600 text-white hover:bg-rose-500",
+    success: "bg-slate-700 text-white hover:bg-slate-600",
+    info: "bg-slate-700 text-white hover:bg-slate-600",
+    danger: "bg-slate-500 text-white hover:bg-slate-400",
 };
 
 const sizes = {

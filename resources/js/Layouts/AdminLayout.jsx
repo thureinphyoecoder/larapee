@@ -427,19 +427,19 @@ export default function AdminLayout({ children, header }) {
 
     return (
         <div
-            className="min-h-screen bg-slate-100/80 flex"
+            className="min-h-screen bg-slate-50 flex"
             style={{ fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif' }}
         >
             {/* Sidebar */}
-            <aside className="w-64 bg-slate-950 text-slate-100 hidden md:flex flex-col fixed h-full border-r border-slate-800 shadow-xl">
-                <div className="p-6 border-b border-slate-800">
+            <aside className="w-64 bg-white text-slate-700 hidden md:flex flex-col fixed h-full border-r border-slate-200 shadow-sm">
+                <div className="p-6 border-b border-slate-200">
                     <Link
                         href="/"
-                        className="text-2xl font-black tracking-tight text-orange-400"
+                        className="text-2xl font-black tracking-tight text-slate-800"
                     >
                         LaraPee Admin
                     </Link>
-                    <p className="text-xs text-slate-400 mt-1 uppercase tracking-[0.2em]">
+                    <p className="text-xs text-slate-500 mt-1 uppercase tracking-[0.2em]">
                         {role === "delivery" ? "rider panel" : `${role} panel`}
                     </p>
                 </div>
@@ -450,14 +450,14 @@ export default function AdminLayout({ children, header }) {
                         const isOpen = Boolean(openGroups[group.id]);
 
                         return (
-                            <div key={group.id} className="rounded-2xl border border-slate-800/70 bg-slate-900/40">
+                            <div key={group.id} className="rounded-2xl border border-slate-200 bg-slate-50/80">
                                 <button
                                     type="button"
                                     onClick={() => toggleNavGroup(group.id)}
                                     className={`w-full px-3 py-2.5 flex items-center justify-between rounded-2xl text-xs font-black uppercase tracking-[0.16em] transition ${
                                         hasActiveLink
-                                            ? "text-orange-300 bg-orange-500/10"
-                                            : "text-slate-300 hover:text-white hover:bg-white/5"
+                                            ? "text-slate-800 bg-slate-200"
+                                            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
                                     }`}
                                 >
                                     <span>{group.label}</span>
@@ -474,8 +474,8 @@ export default function AdminLayout({ children, header }) {
                                                 href={route(link.route)}
                                                 className={`block px-3 py-2 rounded-xl text-sm font-bold transition ${
                                                     isLinkActive(link)
-                                                        ? "bg-orange-500/15 text-orange-300 border border-orange-500/30"
-                                                        : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
+                                                        ? "bg-slate-200 text-slate-800 border border-slate-300"
+                                                        : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
                                                 }`}
                                             >
                                                 {link.label}
@@ -488,18 +488,18 @@ export default function AdminLayout({ children, header }) {
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-slate-800 bg-slate-900">
-                    <p className="text-sm font-semibold text-slate-100 truncate">
+                <div className="p-4 border-t border-slate-200 bg-slate-50">
+                    <p className="text-sm font-semibold text-slate-800 truncate">
                         {primaryIdentity}
                     </p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider truncate">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider truncate">
                         {secondaryIdentity}
                     </p>
                     <Link
                         href={route("logout")}
                         method="post"
                         as="button"
-                        className="mt-3 w-full rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs font-black uppercase tracking-widest text-rose-300 hover:bg-rose-500/20"
+                        className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100"
                     >
                         Log out
                     </Link>
