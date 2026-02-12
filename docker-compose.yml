@@ -5,13 +5,29 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: larapee-app
-    ports:
-      - "5173:5173"
     volumes:
       - .:/var/www
     depends_on:
       - db
       - rabbitmq
+    restart: unless-stopped
+    networks:
+      - larapee-network
+
+  vite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: larapee-vite
+    working_dir: /var/www
+    command: sh -lc "npm install && npm run dev:docker"
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/var/www
+    depends_on:
+      - app
+    restart: unless-stopped
     networks:
       - larapee-network
 
@@ -28,6 +44,7 @@ services:
     depends_on:
       - app
       - rabbitmq
+    restart: unless-stopped
     networks:
       - larapee-network
 
@@ -43,6 +60,8 @@ services:
     depends_on:
       - app
       - rabbitmq
+      - vite
+    restart: unless-stopped
     networks:
       - larapee-network
 
@@ -58,6 +77,7 @@ services:
     depends_on:
       - db
       - rabbitmq
+    restart: unless-stopped
     networks:
       - larapee-network
 
@@ -73,6 +93,7 @@ services:
       - app
       - db
       - rabbitmq
+    restart: unless-stopped
     networks:
       - larapee-network
 
@@ -88,7 +109,8 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - db_data:/var/lib/mysql # 🎯 ဒါက data ကို စက်ထဲမှာ အသေသိမ်းပေးမှာပါ
+      - db_data:/var/lib/mysql # ဒါက data ကို စက်ထဲမှာ အသေသိမ်းပေးမှာပါ
+    restart: unless-stopped
     networks:
       - larapee-network
 
@@ -99,6 +121,7 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    restart: unless-stopped
     networks:
       - larapee-network
 volumes:

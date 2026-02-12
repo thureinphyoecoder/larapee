@@ -14,13 +14,20 @@ import Pusher from "pusher-js";
 
 window.Pusher = Pusher;
 
+const wsHost =
+    import.meta.env.VITE_REVERB_HOST || window.location.hostname;
+const wsPort = Number(import.meta.env.VITE_REVERB_PORT || 8080);
+const isTls =
+    (import.meta.env.VITE_REVERB_SCHEME ?? window.location.protocol.replace(":", "")) ===
+    "https";
+
 window.Echo = new Echo({
-    broadcaster: "reverb", // 🎯 ဒီနေရာမှာ Reverb လို့ ပြောလိုက်တာနဲ့ Pusher server ကို မသွားတော့ပါဘူး
+    broadcaster: "reverb", // ဒီနေရာမှာ Reverb လို့ ပြောလိုက်တာနဲ့ Pusher server ကို မသွားတော့ပါဘူး
     key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
+    wsHost,
+    wsPort,
+    wssPort: wsPort,
+    forceTLS: isTls,
     enabledTransports: ["ws", "wss"],
     authEndpoint: "/broadcasting/auth",
     auth: {
