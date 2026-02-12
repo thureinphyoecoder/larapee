@@ -459,7 +459,6 @@ export default function AdminLayout({ children, header }) {
     return (
         <div
             className={`min-h-screen flex ${isDark ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-800"}`}
-            style={{ fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif' }}
         >
             {/* Sidebar */}
             <aside className={`w-72 hidden h-full fixed md:flex flex-col border-r shadow-sm ${isDark ? "bg-[#0b1220]/95 text-slate-200 border-white/10 backdrop-blur" : "bg-white text-slate-700 border-slate-200"}`}>

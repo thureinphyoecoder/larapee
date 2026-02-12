@@ -31,24 +31,22 @@ const FEEDBACK_TIMEOUT = 3000;
 // ===== REUSABLE COMPONENTS =====
 function MetricCard({ label, value, icon, tone = "slate" }) {
     const toneClasses = {
-        slate: "from-slate-600 to-slate-700 border-slate-300",
-        red: "from-red-500 to-red-600 border-red-300",
-        blue: "from-blue-500 to-blue-600 border-blue-300",
-        orange: "from-orange-500 to-orange-600 border-orange-300",
-        indigo: "from-indigo-500 to-indigo-600 border-indigo-300",
+        slate: "border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300",
+        red: "border-rose-200 dark:border-rose-500/30 text-rose-600 dark:text-rose-300",
+        blue: "border-sky-200 dark:border-sky-500/30 text-sky-600 dark:text-sky-300",
+        orange: "border-amber-200 dark:border-amber-500/30 text-amber-600 dark:text-amber-300",
+        indigo: "border-indigo-200 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-300",
     };
 
     return (
-        <div
-            className={`rounded-2xl p-5 shadow-lg border-2 bg-gradient-to-br text-white ${toneClasses[tone]}`}
-        >
+        <div className={`rounded-2xl border bg-white/85 dark:bg-slate-900/70 backdrop-blur px-5 py-4 shadow-sm ${toneClasses[tone]}`}>
             <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold uppercase tracking-wider opacity-90">
+                <p className="text-xs font-bold uppercase tracking-wider">
                     {label}
                 </p>
-                <span className="text-2xl">{icon}</span>
+                <span className="text-xl">{icon}</span>
             </div>
-            <p className="text-3xl font-black">{value}</p>
+            <p className="text-3xl font-black text-slate-900 dark:text-slate-100">{value}</p>
         </div>
     );
 }
@@ -57,13 +55,13 @@ function FormInput({ label, type = "text", className = "", ...props }) {
     return (
         <div className={className}>
             {label && (
-                <label className="block text-xs font-semibold text-slate-700 mb-2">
+                <label className="mb-2 block text-xs font-semibold text-slate-600 dark:text-slate-400">
                     {label}
                 </label>
             )}
             <input
                 type={type}
-                className="w-full border-2 border-slate-300 rounded-xl px-4 py-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 transition placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-400 dark:focus:ring-cyan-900/40"
                 {...props}
             />
         </div>
@@ -77,17 +75,23 @@ function FormSelect({
     colorScheme = "indigo",
     ...props
 }) {
-    const focusClass = `focus:border-${colorScheme}-500 focus:ring-${colorScheme}-200`;
+    const focusClassByScheme = {
+        indigo: "focus:border-sky-400 focus:ring-sky-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-900/40",
+        orange: "focus:border-amber-400 focus:ring-amber-100 dark:focus:border-amber-400 dark:focus:ring-amber-900/40",
+        blue: "focus:border-sky-400 focus:ring-sky-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-900/40",
+        purple: "focus:border-violet-400 focus:ring-violet-100 dark:focus:border-violet-400 dark:focus:ring-violet-900/40",
+    };
+    const focusClass = focusClassByScheme[colorScheme] || focusClassByScheme.indigo;
 
     return (
         <div className={className}>
             {label && (
-                <label className="block text-xs font-semibold text-slate-700 mb-2">
+                <label className="mb-2 block text-xs font-semibold text-slate-600 dark:text-slate-400">
                     {label}
                 </label>
             )}
             <select
-                className={`w-full border-2 border-slate-300 rounded-xl px-4 py-3 focus:ring-2 transition ${focusClass}`}
+                className={`w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 transition dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 ${focusClass}`}
                 {...props}
             >
                 {options.map((opt) => (
@@ -155,8 +159,8 @@ function SelectedVariantInfo({ variant, color = "orange" }) {
     if (!variant) return null;
 
     const colorClasses = {
-        orange: "bg-white border-orange-200 text-orange-700",
-        blue: "bg-white border-blue-200 text-blue-700",
+        orange: "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-300",
+        blue: "bg-sky-50 border-sky-200 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-300",
     };
 
     return (
@@ -164,17 +168,17 @@ function SelectedVariantInfo({ variant, color = "orange" }) {
             className={`mb-4 p-4 rounded-xl border-2 shadow-sm ${colorClasses[color]}`}
         >
             <p
-                className={`text-xs font-semibold ${color === "orange" ? "text-orange-700" : "text-blue-700"} mb-1`}
+                className={`mb-1 text-xs font-semibold ${color === "orange" ? "text-amber-700 dark:text-amber-300" : "text-sky-700 dark:text-sky-300"}`}
             >
                 ရွေးချယ်ထားသော SKU
             </p>
-            <p className="text-sm font-bold text-slate-800">
+            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                 {variant.product?.name}
             </p>
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                 SKU: {variant.sku} • လက်ကျန်:{" "}
                 <span
-                    className={`font-bold ${color === "orange" ? "text-orange-600" : "text-blue-600"}`}
+                    className={`font-bold ${color === "orange" ? "text-amber-600 dark:text-amber-300" : "text-sky-600 dark:text-sky-300"}`}
                 >
                     {variant.stock_level}
                 </span>
@@ -187,7 +191,7 @@ function EmptyState({ icon, title, subtitle, colSpan = 6 }) {
     return (
         <tr>
             <td colSpan={colSpan} className="px-6 py-16 text-center">
-                <div className="text-slate-400">
+                <div className="text-slate-400 dark:text-slate-500">
                     <div className="text-4xl mb-3">{icon}</div>
                     <p className="font-semibold">{title}</p>
                     {subtitle && <p className="text-xs mt-1">{subtitle}</p>}
@@ -203,8 +207,8 @@ function StockBadge({ level }) {
         <span
             className={`inline-block px-3 py-1.5 rounded-full text-xs font-bold ${
                 isLow
-                    ? "bg-red-100 text-red-700 border-2 border-red-200"
-                    : "bg-emerald-100 text-emerald-700 border-2 border-emerald-200"
+                    ? "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-500/35"
+                    : "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/35"
             }`}
         >
             {level}
@@ -365,10 +369,10 @@ export default function InventoryIndex({
                 {/* Feedback Alert */}
                 {feedback.message && (
                     <div
-                        className={`rounded-2xl border-2 px-6 py-4 text-sm font-semibold shadow-lg animate-in slide-in-from-top duration-300 ${
+                        className={`animate-in slide-in-from-top rounded-2xl border px-6 py-4 text-sm font-semibold shadow-sm duration-300 ${
                             feedback.tone === "error"
-                                ? "border-rose-300 bg-gradient-to-r from-rose-50 to-rose-100 text-rose-800"
-                                : "border-emerald-300 bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-800"
+                                ? "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+                                : "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200"
                         }`}
                     >
                         {feedback.message}
@@ -404,16 +408,16 @@ export default function InventoryIndex({
                 </div>
 
                 {/* Search & Filter */}
-                <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl border-2 border-slate-200 p-6 shadow-sm">
+                <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/70">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-700">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
                             <FaMagnifyingGlass className="h-5 w-5" />
                         </div>
                         <div>
-                            <h3 className="font-black text-slate-900 text-lg">
+                            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
                                 ကုန်ပစ္စည်း ရှာဖွေခြင်း
                             </h3>
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
                                 Product အမည်၊ SKU၊ Brand၊ Category (သို့)
                                 ဆိုင်ခွဲအမည် ဖြင့် ရှာဖွေနိုင်ပါသည်
                             </p>
@@ -441,30 +445,30 @@ export default function InventoryIndex({
                             className="lg:col-span-2"
                         />
 
-                        <div className="lg:col-span-2 space-y-3">
-                            <label className="block text-xs font-semibold text-slate-600">
+                        <div className="space-y-3 lg:col-span-2">
+                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400">
                                 စစ်ထုတ်မှု ရွေးချယ်ချက်
                             </label>
-                            <label className="inline-flex items-center gap-3 cursor-pointer bg-white border-2 border-slate-300 rounded-xl px-4 py-3 hover:border-indigo-400 transition">
+                            <label className="inline-flex cursor-pointer items-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 transition hover:border-sky-400 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-cyan-400">
                                 <input
                                     type="checkbox"
-                                    className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                    className="h-5 w-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-900 dark:text-cyan-400 dark:focus:ring-cyan-500"
                                     checked={lowStockOnly}
                                     onChange={(e) =>
                                         setLowStockOnly(e.target.checked)
                                     }
                                 />
-                                <span className="text-sm font-medium text-slate-700">
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                                     <FaTriangleExclamation className="mr-2 inline h-3.5 w-3.5 text-amber-500" />
                                     လက်ကျန်နည်းများသာ ပြရန်
                                 </span>
                             </label>
                         </div>
 
-                        <div className="lg:col-span-6 flex gap-3 pt-2">
+                        <div className="flex gap-3 pt-2 lg:col-span-6">
                             <button
                                 type="submit"
-                                className="flex flex-1 items-center justify-center gap-2 md:flex-none px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-sm font-bold shadow-lg shadow-indigo-200 hover:shadow-xl transition-all duration-200"
+                                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-sky-600 px-8 py-3.5 text-sm font-bold text-white transition duration-200 hover:bg-sky-500 md:flex-none"
                             >
                                 <FaMagnifyingGlass className="h-3.5 w-3.5" />
                                 ရှာမည်
@@ -472,7 +476,7 @@ export default function InventoryIndex({
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="flex flex-1 items-center justify-center gap-2 md:flex-none px-8 py-3.5 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 text-sm font-semibold text-slate-700 transition-all duration-200"
+                                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-8 py-3.5 text-sm font-semibold text-slate-700 transition duration-200 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 md:flex-none"
                             >
                                 <FaArrowRightArrowLeft className="h-3.5 w-3.5" />
                                 ပြန်ရှင်းမည်
@@ -484,16 +488,16 @@ export default function InventoryIndex({
                 {/* Action Forms */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Stock Adjustment */}
-                    <div className="bg-gradient-to-br from-white to-orange-50/30 rounded-3xl border-2 border-orange-200 p-6 shadow-sm">
+                    <div className="rounded-3xl border border-amber-200 bg-white p-6 shadow-sm dark:border-amber-500/30 dark:bg-slate-900/70">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300">
                                 <FaPenToSquare className="h-6 w-6" />
                             </div>
                             <div>
-                                <h3 className="font-black text-slate-900 text-lg">
+                                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
                                     လက်ကျန် ပြင်ဆင်ခြင်း
                                 </h3>
-                                <p className="text-xs text-slate-600">
+                                <p className="text-xs text-slate-600 dark:text-slate-400">
                                     SKU အလိုက် ထည့်/လျှော့/သတ်မှတ် ပြုလုပ်ရန်
                                 </p>
                             </div>
@@ -550,7 +554,7 @@ export default function InventoryIndex({
                                     required
                                 />
                                 <div className="flex items-end">
-                                    <button className="flex w-full items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-bold py-3 shadow-lg shadow-orange-200 transition-all duration-200">
+                                    <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 font-bold text-white transition hover:bg-amber-400">
                                         <FaFloppyDisk className="h-3.5 w-3.5" />
                                         သိမ်း
                                     </button>
@@ -569,16 +573,16 @@ export default function InventoryIndex({
                     </div>
 
                     {/* Transfer Form */}
-                    <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-3xl border-2 border-blue-200 p-6 shadow-sm">
+                    <div className="rounded-3xl border border-sky-200 bg-white p-6 shadow-sm dark:border-sky-500/30 dark:bg-slate-900/70">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300">
                                 <FaArrowRightArrowLeft className="h-6 w-6" />
                             </div>
                             <div>
-                                <h3 className="font-black text-slate-900 text-lg">
+                                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
                                     ဆိုင်ခွဲအကြား လွှဲပြောင်းခြင်း
                                 </h3>
-                                <p className="text-xs text-slate-600">
+                                <p className="text-xs text-slate-600 dark:text-slate-400">
                                     တစ်ဆိုင်ခွဲမှ အခြားဆိုင်ခွဲသို့ ကုန်ပစ္စည်း
                                     ရွှေ့ရန်
                                 </p>
@@ -643,7 +647,7 @@ export default function InventoryIndex({
                                 }
                             />
 
-                            <button className="flex w-full items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl py-3.5 font-bold shadow-lg shadow-blue-200 transition-all duration-200">
+                            <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 py-3.5 font-bold text-white transition hover:bg-sky-500">
                                 <FaTruckFast className="h-4 w-4" />
                                 လွှဲပြောင်းမည်
                             </button>
@@ -653,16 +657,16 @@ export default function InventoryIndex({
 
                 {/* Share Permission */}
                 {canManageShares && (
-                    <div className="bg-gradient-to-br from-white to-purple-50/30 rounded-3xl border-2 border-purple-200 p-6 shadow-sm">
+                    <div className="rounded-3xl border border-cyan-200 bg-white p-6 shadow-sm dark:border-cyan-500/30 dark:bg-slate-900/70">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300">
                                 <FaLock className="h-5 w-5" />
                             </div>
                             <div>
-                                <h3 className="font-black text-slate-900 text-lg">
+                                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
                                     Share Permission စီမံခန့်ခွဲမှု
                                 </h3>
-                                <p className="text-xs text-slate-600">
+                                <p className="text-xs text-slate-600 dark:text-slate-400">
                                     ဆိုင်ခွဲများအကြား Stock မျှဝေခွင့် ပေးရန်
                                     (Admin သာ)
                                 </p>
@@ -715,7 +719,7 @@ export default function InventoryIndex({
                                 colorScheme="purple"
                             />
                             <div className="flex items-end">
-                                <button className="flex w-full items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-bold py-3 shadow-lg shadow-purple-200 transition-all duration-200">
+                                <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 py-3 font-bold text-white transition hover:bg-cyan-500">
                                     <FaFloppyDisk className="h-3.5 w-3.5" />
                                     သိမ်း
                                 </button>
@@ -724,18 +728,18 @@ export default function InventoryIndex({
 
                         {shares.length > 0 && (
                             <div>
-                                <h4 className="text-sm font-bold text-slate-700 mb-3">
+                                <h4 className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-300">
                                     လက်ရှိ Permissions
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {shares.map((share) => (
                                         <div
                                             key={share.id}
-                                            className="border-2 border-slate-200 rounded-xl px-4 py-3 bg-white hover:border-purple-300 transition"
+                                            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-900"
                                         >
-                                            <p className="text-sm font-semibold text-slate-800">
+                                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                                                 {share.from_shop?.name}{" "}
-                                                <span className="text-purple-500 mx-1">
+                                                <span className="mx-1 text-cyan-500">
                                                     →
                                                 </span>{" "}
                                                 {share.to_shop?.name}
@@ -743,8 +747,8 @@ export default function InventoryIndex({
                                             <span
                                                 className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold ${
                                                     share.is_enabled
-                                                        ? "bg-emerald-100 text-emerald-700"
-                                                        : "bg-red-100 text-red-700"
+                                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                                                        : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
                                                 }`}
                                             >
                                                 {share.is_enabled
@@ -760,12 +764,12 @@ export default function InventoryIndex({
                 )}
 
                 {/* Inventory Table */}
-                <div className="bg-white rounded-3xl border-2 border-slate-200 overflow-hidden shadow-sm">
-                    <div className="px-6 py-5 bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
-                        <h3 className="font-black text-slate-900 text-lg flex items-center gap-2">
+                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/70">
+                    <div className="border-b border-slate-200 bg-slate-50 px-6 py-5 dark:border-slate-700 dark:bg-slate-900/80">
+                        <h3 className="flex items-center gap-2 text-lg font-black text-slate-900 dark:text-slate-100">
                             <FaClipboardList className="h-4 w-4" /> လက်ရှိ ကုန်လက်ကျန် စာရင်း
                         </h3>
-                        <p className="text-xs text-slate-600 mt-1">
+                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                             ပြင်ဆင် (သို့) လွှဲပြောင်း ခလုတ်များကို နှိပ်၍
                             အပေါ်ရှိ Form များတွင် အလိုအလျောက်
                             ဖြည့်သွင်းပေးပါမည်
@@ -773,8 +777,8 @@ export default function InventoryIndex({
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
-                            <thead className="bg-slate-100">
-                                <tr className="text-left text-slate-600 font-bold text-xs border-b-2 border-slate-200">
+                            <thead className="bg-slate-100/80 dark:bg-slate-800/70">
+                                <tr className="border-b border-slate-200 text-left text-xs font-bold text-slate-600 dark:border-slate-700 dark:text-slate-400">
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaStore className="h-3 w-3" />
@@ -813,30 +817,30 @@ export default function InventoryIndex({
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {variantRows.length > 0 ? (
                                     variantRows.map((variant) => (
                                         <tr
                                             key={variant.id}
-                                            className="hover:bg-gradient-to-r hover:from-orange-50/30 hover:to-transparent transition-all duration-200"
+                                            className="transition-colors duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/60"
                                         >
-                                            <td className="px-6 py-4 font-medium text-slate-700">
+                                            <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">
                                                 {variant.product?.shop?.name ||
                                                     "—"}
                                             </td>
-                                            <td className="px-6 py-4 text-slate-800">
+                                            <td className="px-6 py-4 text-slate-800 dark:text-slate-100">
                                                 {variant.product?.name || "—"}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="font-mono font-semibold text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                                                <span className="rounded bg-slate-100 px-2 py-1 font-mono font-semibold text-slate-900 dark:bg-slate-800 dark:text-slate-100">
                                                     {variant.sku || "—"}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 font-semibold text-slate-700">
+                                            <td className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-200">
                                                 {Number(
                                                     variant.price || 0,
                                                 ).toLocaleString()}{" "}
-                                                <span className="text-xs text-slate-500">
+                                                <span className="text-xs text-slate-500 dark:text-slate-400">
                                                     MMK
                                                 </span>
                                             </td>
@@ -859,7 +863,7 @@ export default function InventoryIndex({
                                                                 },
                                                             )
                                                         }
-                                                        className="px-3 py-2 text-xs font-semibold rounded-lg border-2 border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100 hover:border-orange-400 transition-all duration-200"
+                                                        className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 dark:border-amber-500/35 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/15"
                                                     >
                                                         <span className="inline-flex items-center gap-1">
                                                             <FaPenToSquare className="h-3 w-3" />
@@ -875,7 +879,7 @@ export default function InventoryIndex({
                                                                 { quantity: 1 },
                                                             )
                                                         }
-                                                        className="px-3 py-2 text-xs font-semibold rounded-lg border-2 border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 transition-all duration-200"
+                                                        className="rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 dark:border-sky-500/35 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/15"
                                                     >
                                                         <span className="inline-flex items-center gap-1">
                                                             <FaArrowRightArrowLeft className="h-3 w-3" />
@@ -898,15 +902,15 @@ export default function InventoryIndex({
 
                     {/* Pagination */}
                     {variants?.links?.length > 1 && (
-                        <div className="p-5 flex flex-wrap gap-2 border-t-2 border-slate-100 bg-slate-50">
+                        <div className="flex flex-wrap gap-2 border-t border-slate-100 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900/70">
                             {variants.links.map((link, idx) => (
                                 <Link
                                     key={`${link.label}-${idx}`}
                                     href={link.url || "#"}
-                                    className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-all duration-200 ${
+                                    className={`rounded-lg border px-4 py-2 text-sm font-semibold transition duration-200 ${
                                         link.active
-                                            ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white border-orange-600 shadow-lg"
-                                            : "bg-white text-slate-600 border-slate-300 hover:border-orange-400 hover:bg-orange-50"
+                                            ? "border-sky-500 bg-sky-600 text-white"
+                                            : "border-slate-300 bg-white text-slate-600 hover:border-sky-400 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                                     } ${!link.url ? "opacity-40 pointer-events-none" : ""}`}
                                 >
                                     {sanitizePaginationLabel(link.label)}
@@ -917,19 +921,19 @@ export default function InventoryIndex({
                 </div>
 
                 {/* Transfer History */}
-                <div className="bg-white rounded-3xl border-2 border-slate-200 overflow-hidden shadow-sm">
-                    <div className="px-6 py-5 bg-gradient-to-r from-blue-50 to-blue-100 border-b-2 border-slate-200">
-                        <h3 className="font-black text-slate-900 text-lg flex items-center gap-2">
+                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/70">
+                    <div className="border-b border-slate-200 bg-slate-50 px-6 py-5 dark:border-slate-700 dark:bg-slate-900/80">
+                        <h3 className="flex items-center gap-2 text-lg font-black text-slate-900 dark:text-slate-100">
                             <FaClipboardList className="h-4 w-4" /> လွှဲပြောင်းမှု မှတ်တမ်း
                         </h3>
-                        <p className="text-xs text-slate-600 mt-1">
+                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                             လတ်တလော လုပ်ဆောင်ခဲ့သော ကုန်လွှဲပြောင်းမှုများ
                         </p>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
-                            <thead className="bg-slate-100">
-                                <tr className="text-left text-slate-600 font-bold text-xs border-b-2 border-slate-200">
+                            <thead className="bg-slate-100/80 dark:bg-slate-800/70">
+                                <tr className="border-b border-slate-200 text-left text-xs font-bold text-slate-600 dark:border-slate-700 dark:text-slate-400">
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaClock className="h-3 w-3" />
@@ -974,14 +978,14 @@ export default function InventoryIndex({
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {transfers.length > 0 ? (
                                     transfers.map((transfer) => (
                                         <tr
                                             key={transfer.id}
-                                            className="hover:bg-blue-50/30 transition-all duration-200"
+                                            className="transition-colors duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/60"
                                         >
-                                            <td className="px-6 py-4 text-slate-600 text-xs">
+                                            <td className="px-6 py-4 text-xs text-slate-600 dark:text-slate-400">
                                                 {new Date(
                                                     transfer.created_at,
                                                 ).toLocaleString("en-GB", {
@@ -992,28 +996,28 @@ export default function InventoryIndex({
                                                     minute: "2-digit",
                                                 })}
                                             </td>
-                                            <td className="px-6 py-4 font-medium text-slate-700">
+                                            <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">
                                                 {transfer.from_shop?.name ||
                                                     "—"}
                                             </td>
-                                            <td className="px-6 py-4 font-medium text-slate-700">
+                                            <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">
                                                 {transfer.to_shop?.name || "—"}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="font-mono font-semibold text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                                                <span className="rounded bg-slate-100 px-2 py-1 font-mono font-semibold text-slate-900 dark:bg-slate-800 dark:text-slate-100">
                                                     {transfer.source_variant
                                                         ?.sku || "—"}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 font-bold text-blue-600">
+                                            <td className="px-6 py-4 font-bold text-sky-600 dark:text-sky-300">
                                                 {transfer.quantity}
                                             </td>
-                                            <td className="px-6 py-4 text-slate-700">
+                                            <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
                                                 {transfer.initiator?.name ||
                                                     "System"}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase bg-emerald-100 text-emerald-700 border-2 border-emerald-200">
+                                                <span className="inline-block rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-bold uppercase text-emerald-700 dark:border-emerald-500/35 dark:bg-emerald-500/10 dark:text-emerald-300">
                                                     {transfer.status}
                                                 </span>
                                             </td>
