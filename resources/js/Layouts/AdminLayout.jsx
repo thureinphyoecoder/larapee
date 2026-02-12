@@ -26,54 +26,132 @@ export default function AdminLayout({ children, header }) {
 
     const menuByRole = {
         admin: [
-            { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
-            { label: "Payroll", route: "admin.payroll.index", activePatterns: ["admin.payroll.*"] },
-            { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
-            { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
-            { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
-            { label: "Audit Logs", route: "admin.audit-logs.index", activePatterns: ["admin.audit-logs.*"] },
-            { label: "Service Jobs", route: "admin.service-jobs.index", activePatterns: ["admin.service-jobs.*"] },
-            { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
-            { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
-            { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
-            { label: "Categories", route: "admin.categories.index", activePatterns: ["admin.categories.*"] },
-            { label: "Shops", route: "admin.shops.index", activePatterns: ["admin.shops.*"] },
-            { label: "Users", route: "admin.users.index", activePatterns: ["admin.users.*"] },
+            {
+                id: "overview",
+                label: "Overview",
+                links: [
+                    { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
+                ],
+            },
+            {
+                id: "operations",
+                label: "Operations",
+                links: [
+                    { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
+                    { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
+                    { label: "Service Jobs", route: "admin.service-jobs.index", activePatterns: ["admin.service-jobs.*"] },
+                ],
+            },
+            {
+                id: "catalog",
+                label: "Catalog",
+                links: [
+                    { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
+                    { label: "Categories", route: "admin.categories.index", activePatterns: ["admin.categories.*"] },
+                    { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
+                    { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
+                ],
+            },
+            {
+                id: "finance",
+                label: "Finance & HR",
+                links: [
+                    { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
+                    { label: "Payroll", route: "admin.payroll.index", activePatterns: ["admin.payroll.*"] },
+                ],
+            },
+            {
+                id: "admin",
+                label: "Admin",
+                links: [
+                    { label: "Audit Logs", route: "admin.audit-logs.index", activePatterns: ["admin.audit-logs.*"] },
+                    { label: "Shops", route: "admin.shops.index", activePatterns: ["admin.shops.*"] },
+                    { label: "Users", route: "admin.users.index", activePatterns: ["admin.users.*"] },
+                ],
+            },
         ],
         manager: [
-            { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
-            { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
-            { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
-            { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
-            { label: "Audit Logs", route: "admin.audit-logs.index", activePatterns: ["admin.audit-logs.*"] },
-            { label: "Service Jobs", route: "admin.service-jobs.index", activePatterns: ["admin.service-jobs.*"] },
-            { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
-            { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
-            { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
-            { label: "Categories", route: "admin.categories.index", activePatterns: ["admin.categories.*"] },
+            {
+                id: "overview",
+                label: "Overview",
+                links: [
+                    { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
+                ],
+            },
+            {
+                id: "operations",
+                label: "Operations",
+                links: [
+                    { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
+                    { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
+                    { label: "Service Jobs", route: "admin.service-jobs.index", activePatterns: ["admin.service-jobs.*"] },
+                ],
+            },
+            {
+                id: "catalog",
+                label: "Catalog",
+                links: [
+                    { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
+                    { label: "Categories", route: "admin.categories.index", activePatterns: ["admin.categories.*"] },
+                    { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
+                    { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
+                ],
+            },
+            {
+                id: "finance",
+                label: "Finance",
+                links: [
+                    { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
+                    { label: "Audit Logs", route: "admin.audit-logs.index", activePatterns: ["admin.audit-logs.*"] },
+                ],
+            },
         ],
         accountant: [
-            { label: "Payroll", route: "admin.payroll.index", activePatterns: ["admin.payroll.*"] },
-            { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
-            { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
-            { label: "Audit Logs", route: "admin.audit-logs.index", activePatterns: ["admin.audit-logs.*"] },
-            { label: "Service Jobs", route: "admin.service-jobs.index", activePatterns: ["admin.service-jobs.*"] },
-            { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
+            {
+                id: "finance",
+                label: "Finance & Compliance",
+                links: [
+                    { label: "Payroll", route: "admin.payroll.index", activePatterns: ["admin.payroll.*"] },
+                    { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
+                    { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
+                    { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
+                    { label: "Audit Logs", route: "admin.audit-logs.index", activePatterns: ["admin.audit-logs.*"] },
+                    { label: "Service Jobs", route: "admin.service-jobs.index", activePatterns: ["admin.service-jobs.*"] },
+                ],
+            },
         ],
         sales: [
-            { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
-            { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
-            { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
-            { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
-            { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
+            {
+                id: "overview",
+                label: "Overview",
+                links: [
+                    { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
+                ],
+            },
+            {
+                id: "frontdesk",
+                label: "Front Desk",
+                links: [
+                    { label: "Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
+                    { label: "Support", route: "admin.support.index", activePatterns: ["admin.support.*"] },
+                    { label: "Products", route: "admin.products.index", activePatterns: ["admin.products.*"] },
+                    { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
+                ],
+            },
         ],
         delivery: [
-            { label: "Rider Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
-            { label: "Delivery Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
+            {
+                id: "delivery",
+                label: "Delivery Panel",
+                links: [
+                    { label: "Rider Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
+                    { label: "Delivery Orders", route: "admin.orders.index", activePatterns: ["admin.orders.*"] },
+                ],
+            },
         ],
     };
 
-    const navLinks = menuByRole[role] || menuByRole.admin;
+    const navGroups = menuByRole[role] || menuByRole.admin;
     const canAccessSupport = ["admin", "manager", "sales"].includes(role);
     const toMinutes = (value) => Math.max(0, Math.round(Number(value || 0)));
     const formatWorkedTime = (value) => {
@@ -103,6 +181,7 @@ export default function AdminLayout({ children, header }) {
     const [notifications, setNotifications] = useState([]);
     const [globalSearch, setGlobalSearch] = useState("");
     const [attendanceLoading, setAttendanceLoading] = useState(false);
+    const [openGroups, setOpenGroups] = useState({});
     const [, setTimeTick] = useState(0);
 
     const unreadCount = notifications.filter((n) => !n.isRead).length;
@@ -331,6 +410,21 @@ export default function AdminLayout({ children, header }) {
         return patterns.some((pattern) => route().current(pattern));
     };
 
+    useEffect(() => {
+        setOpenGroups((prev) => {
+            const next = {};
+            navGroups.forEach((group, index) => {
+                const hasActiveLink = group.links.some((link) => isLinkActive(link));
+                next[group.id] = hasActiveLink || (prev[group.id] ?? index === 0);
+            });
+            return next;
+        });
+    }, [page.url, role]);
+
+    const toggleNavGroup = (groupId) => {
+        setOpenGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
+    };
+
     return (
         <div
             className="min-h-screen bg-slate-100/80 flex"
@@ -350,20 +444,48 @@ export default function AdminLayout({ children, header }) {
                     </p>
                 </div>
 
-                <nav className="flex-1 px-4 py-5 space-y-1">
-                    {navLinks.map((link) => (
-                        <Link
-                            key={link.route}
-                            href={route(link.route)}
-                            className={`block px-3 py-2.5 rounded-xl text-sm font-bold transition ${
-                                isLinkActive(link)
-                                    ? "bg-orange-500/15 text-orange-300 border border-orange-500/30"
-                                    : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
-                            }`}
-                        >
-                            {link.label}
-                        </Link>
-                    ))}
+                <nav className="flex-1 px-4 py-5 space-y-2 overflow-y-auto">
+                    {navGroups.map((group) => {
+                        const hasActiveLink = group.links.some((link) => isLinkActive(link));
+                        const isOpen = Boolean(openGroups[group.id]);
+
+                        return (
+                            <div key={group.id} className="rounded-2xl border border-slate-800/70 bg-slate-900/40">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleNavGroup(group.id)}
+                                    className={`w-full px-3 py-2.5 flex items-center justify-between rounded-2xl text-xs font-black uppercase tracking-[0.16em] transition ${
+                                        hasActiveLink
+                                            ? "text-orange-300 bg-orange-500/10"
+                                            : "text-slate-300 hover:text-white hover:bg-white/5"
+                                    }`}
+                                >
+                                    <span>{group.label}</span>
+                                    <span className={`text-[11px] transition-transform ${isOpen ? "rotate-180" : ""}`}>
+                                        ▼
+                                    </span>
+                                </button>
+
+                                {isOpen && (
+                                    <div className="pb-2 px-2 space-y-1">
+                                        {group.links.map((link) => (
+                                            <Link
+                                                key={link.route}
+                                                href={route(link.route)}
+                                                className={`block px-3 py-2 rounded-xl text-sm font-bold transition ${
+                                                    isLinkActive(link)
+                                                        ? "bg-orange-500/15 text-orange-300 border border-orange-500/30"
+                                                        : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
+                                                }`}
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </nav>
 
                 <div className="p-4 border-t border-slate-800 bg-slate-900">
