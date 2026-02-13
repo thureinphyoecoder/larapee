@@ -4,15 +4,15 @@ import Swal from "sweetalert2";
 import { useEffect, useMemo, useState } from "react";
 
 const statusTone = {
-    pending: "bg-amber-100 text-amber-700",
-    confirmed: "bg-sky-100 text-sky-700",
-    shipped: "bg-indigo-100 text-indigo-700",
-    delivered: "bg-emerald-100 text-emerald-700",
-    cancelled: "bg-rose-100 text-rose-700",
-    refund_requested: "bg-violet-100 text-violet-700",
-    refunded: "bg-fuchsia-100 text-fuchsia-700",
-    return_requested: "bg-orange-100 text-orange-700",
-    returned: "bg-slate-200 text-slate-700",
+    pending: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+    confirmed: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+    shipped: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300",
+    delivered: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+    cancelled: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+    refund_requested: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+    refunded: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-500/15 dark:text-fuchsia-300",
+    return_requested: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
+    returned: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
 };
 
 function formatMoney(amount) {
@@ -176,12 +176,12 @@ export default function Show({ order }) {
             <Head title={`Order #${order?.id || ""}`} />
 
             <div className="mx-auto max-w-7xl space-y-6">
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-slate-400">Order Overview</p>
-                            <h1 className="mt-2 text-2xl font-black text-slate-900">Order #{order?.id}</h1>
-                            <p className="mt-1 text-sm text-slate-500">
+                            <h1 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Order #{order?.id}</h1>
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                 Created {order?.created_at ? new Date(order.created_at).toLocaleString() : "Unknown time"}
                             </p>
                         </div>
@@ -192,7 +192,7 @@ export default function Show({ order }) {
                             </span>
                             <Link
                                 href={route("admin.orders.index")}
-                                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 Back to Orders
                             </Link>
@@ -225,52 +225,52 @@ export default function Show({ order }) {
 
                 <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                     <div className="xl:col-span-2 space-y-6">
-                        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                            <div className="border-b border-slate-100 px-5 py-4">
-                                <h3 className="text-lg font-black text-slate-900">Ordered Items</h3>
+                        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                            <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-700">
+                                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Ordered Items</h3>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm">
-                                    <thead className="bg-slate-50">
-                                        <tr className="text-[11px] uppercase tracking-widest text-slate-500">
+                                    <thead className="bg-slate-50 dark:bg-slate-800/70">
+                                        <tr className="text-[11px] uppercase tracking-widest text-slate-500 dark:text-slate-400">
                                             <th className="px-5 py-3 font-bold">Product</th>
                                             <th className="px-5 py-3 font-bold">Qty</th>
                                             <th className="px-5 py-3 font-bold">Unit Price</th>
                                             <th className="px-5 py-3 font-bold text-right">Subtotal</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                         {items.length ? (
                                             items.map((item) => (
                                                 <tr key={item.id}>
-                                                    <td className="px-5 py-4 font-semibold text-slate-800">{item.product?.name || "Product not available"}</td>
-                                                    <td className="px-5 py-4 text-slate-600">x {item.quantity}</td>
-                                                    <td className="px-5 py-4 text-slate-600">{formatMoney(item.price)}</td>
-                                                    <td className="px-5 py-4 text-right font-bold text-slate-900">{formatMoney(Number(item.price || 0) * Number(item.quantity || 0))}</td>
+                                                    <td className="px-5 py-4 font-semibold text-slate-800 dark:text-slate-200">{item.product?.name || "Product not available"}</td>
+                                                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300">x {item.quantity}</td>
+                                                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{formatMoney(item.price)}</td>
+                                                    <td className="px-5 py-4 text-right font-bold text-slate-900 dark:text-slate-100">{formatMoney(Number(item.price || 0) * Number(item.quantity || 0))}</td>
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan="4" className="p-8 text-center text-slate-400">No items found.</td>
+                                                <td colSpan="4" className="p-8 text-center text-slate-400 dark:text-slate-500">No items found.</td>
                                             </tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
-                            <div className="border-t border-slate-100 px-5 py-4 flex items-center justify-between text-sm">
-                                <span className="font-semibold text-slate-600">Calculated Total</span>
+                            <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4 text-sm dark:border-slate-700">
+                                <span className="font-semibold text-slate-600 dark:text-slate-300">Calculated Total</span>
                                 <span className="text-lg font-black text-orange-600">{formatMoney(orderTotal)}</span>
                             </div>
                         </div>
 
-                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h3 className="text-lg font-black text-slate-900">Delivery Tracking</h3>
+                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Delivery Tracking</h3>
                             {liveOrder?.delivery_lat && liveOrder?.delivery_lng ? (
                                 <>
-                                    <p className="mt-2 text-sm text-slate-600">
+                                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                                         Current location: {liveOrder.delivery_lat}, {liveOrder.delivery_lng}
                                     </p>
-                                    <p className="text-xs text-slate-400 mt-1">
+                                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                                         Last update: {liveOrder.delivery_updated_at ? new Date(liveOrder.delivery_updated_at).toLocaleString() : "Not available"}
                                     </p>
                                     <div className="mt-3">
@@ -285,7 +285,7 @@ export default function Show({ order }) {
                                     </div>
                                 </>
                             ) : (
-                                <p className="mt-2 text-sm text-slate-400">No location update yet.</p>
+                                <p className="mt-2 text-sm text-slate-400 dark:text-slate-500">No location update yet.</p>
                             )}
 
                             {["admin", "manager", "delivery"].includes(role) && (
@@ -317,9 +317,9 @@ export default function Show({ order }) {
                     </div>
 
                     <div className="space-y-6">
-                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h3 className="text-lg font-black text-slate-900">Customer Info</h3>
-                            <div className="mt-3 space-y-2 text-sm text-slate-700">
+                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Customer Info</h3>
+                            <div className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-300">
                                 <p><span className="font-semibold">Name:</span> {customer?.name || "Customer not set"}</p>
                                 <p><span className="font-semibold">Phone:</span> {liveOrder?.phone || "Not provided"}</p>
                                 <p><span className="font-semibold">Address:</span> {liveOrder?.address || "Not provided"}</p>
@@ -334,8 +334,8 @@ export default function Show({ order }) {
                         )}
 
                         {canAccessPaymentSlip && (
-                            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <h3 className="text-lg font-black text-slate-900">Payment Slip</h3>
+                            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Payment Slip</h3>
                                 {liveOrder?.payment_slip ? (
                                     <button
                                         type="button"
@@ -349,7 +349,7 @@ export default function Show({ order }) {
                                         />
                                     </button>
                                 ) : (
-                                    <div className="mt-3 h-40 rounded-xl border bg-slate-50 flex items-center justify-center text-sm text-slate-400">
+                                    <div className="mt-3 flex h-40 items-center justify-center rounded-xl border bg-slate-50 text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500">
                                         No slip uploaded
                                     </div>
                                 )}
@@ -357,12 +357,12 @@ export default function Show({ order }) {
                         )}
 
                         {canAccessPaymentSlip && (
-                            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <h3 className="text-lg font-black text-slate-900">Slip Verification</h3>
-                                <div className="mt-3 space-y-2 text-sm text-slate-700">
+                            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Slip Verification</h3>
+                                <div className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-300">
                                     <p><span className="font-semibold">Verdict:</span> {liveOrder?.slip_verdict || "Not checked"}</p>
                                     <p><span className="font-semibold">Score:</span> {liveOrder?.slip_score ?? "-"}</p>
-                                    <p className="text-xs text-slate-400">
+                                    <p className="text-xs text-slate-400 dark:text-slate-500">
                                         Checked at: {liveOrder?.slip_checked_at ? new Date(liveOrder.slip_checked_at).toLocaleString() : "Not available"}
                                     </p>
                                 </div>
@@ -391,8 +391,8 @@ export default function Show({ order }) {
                         )}
 
                         {["admin", "manager", "delivery"].includes(role) && (
-                            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <h3 className="text-lg font-black text-slate-900">Shipment Confirmation</h3>
+                            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Shipment Confirmation</h3>
                                 {liveOrder?.delivery_proof_path ? (
                                     <a
                                         href={`/storage/${liveOrder.delivery_proof_path}`}
@@ -403,7 +403,7 @@ export default function Show({ order }) {
                                         View uploaded proof image
                                     </a>
                                 ) : (
-                                    <p className="mt-3 text-sm text-slate-400">No proof uploaded yet.</p>
+                                    <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">No proof uploaded yet.</p>
                                 )}
 
                                 <div className="mt-4 space-y-3">
@@ -411,7 +411,7 @@ export default function Show({ order }) {
                                         type="file"
                                         accept="image/*"
                                         onChange={(e) => setDeliveryProof(e.target.files?.[0] || null)}
-                                        className="block w-full text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-sky-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-sky-700 hover:file:bg-sky-100"
+                                        className="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:rounded-full file:border-0 file:bg-sky-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-sky-700 hover:file:bg-sky-100 dark:file:bg-sky-500/10 dark:file:text-sky-300 dark:hover:file:bg-sky-500/20"
                                     />
                                     <button
                                         type="button"
@@ -456,12 +456,12 @@ export default function Show({ order }) {
 
             {canAccessPaymentSlip && showSlip && liveOrder?.payment_slip && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setShowSlip(false)}>
-                    <div className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    <div className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
                         <div className="mb-3 flex items-center justify-between">
-                            <h4 className="font-bold text-slate-800">Payment Slip</h4>
-                            <button className="text-slate-500 hover:text-slate-800" onClick={() => setShowSlip(false)}>Close</button>
+                            <h4 className="font-bold text-slate-800 dark:text-slate-100">Payment Slip</h4>
+                            <button className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200" onClick={() => setShowSlip(false)}>Close</button>
                         </div>
-                        <img src={`/storage/${liveOrder.payment_slip}`} className="w-full rounded-lg border" alt="Payment Slip" />
+                        <img src={`/storage/${liveOrder.payment_slip}`} className="w-full rounded-lg border dark:border-slate-700" alt="Payment Slip" />
                     </div>
                 </div>
             )}

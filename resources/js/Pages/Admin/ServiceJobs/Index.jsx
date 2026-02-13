@@ -17,7 +17,7 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
                         <h3 className="font-black text-slate-900 dark:text-slate-100">Retry Failed Job</h3>
                         <form
                             className="mt-4 flex gap-3"
@@ -37,11 +37,11 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                                     <option key={job.id} value={job.id}>#{job.id} [{job.queue}] {job.failed_at}</option>
                                 ))}
                             </select>
-                            <button className="rounded-xl bg-slate-900 px-4 font-bold text-white dark:bg-slate-100 dark:text-slate-900">Retry</button>
+                            <button className="rounded-xl bg-orange-600 px-4 font-bold text-white hover:bg-orange-500">Retry</button>
                         </form>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
                         <h3 className="font-black text-slate-900 dark:text-slate-100">Run Daily Close</h3>
                         <form
                             className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3"
@@ -64,12 +64,12 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                                 value={closeForm.data.shop_id}
                                 onChange={(e) => closeForm.setData("shop_id", e.target.value)}
                             />
-                            <button className="rounded-xl bg-orange-600 px-4 font-bold text-white">Run</button>
+                            <button className="rounded-xl bg-orange-600 px-4 font-bold text-white hover:bg-orange-500">Run</button>
                         </form>
                     </div>
                 </div>
 
-                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700">
+                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
                     <h3 className="p-5 pb-0 font-black text-slate-900 dark:text-slate-100">Queued Jobs</h3>
                     <table className="w-full text-sm mt-3">
                         <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
@@ -93,7 +93,7 @@ export default function ServiceJobsIndex({ stats = {}, jobs = [], failedJobs = [
                     </table>
                 </div>
 
-                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700">
+                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
                     <h3 className="p-5 pb-0 font-black text-slate-900 dark:text-slate-100">Job Batches</h3>
                     <table className="w-full text-sm mt-3">
                         <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
@@ -131,7 +131,7 @@ function Metric({ label, value, tone = "slate" }) {
     };
 
     return (
-        <div className={`bg-white border rounded-2xl p-4 shadow-sm ${tones[tone] || tones.slate}`}>
+        <div className={`rounded-2xl border bg-white p-4 shadow-sm dark:bg-slate-900/80 ${tones[tone] || tones.slate}`}>
             <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</p>
             <p className="mt-2 text-xl font-black">{value}</p>
         </div>
