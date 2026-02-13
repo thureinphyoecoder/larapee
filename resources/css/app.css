@@ -53,6 +53,24 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+html[lang="mm"] body {
+    font-family: "Noto Sans Myanmar", "Pyidaungsu", "Padauk", ui-sans-serif, system-ui, sans-serif;
+    line-height: 1.65;
+    letter-spacing: 0;
+    word-spacing: 0;
+    font-feature-settings: "kern" 1;
+}
+
+html[lang="mm"] h1,
+html[lang="mm"] h2,
+html[lang="mm"] h3,
+html[lang="mm"] h4,
+html[lang="mm"] h5,
+html[lang="mm"] h6 {
+    letter-spacing: 0;
+    line-height: 1.45;
+}
+
 :root[data-theme="dark"] body {
     background-image:
         radial-gradient(1050px 500px at 92% -12%, rgba(56, 189, 248, 0.06), transparent 58%),

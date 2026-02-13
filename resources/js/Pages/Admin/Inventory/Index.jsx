@@ -415,7 +415,7 @@ export default function InventoryIndex({
                             <FaMagnifyingGlass className="h-5 w-5" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                                 ကုန်ပစ္စည်း ရှာဖွေခြင်း
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -543,7 +543,7 @@ export default function InventoryIndex({
                                     <FaPenToSquare className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <h4 className="text-base font-black text-slate-900 dark:text-slate-100">
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
                                         လက်ကျန် ပြင်ဆင်ခြင်း
                                     </h4>
                                     <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -609,7 +609,7 @@ export default function InventoryIndex({
                                     <FaArrowRightArrowLeft className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <h4 className="text-base font-black text-slate-900 dark:text-slate-100">
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
                                         ဆိုင်ခွဲအကြား လွှဲပြောင်းခြင်း
                                     </h4>
                                     <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -671,7 +671,7 @@ export default function InventoryIndex({
                                     <FaLock className="h-5 w-5" />
                                 </div>
                                 <div>
-                                    <h4 className="text-base font-black text-slate-900 dark:text-slate-100">
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
                                         Share Permission စီမံခန့်ခွဲမှု
                                     </h4>
                                     <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -750,7 +750,7 @@ export default function InventoryIndex({
                 {/* Inventory Table */}
                 <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/70">
                     <div className="border-b border-slate-200 bg-slate-50 px-6 py-5 dark:border-slate-700 dark:bg-slate-900/80">
-                        <h3 className="flex items-center gap-2 text-lg font-black text-slate-900 dark:text-slate-100">
+                        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
                             <FaClipboardList className="h-4 w-4" /> လက်ရှိ ကုန်လက်ကျန် စာရင်း
                         </h3>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
@@ -907,7 +907,7 @@ export default function InventoryIndex({
                 {/* Transfer History */}
                 <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/70">
                     <div className="border-b border-slate-200 bg-slate-50 px-6 py-5 dark:border-slate-700 dark:bg-slate-900/80">
-                        <h3 className="flex items-center gap-2 text-lg font-black text-slate-900 dark:text-slate-100">
+                        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
                             <FaClipboardList className="h-4 w-4" /> လွှဲပြောင်းမှု မှတ်တမ်း
                         </h3>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
