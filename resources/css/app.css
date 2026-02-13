@@ -101,3 +101,71 @@ select {
     background-color: var(--color-surface-muted);
     border: 1px solid var(--color-border);
 }
+
+/* SweetAlert2 theming to match LaraPee dark/orange design language */
+:root {
+    --swal-bg: #ffffff;
+    --swal-border: #e2e8f0;
+    --swal-title: #0f172a;
+    --swal-text: #475569;
+    --swal-confirm-bg: #ea580c;
+    --swal-confirm-bg-hover: #c2410c;
+    --swal-cancel-bg: #64748b;
+    --swal-cancel-bg-hover: #475569;
+}
+
+:root[data-theme="dark"],
+html.dark {
+    --swal-bg: #0f172a;
+    --swal-border: rgba(148, 163, 184, 0.24);
+    --swal-title: #f1f5f9;
+    --swal-text: #cbd5e1;
+    --swal-confirm-bg: #f97316;
+    --swal-confirm-bg-hover: #ea580c;
+    --swal-cancel-bg: #334155;
+    --swal-cancel-bg-hover: #1e293b;
+}
+
+.swal2-popup {
+    background: var(--swal-bg) !important;
+    border: 1px solid var(--swal-border) !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 24px 80px rgba(2, 6, 23, 0.45) !important;
+}
+
+.swal2-title {
+    color: var(--swal-title) !important;
+    font-weight: 800 !important;
+}
+
+.swal2-html-container {
+    color: var(--swal-text) !important;
+}
+
+.swal2-input,
+.swal2-textarea,
+.swal2-select {
+    background: transparent !important;
+    border: 1px solid var(--swal-border) !important;
+    color: var(--swal-title) !important;
+}
+
+.swal2-confirm.swal2-styled {
+    background: var(--swal-confirm-bg) !important;
+    border-radius: 0.65rem !important;
+    font-weight: 700 !important;
+}
+
+.swal2-confirm.swal2-styled:hover {
+    background: var(--swal-confirm-bg-hover) !important;
+}
+
+.swal2-cancel.swal2-styled {
+    background: var(--swal-cancel-bg) !important;
+    border-radius: 0.65rem !important;
+    font-weight: 700 !important;
+}
+
+.swal2-cancel.swal2-styled:hover {
+    background: var(--swal-cancel-bg-hover) !important;
+}
