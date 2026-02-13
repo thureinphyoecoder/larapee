@@ -14,6 +14,8 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const [showNoti, setShowNoti] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const [themeMode, setThemeMode] = useState("system");
+    const [resolvedTheme, setResolvedTheme] = useState("light");
     const [, setTimeTick] = useState(0);
     const normalizeTimestamp = (value) => {
         if (!value) return null;
@@ -104,6 +106,34 @@ export default function AuthenticatedLayout({ header, children }) {
             JSON.stringify(notifications.slice(0, 80)),
         );
     }, [notifications, notificationStorageKey]);
+
+    useEffect(() => {
+        const saved =
+            window.localStorage.getItem("larapee_user_theme_mode") ||
+            window.localStorage.getItem("larapee_theme_mode") ||
+            window.localStorage.getItem("larapee_admin_theme_mode");
+        if (saved === "light" || saved === "dark" || saved === "system") {
+            setThemeMode(saved);
+        }
+    }, []);
+
+    useEffect(() => {
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+        const applyTheme = () => {
+            const nextTheme = themeMode === "system" ? (media.matches ? "dark" : "light") : themeMode;
+            setResolvedTheme(nextTheme);
+            document.documentElement.dataset.theme = nextTheme;
+            document.documentElement.classList.toggle("dark", nextTheme === "dark");
+        };
+        applyTheme();
+        media.addEventListener("change", applyTheme);
+        return () => media.removeEventListener("change", applyTheme);
+    }, [themeMode]);
+
+    useEffect(() => {
+        window.localStorage.setItem("larapee_user_theme_mode", themeMode);
+        window.localStorage.setItem("larapee_theme_mode", themeMode);
+    }, [themeMode]);
 
     useEffect(() => {
         const timer = window.setInterval(() => {
@@ -223,18 +253,18 @@ export default function AuthenticatedLayout({ header, children }) {
     const isUser = currentUserRole === "user";
 
     return (
-        <div className={`min-h-screen bg-gray-100 ${isUser ? "" : "flex"}`}>
+        <div className={`min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 ${isUser ? "" : "flex"}`}>
             {/* Desktop Sidebar (admin/staff only) */}
             {!isUser && (
-                <aside className="w-64 bg-white shadow-xl hidden md:flex flex-col fixed h-full">
-                    <div className="p-6 border-b border-gray-100">
+                <aside className="hidden h-full w-64 fixed flex-col border-r border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 md:flex">
+                    <div className="p-6 border-b border-slate-100 dark:border-slate-800">
                         <Link href="/">
                             <ApplicationLogo className="h-9 w-auto fill-current text-orange-600" />
                         </Link>
                     </div>
 
                     <nav className="flex-1 px-4 py-4 space-y-1">
-                        <p className="text-xs font-semibold text-gray-400 uppercase px-3 mb-2">
+                        <p className="mb-2 px-3 text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">
                             {currentUserRole} Panel
                         </p>
                         {links.map((link, index) => (
@@ -249,11 +279,11 @@ export default function AuthenticatedLayout({ header, children }) {
                         ))}
                     </nav>
 
-                    <div className="p-4 border-t border-gray-100 bg-gray-50">
-                        <p className="text-sm font-medium text-gray-700 truncate">
+                    <div className="border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                        <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
                             {user?.name ? user.name : "Still Guest?"}
                         </p>
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                             {user?.name ? user.name : "Still Guest?"}
                         </p>
                     </div>
@@ -262,7 +292,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
             {/* Main Content Area */}
             <div className={`flex-1 flex flex-col ${isUser ? "" : "md:ms-64"}`}>
-                <nav className="sticky top-0 z-10 flex min-h-16 flex-wrap items-center gap-3 border-b border-gray-100 bg-white px-4 py-2 sm:px-8">
+                <nav className="sticky top-0 z-10 flex min-h-16 flex-wrap items-center gap-3 border-b border-slate-200 bg-white/95 px-4 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 sm:px-8">
                     <div className="flex-1 flex items-center gap-3">
                         {isUser && (
                             <Link href="/">
@@ -279,7 +309,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${
                                             route().current(link.route)
                                                 ? "bg-orange-600 text-white border-orange-600"
-                                                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                                                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                                         }`}
                                     >
                                         {link.label}
@@ -293,7 +323,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     <div className="relative">
                         <button
                             onClick={() => setShowNoti(!showNoti)}
-                            className="p-2 text-gray-500 hover:text-orange-600 transition rounded-full hover:bg-gray-100"
+                            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-orange-600 dark:text-slate-300 dark:hover:bg-slate-800"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -322,12 +352,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                     className="fixed inset-0 z-10"
                                     onClick={() => setShowNoti(false)}
                                 ></div>
-                                <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-20 overflow-hidden">
-                                    <div className="px-4 py-2 border-b border-slate-50 flex justify-between items-center">
-                                        <span className="font-bold text-slate-700">
+                                <div className="absolute right-0 z-20 mt-3 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+                                    <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2 dark:border-slate-800">
+                                        <span className="font-bold text-slate-700 dark:text-slate-100">
                                             Notifications
                                         </span>
-                                        <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase">
+                                        <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold uppercase text-orange-600 dark:bg-orange-500/20 dark:text-orange-300">
                                             Recent
                                         </span>
                                     </div>
@@ -338,18 +368,18 @@ export default function AuthenticatedLayout({ header, children }) {
                                                     key={n.id}
                                                     type="button"
                                                     onClick={() => openNotification(n)}
-                                                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 ${!n.isRead ? "bg-orange-50/40" : ""}`}
+                                                    className={`w-full border-b border-slate-100 px-4 py-3 text-left hover:bg-slate-50 last:border-0 dark:border-slate-800 dark:hover:bg-slate-800/70 ${!n.isRead ? "bg-orange-50/40 dark:bg-orange-500/10" : ""}`}
                                                 >
-                                                    <p className="text-sm text-slate-700 leading-snug">
+                                                    <p className="text-sm leading-snug text-slate-700 dark:text-slate-200">
                                                         {n.message}
                                                     </p>
-                                                    <p className="text-[11px] text-slate-400 mt-1">
+                                                    <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
                                                         {formatRelativeTime(n.createdAt)}
                                                     </p>
                                                 </button>
                                             ))
                                         ) : (
-                                            <div className="p-8 text-center text-slate-400 text-sm">
+                                            <div className="p-8 text-center text-sm text-slate-400 dark:text-slate-500">
                                                 Notification မရှိသေးပါ
                                             </div>
                                         )}
@@ -357,7 +387,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <button
                                         type="button"
                                         onClick={() => setNotifications([])}
-                                        className="w-full py-2 text-xs font-bold text-slate-400 hover:text-orange-600 transition bg-slate-50/50 uppercase tracking-widest"
+                                        className="w-full bg-slate-50/50 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 transition hover:text-orange-600 dark:bg-slate-800/70 dark:text-slate-500"
                                     >
                                         Clear All
                                     </button>
@@ -369,9 +399,23 @@ export default function AuthenticatedLayout({ header, children }) {
                     <LocaleSwitcher compact />
 
                     <div className="relative">
+                        <label className="sr-only" htmlFor="customer-theme-mode">Theme</label>
+                        <select
+                            id="customer-theme-mode"
+                            value={themeMode}
+                            onChange={(e) => setThemeMode(e.target.value)}
+                            className="h-9 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        >
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="system">System</option>
+                        </select>
+                    </div>
+
+                    <div className="relative">
                         <Dropdown>
                             <Dropdown.Trigger>
-                                <button className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition duration-150">
+                                <button className="flex items-center text-sm font-medium text-slate-500 transition duration-150 hover:text-slate-700 focus:outline-none dark:text-slate-300 dark:hover:text-slate-100">
                                     Profile Settings
                                     <svg
                                         className="ms-2 h-4 w-4"
@@ -403,7 +447,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </nav>
 
                 {header && (
-                    <header className="bg-white shadow-sm">
+                    <header className="bg-white shadow-sm dark:bg-slate-900">
                         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                             {header}
                         </div>
