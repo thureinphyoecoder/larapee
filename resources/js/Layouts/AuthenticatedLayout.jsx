@@ -8,10 +8,13 @@ import {
     LuClipboardList,
     LuHouse,
     LuLayoutDashboard,
+    LuLogOut,
     LuMapPin,
     LuMessageSquare,
     LuPackage,
+    LuPanelLeft,
     LuTruck,
+    LuUserRound,
 } from "react-icons/lu";
 import Swal from "sweetalert2";
 
@@ -273,7 +276,8 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
 
                     <nav className="flex-1 px-4 py-4 space-y-1">
-                        <p className="mb-2 px-3 text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">
+                        <p className="mb-2 inline-flex items-center gap-2 px-3 text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">
+                            <LuPanelLeft className="h-3.5 w-3.5" />
                             {currentUserRole} Panel
                         </p>
                         {links.map((link, index) => (
@@ -281,10 +285,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                 key={index}
                                 href={route(link.route)}
                                 active={route().current(link.route)}
-                                className="w-full flex items-center px-3 py-2 text-sm font-medium transition-colors duration-150"
+                                className="w-full"
                             >
-                                <span className="inline-flex items-center gap-2">
-                                    {link.icon ? <link.icon className="h-4 w-4" /> : null}
+                                <span className="inline-flex items-center gap-2.5">
+                                    {link.icon ? (
+                                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                                            <link.icon className="h-4 w-4" />
+                                        </span>
+                                    ) : null}
                                     {link.label}
                                 </span>
                             </NavLink>
@@ -292,12 +300,22 @@ export default function AuthenticatedLayout({ header, children }) {
                     </nav>
 
                     <div className="border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-                        <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <p className="inline-flex items-center gap-2 truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                            <LuUserRound className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                             {user?.name ? user.name : "Still Guest?"}
                         </p>
                         <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                             {user?.name ? user.name : "Still Guest?"}
                         </p>
+                        <Link
+                            href={route("logout")}
+                            method="post"
+                            as="button"
+                            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black uppercase tracking-widest text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                        >
+                            <LuLogOut className="h-3.5 w-3.5" />
+                            Log out
+                        </Link>
                     </div>
                 </aside>
             )}

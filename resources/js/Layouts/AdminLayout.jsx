@@ -18,8 +18,10 @@ import {
     LuSearch,
     LuShieldCheck,
     LuStore,
+    LuTruck,
     LuUsers,
     LuWallet,
+    LuLogOut,
 } from "react-icons/lu";
 import Swal from "sweetalert2";
 
@@ -559,18 +561,30 @@ export default function AdminLayout({ children, header }) {
                                                 <Link
                                                     key={link.route}
                                                     href={route(link.route)}
-                                                    className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition ${
+                                                    className={`block rounded-xl border px-4 py-2.5 text-sm font-bold transition ${
                                                         isLinkActive(link)
                                                             ? isDark
-                                                                ? "bg-white/[0.1] text-white border border-white/10"
-                                                                : "bg-slate-200 text-slate-800 border border-slate-300"
+                                                                ? "border-orange-500/40 bg-orange-500/15 text-white"
+                                                                : "border-orange-300 bg-orange-50 text-slate-900"
                                                             : isDark
-                                                                ? "text-slate-300 hover:text-white hover:bg-white/[0.06] border border-transparent"
-                                                                : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
+                                                                ? "border-transparent text-slate-300 hover:border-white/10 hover:text-white hover:bg-white/[0.06]"
+                                                                : "border-transparent text-slate-600 hover:text-slate-800 hover:bg-slate-100 hover:border-slate-200"
                                                     }`}
                                                 >
-                                                    <span className="inline-flex items-center gap-2">
-                                                        {LinkIcon ? <LinkIcon className="h-4 w-4" /> : null}
+                                                    <span className="inline-flex items-center gap-2.5">
+                                                        {LinkIcon ? (
+                                                            <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${
+                                                                isLinkActive(link)
+                                                                    ? isDark
+                                                                        ? "bg-orange-500/20 text-orange-200"
+                                                                        : "bg-orange-100 text-orange-700"
+                                                                    : isDark
+                                                                        ? "bg-slate-800 text-slate-300"
+                                                                        : "bg-slate-100 text-slate-600"
+                                                            }`}>
+                                                                <LinkIcon className="h-4 w-4" />
+                                                            </span>
+                                                        ) : null}
                                                         {link.label}
                                                     </span>
                                                 </Link>
@@ -600,7 +614,10 @@ export default function AdminLayout({ children, header }) {
                                 : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
                         }`}
                     >
-                        Log out
+                        <span className="inline-flex items-center justify-center gap-2">
+                            <LuLogOut className="h-3.5 w-3.5" />
+                            Log out
+                        </span>
                     </Link>
                 </div>
             </aside>
