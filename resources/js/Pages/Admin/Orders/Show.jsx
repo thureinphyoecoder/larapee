@@ -40,6 +40,7 @@ export default function Show({ order }) {
     const [showSlip, setShowSlip] = useState(false);
     const [deliveryProof, setDeliveryProof] = useState(null);
     const [isLocating, setIsLocating] = useState(false);
+    const [isUploadingProof, setIsUploadingProof] = useState(false);
     const [locationError, setLocationError] = useState("");
 
     const items = liveOrder?.items || [];
@@ -111,6 +112,7 @@ export default function Show({ order }) {
     };
 
     const captureCurrentLocation = () => {
+        if (isUploadingProof) return;
         setLocationError("");
 
         if (!navigator.geolocation) {
@@ -291,8 +293,8 @@ export default function Show({ order }) {
                                     <button
                                         type="button"
                                         onClick={captureCurrentLocation}
-                                        disabled={isLocating}
-                                        className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                                        disabled={isLocating || isUploadingProof}
+                                        className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {isLocating ? "Getting current GPS..." : "Use Current Location"}
                                     </button>
@@ -413,9 +415,10 @@ export default function Show({ order }) {
                                     />
                                     <button
                                         type="button"
-                                        disabled={!deliveryProof}
+                                        disabled={!deliveryProof || isUploadingProof || isLocating}
                                         onClick={() => {
-                                            if (!deliveryProof) return;
+                                            if (!deliveryProof || isUploadingProof) return;
+                                            setIsUploadingProof(true);
                                             router.post(
                                                 route("admin.orders.confirmShipment", order.id),
                                                 { delivery_proof: deliveryProof },
@@ -427,12 +430,22 @@ export default function Show({ order }) {
                                                         setLiveOrder((prev) => ({ ...prev, status: "shipped" }));
                                                         Swal.fire("Uploaded", "Delivery proof uploaded and order marked shipped.", "success");
                                                     },
+                                                    onError: () => {
+                                                        Swal.fire("Error", "Could not upload proof. Please try again.", "error");
+                                                    },
+                                                    onFinish: () => {
+                                                        setIsUploadingProof(false);
+                                                    },
                                                 },
                                             );
                                         }}
-                                        className={`w-full rounded-xl py-2 text-sm font-bold ${deliveryProof ? "bg-sky-600 text-white hover:bg-sky-700" : "bg-slate-200 text-slate-500 cursor-not-allowed"}`}
+                                        className={`w-full rounded-xl py-2 text-sm font-bold ${
+                                            !deliveryProof || isUploadingProof || isLocating
+                                                ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                                                : "bg-sky-600 text-white hover:bg-sky-700"
+                                        }`}
                                     >
-                                        Upload & Confirm Shipped
+                                        {isUploadingProof ? "Uploading proof..." : "Upload & Confirm Shipped"}
                                     </button>
                                 </div>
                             </div>
