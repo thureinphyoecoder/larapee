@@ -506,10 +506,10 @@ export default function AdminLayout({ children, header }) {
 
     return (
         <div
-            className={`min-h-screen flex ${isDark ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-800"}`}
+            className={`premium-shell min-h-screen flex ${isDark ? "text-slate-100" : "text-slate-800"}`}
         >
             {/* Sidebar */}
-            <aside className={`w-72 hidden h-full fixed md:flex flex-col border-r shadow-sm ${isDark ? "bg-[#0b1220]/95 text-slate-200 border-white/10 backdrop-blur" : "bg-white text-slate-700 border-slate-200"}`}>
+            <aside className={`premium-sidebar w-72 hidden h-full fixed md:flex flex-col ${isDark ? "bg-[#0b1220]/86 text-slate-200" : "bg-white/88 text-slate-700"}`}>
                 <div className={`px-6 py-7 border-b ${isDark ? "border-white/10" : "border-slate-200"}`}>
                     <Link
                         href="/"
@@ -624,7 +624,7 @@ export default function AdminLayout({ children, header }) {
 
             {/* Main Content */}
             <div className="flex-1 md:ms-72 flex flex-col min-h-screen">
-                <header className={`h-20 backdrop-blur border-b px-6 sticky top-0 z-50 ${isDark ? "bg-[#0b1220]/80 border-white/10" : "bg-white/90 border-slate-200"}`}>
+                <header className={`premium-topbar h-20 px-6 sticky top-0 z-50 ${isDark ? "bg-[#0b1220]/76 border-white/10" : "bg-white/84 border-slate-200/90"}`}>
                     <div className="h-full grid grid-cols-[auto,1fr,auto] items-center gap-6">
                         <div className={`text-lg font-black whitespace-nowrap ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                             {header || "Admin"}
@@ -805,7 +805,7 @@ export default function AdminLayout({ children, header }) {
                     </div>
                 </header>
 
-                <main className={`flex-1 p-6 md:p-8 ${isDark ? "bg-transparent" : ""}`}>{children}</main>
+                <main className={`premium-main flex-1 p-6 md:p-8 ${isDark ? "bg-transparent" : ""}`}>{children}</main>
             </div>
         </div>
     );

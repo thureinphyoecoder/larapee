@@ -265,17 +265,17 @@ export default function AuthenticatedLayout({ header, children }) {
     const isUser = currentUserRole === "user";
 
     return (
-        <div className={`min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 ${isUser ? "" : "flex"}`}>
+        <div className={`premium-shell min-h-screen text-slate-900 dark:text-slate-100 ${isUser ? "" : "flex"}`}>
             {/* Desktop Sidebar (admin/staff only) */}
             {!isUser && (
-                <aside className="hidden h-full w-64 fixed flex-col border-r border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 md:flex">
-                    <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+                <aside className="premium-sidebar hidden h-full w-64 fixed flex-col bg-white/90 dark:bg-slate-900/85 md:flex">
+                    <div className="p-6 border-b border-slate-100/90 dark:border-slate-800">
                         <Link href="/">
                             <ApplicationLogo className="h-9 w-auto fill-current text-orange-600" />
                         </Link>
                     </div>
 
-                    <nav className="flex-1 px-4 py-4 space-y-1">
+                    <nav className="flex-1 px-4 py-5 space-y-1.5">
                         <p className="mb-2 inline-flex items-center gap-2 px-3 text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">
                             <LuPanelLeft className="h-3.5 w-3.5" />
                             {currentUserRole} Panel
@@ -299,7 +299,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         ))}
                     </nav>
 
-                    <div className="border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                    <div className="border-t border-slate-100/90 bg-slate-50/75 p-4 dark:border-slate-800 dark:bg-slate-900/70">
                         <p className="inline-flex items-center gap-2 truncate text-sm font-medium text-slate-700 dark:text-slate-200">
                             <LuUserRound className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                             {user?.name ? user.name : "Still Guest?"}
@@ -322,7 +322,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
             {/* Main Content Area */}
             <div className={`flex-1 flex flex-col ${isUser ? "" : "md:ms-64"}`}>
-                <nav className="sticky top-0 z-10 flex min-h-16 flex-wrap items-center gap-3 border-b border-slate-200 bg-white/95 px-4 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 sm:px-8">
+                <nav className="premium-topbar sticky top-0 z-10 flex min-h-16 flex-wrap items-center gap-3 bg-white/86 px-4 py-2 dark:bg-slate-900/82 sm:px-8">
                     <div className="flex-1 flex items-center gap-3">
                         {isUser && (
                             <Link href="/">
@@ -480,14 +480,14 @@ export default function AuthenticatedLayout({ header, children }) {
                 </nav>
 
                 {header && (
-                    <header className="bg-white shadow-sm dark:bg-slate-900">
+                    <header className="premium-topbar bg-white/70 dark:bg-slate-900/65">
                         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                             {header}
                         </div>
                     </header>
                 )}
 
-                <main className={`flex-1 ${isUser ? "p-4 sm:p-6" : "p-6"}`}>
+                <main className={`premium-main flex-1 ${isUser ? "p-4 sm:p-6" : "p-6 md:p-8"}`}>
                     {children}
                 </main>
             </div>

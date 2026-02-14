@@ -6,12 +6,16 @@
 
 :root {
     color-scheme: light;
-    --color-bg: #f6f8fc;
-    --color-text: #0f172a;
+    --color-bg: #f4f6fb;
+    --color-text: #0c1426;
     --color-surface: #ffffff;
-    --color-surface-muted: #eef2f8;
-    --color-border: #d8e0ec;
-    --color-ring: #38bdf8;
+    --color-surface-muted: #eef2f7;
+    --color-border: #d7dfec;
+    --color-ring: #0ea5e9;
+    --color-accent: #f97316;
+    --color-accent-2: #0ea5e9;
+    --shadow-elev-1: 0 10px 30px rgba(15, 23, 42, 0.08);
+    --shadow-elev-2: 0 28px 70px rgba(15, 23, 42, 0.13);
     --font-ui: "Noto Sans Myanmar", "Pyidaungsu", "Padauk", "Space Grotesk",
         ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -19,12 +23,16 @@
 @media (prefers-color-scheme: dark) {
     :root {
         color-scheme: dark;
-        --color-bg: #070d19;
-        --color-text: #dfe8f5;
-        --color-surface: #0f1727;
-        --color-surface-muted: #111c30;
+        --color-bg: #050b16;
+        --color-text: #dbe6f8;
+        --color-surface: #0d1728;
+        --color-surface-muted: #101b2f;
         --color-border: rgba(148, 163, 184, 0.24);
         --color-ring: #22d3ee;
+        --color-accent: #fb923c;
+        --color-accent-2: #22d3ee;
+        --shadow-elev-1: 0 12px 34px rgba(2, 6, 23, 0.36);
+        --shadow-elev-2: 0 30px 84px rgba(2, 6, 23, 0.48);
     }
 }
 
@@ -46,6 +54,11 @@ body {
     background-color: var(--color-bg);
     color: var(--color-text);
     font-family: var(--font-ui);
+    background-image:
+        radial-gradient(1000px 460px at 100% -8%, rgba(249, 115, 22, 0.1), transparent 56%),
+        radial-gradient(880px 420px at -12% 10%, rgba(14, 165, 233, 0.09), transparent 60%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(244, 247, 253, 0.95) 36%, rgba(240, 244, 251, 1) 100%);
+    background-attachment: fixed;
     text-rendering: optimizeLegibility;
     font-kerning: normal;
     font-feature-settings: "kern" 1, "liga" 1, "clig" 1, "calt" 1;
@@ -73,8 +86,9 @@ html[lang="mm"] h6 {
 
 :root[data-theme="dark"] body {
     background-image:
-        radial-gradient(1050px 500px at 92% -12%, rgba(56, 189, 248, 0.06), transparent 58%),
-        radial-gradient(880px 460px at -10% 10%, rgba(59, 130, 246, 0.07), transparent 60%);
+        radial-gradient(1050px 500px at 92% -12%, rgba(56, 189, 248, 0.08), transparent 58%),
+        radial-gradient(880px 460px at -10% 10%, rgba(59, 130, 246, 0.08), transparent 60%),
+        linear-gradient(180deg, rgba(5, 11, 22, 0.98), rgba(5, 11, 22, 1));
 }
 
 select {
@@ -95,11 +109,81 @@ select {
 .admin-surface {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-elev-1);
+    border-radius: 1rem;
 }
 
 .admin-surface-muted {
     background-color: var(--color-surface-muted);
     border: 1px solid var(--color-border);
+    border-radius: 1rem;
+}
+
+.premium-shell {
+    position: relative;
+    isolation: isolate;
+}
+
+.premium-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+        radial-gradient(700px 360px at 14% -8%, rgba(251, 146, 60, 0.12), transparent 62%),
+        radial-gradient(620px 320px at 88% 4%, rgba(34, 211, 238, 0.1), transparent 58%);
+}
+
+.premium-sidebar {
+    backdrop-filter: blur(18px);
+    border-right: 1px solid var(--color-border);
+    box-shadow: var(--shadow-elev-1);
+}
+
+.premium-topbar {
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.premium-main {
+    animation: page-enter 360ms ease both;
+}
+
+.premium-card {
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: 1.1rem;
+    box-shadow: var(--shadow-elev-1);
+}
+
+.premium-input {
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.premium-input:focus {
+    border-color: color-mix(in srgb, var(--color-ring) 70%, #ffffff 30%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-ring) 20%, transparent);
+    transform: translateY(-1px);
+}
+
+@keyframes page-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .premium-main {
+        animation: none;
+    }
 }
 
 /* SweetAlert2 theming to match LaraPee dark/orange design language */

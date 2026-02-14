@@ -182,8 +182,7 @@ export default function Welcome({
 
     return (
         <div
-            className="min-h-screen bg-slate-100"
-            style={{ fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif' }}
+            className="premium-shell min-h-screen bg-transparent"
         >
             <header className="sticky top-0 z-40 border-b border-slate-200/90 bg-white/95 backdrop-blur">
                 <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
