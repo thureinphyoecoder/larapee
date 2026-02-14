@@ -13,16 +13,41 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $products = Product::with([
+        $search = trim((string) $request->string('search')->toString());
+        $category = trim((string) $request->string('category')->toString());
+        $limit = max(1, min(48, (int) $request->integer('limit', 24)));
+
+        $query = Product::query()
+            ->with([
             'variants' => fn ($query) => $query->where('is_active', true),
             'brand',
             'shop',
-        ])->orderByDesc('is_hero')->latest()->get();
+        ])
+            ->whereHas('variants', fn ($q) => $q->where('is_active', true))
+            ->orderByDesc('is_hero')
+            ->latest();
+
+        if ($search !== '') {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        if ($category !== '') {
+            $query->whereHas('category', function ($q) use ($category) {
+                $q->where('slug', $category)
+                    ->orWhere('id', $category);
+            });
+        }
+
+        $products = $query->limit($limit)->get();
 
         return Inertia::render('Welcome', [
             'products' => $products->map(fn (Product $product) => $this->serializeStorefrontProduct($product))->values(),
-            'categories' => Category::all(),
-            'filters' => $request->only(['search', 'category'])
+            'categories' => Category::query()->orderBy('name')->get(),
+            'filters' => [
+                'search' => $search,
+                'category' => $category,
+                'limit' => $limit,
+            ],
         ]);
     }
 
