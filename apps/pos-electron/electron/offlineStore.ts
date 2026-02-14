@@ -38,6 +38,11 @@ type SyncResult = {
   failed: number;
   pending: number;
   lastSyncAt: string | null;
+  issues: Array<{
+    outboxId: number;
+    reason: string;
+    nextAction: string;
+  }>;
 };
 
 type OutboxRow = {
@@ -258,11 +263,18 @@ export class OfflineStore {
 
     let synced = 0;
     let failed = 0;
+    const issues: SyncResult["issues"] = [];
 
     for (const row of queue) {
       try {
         if (row.event_type !== "order.create") {
-          this.markFailed(Number(row.id), "Unsupported outbox event");
+          const reason = "Unsupported outbox event";
+          this.markFailed(Number(row.id), reason);
+          issues.push({
+            outboxId: Number(row.id),
+            reason,
+            nextAction: "Update POS app version and retry sync.",
+          });
           failed += 1;
           continue;
         }
@@ -298,7 +310,13 @@ export class OfflineStore {
 
         if (!response.ok) {
           const text = await response.text().catch(() => "sync failed");
-          this.markFailed(Number(row.id), `HTTP ${response.status}: ${text.slice(0, 240)}`);
+          const reason = `HTTP ${response.status}: ${text.slice(0, 240)}`;
+          this.markFailed(Number(row.id), reason);
+          issues.push({
+            outboxId: Number(row.id),
+            reason,
+            nextAction: this.recommendAction(response.status),
+          });
           failed += 1;
           continue;
         }
@@ -313,6 +331,11 @@ export class OfflineStore {
       } catch (error) {
         const message = error instanceof Error ? error.message : "unknown sync error";
         this.markFailed(Number(row.id), message);
+        issues.push({
+          outboxId: Number(row.id),
+          reason: message,
+          nextAction: this.recommendAction(0),
+        });
         failed += 1;
       }
     }
@@ -330,6 +353,7 @@ export class OfflineStore {
       failed,
       pending: Number(pendingRow[0].pending),
       lastSyncAt: this.getSyncState("last_sync_at"),
+      issues,
     };
   }
 
@@ -500,5 +524,18 @@ export class OfflineStore {
       items: normalized.items,
     });
     return createHash("sha256").update(canonical).digest("hex");
+  }
+
+  private recommendAction(statusCode: number): string {
+    if (statusCode === 401 || statusCode === 403) {
+      return "Please log in again and run Sync Now.";
+    }
+    if (statusCode === 422 || statusCode === 409) {
+      return "Review the order data in POS and correct the item/stock conflict before retrying.";
+    }
+    if (statusCode >= 500) {
+      return "Server is currently unavailable. Wait a moment and retry Sync Now.";
+    }
+    return "Check internet connection, then retry using Sync Now.";
   }
 }

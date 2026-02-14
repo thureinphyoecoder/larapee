@@ -31,6 +31,20 @@ type ToastItem = {
   remainingMs: number;
 };
 
+type SyncIssue = {
+  outboxId: number;
+  reason: string;
+  nextAction: string;
+};
+
+type SyncResult = {
+  synced: number;
+  failed: number;
+  pending: number;
+  lastSyncAt?: string | null;
+  issues?: SyncIssue[];
+};
+
 const DEFAULT_OFFLINE_STATUS: OfflineStatus = {
   online: true,
   pending: 0,
@@ -289,20 +303,29 @@ export default function App() {
     }
   };
 
-  const runSync = async (options?: { silentSuccess?: boolean }): Promise<{ synced: number; failed: number; pending: number }> => {
+  const runSync = async (options?: { silentSuccess?: boolean; source?: "auto" | "manual" }): Promise<SyncResult> => {
+    const source = options?.source ?? "manual";
+    const sourceLabel = source === "auto" ? "Auto sync" : "Manual sync";
+
     if (syncInFlightRef.current) {
       const status = await window.desktopBridge.offlineStatus().catch(() => null);
       return {
         synced: 0,
         failed: 0,
         pending: status?.pending ?? 0,
+        issues: [],
       };
     }
 
     const token = sessionStore.getToken();
     if (!token) {
       setError("Session token missing. Please log in again.");
-      return { synced: 0, failed: 1, pending: offlineStatus.pending };
+      return {
+        synced: 0,
+        failed: 1,
+        pending: offlineStatus.pending,
+        issues: [{ outboxId: 0, reason: "Session token missing.", nextAction: "Please log in again and press Sync Now." }],
+      };
     }
 
     const startedAt = Date.now();
@@ -312,23 +335,23 @@ export default function App() {
       setError("");
       const result = await orderService.syncQueuedOrders(token);
       if (result.failed > 0) {
-        setError(
-          `Sync completed with issues: ${result.synced} synced, ${result.failed} failed, ${result.pending} pending.`,
-        );
-      } else if (!options?.silentSuccess) {
-        setNotice(`Sync finished: ${result.synced} synced, ${result.pending} pending.`);
+        setError(formatSyncFailureMessage(result, sourceLabel));
+      } else if (!options?.silentSuccess && (result.synced > 0 || source === "manual")) {
+        setNotice(`${sourceLabel} succeeded: ${result.synced} synced, ${result.pending} pending.`);
       }
 
       await refreshDashboard({ trackBusy: false });
       await refreshOfflineStatus();
       return result;
     } catch (err) {
-      setError(parseApiError(err));
+      const reason = parseApiError(err);
+      setError(`${sourceLabel} failed. Reason: ${reason}. Action: Check internet/session and retry Sync Now.`);
       const status = await window.desktopBridge.offlineStatus().catch(() => null);
       return {
         synced: 0,
         failed: 1,
         pending: status?.pending ?? 0,
+        issues: [{ outboxId: 0, reason, nextAction: "Check internet/session and retry Sync Now." }],
       };
     } finally {
       const elapsed = Date.now() - startedAt;
@@ -377,7 +400,7 @@ export default function App() {
           return;
         }
 
-        const result = await runSync({ silentSuccess: true });
+        const result = await runSync({ silentSuccess: false, source: "auto" });
         if (cancelled) return;
 
         if (result.failed > 0) {
@@ -1165,6 +1188,18 @@ export default function App() {
 
 function parseApiError(error: unknown): string {
   return mapErrorToMessage(error);
+}
+
+function formatSyncFailureMessage(result: SyncResult, sourceLabel: string): string {
+  const summary = `${sourceLabel} finished with issues: ${result.synced} synced, ${result.failed} failed, ${result.pending} pending.`;
+  const firstIssue = result.issues?.[0];
+  if (!firstIssue) {
+    return `${summary} Action: Retry Sync Now.`;
+  }
+
+  const reason = firstIssue.reason || "Unknown reason";
+  const action = firstIssue.nextAction || "Retry Sync Now.";
+  return `${summary} Reason: ${reason}. Action: ${action}`;
 }
 
 function statusTone(status: string): "neutral" | "success" | "warning" | "danger" {

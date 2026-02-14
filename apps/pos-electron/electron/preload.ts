@@ -20,6 +20,11 @@ contextBridge.exposeInMainWorld("desktopBridge", {
       failed: number;
       pending: number;
       lastSyncAt: string | null;
+      issues: Array<{
+        outboxId: number;
+        reason: string;
+        nextAction: string;
+      }>;
     }>,
   receiptPrint: async (payload: { text: string; silent?: boolean; simulate?: boolean }) =>
     ipcRenderer.invoke("receipt:print", payload) as Promise<{ ok: boolean; message?: string }>,

@@ -25,6 +25,11 @@ declare global {
         failed: number;
         pending: number;
         lastSyncAt: string | null;
+        issues: Array<{
+          outboxId: number;
+          reason: string;
+          nextAction: string;
+        }>;
       }>;
       receiptPrint: (payload: { text: string; silent?: boolean; simulate?: boolean }) => Promise<{
         ok: boolean;
