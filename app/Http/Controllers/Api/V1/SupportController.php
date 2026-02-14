@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Support\DeleteSupportMessageAction;
 use App\Actions\Support\MarkSupportMessagesSeenAction;
 use App\Actions\Support\StoreSupportMessageAction;
+use App\Actions\Support\UpdateSupportMessageAction;
 use App\Events\SupportMessageSent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Support\StoreSupportMessageRequest;
@@ -11,7 +13,7 @@ use App\Models\SupportMessage;
 use App\Services\SupportChatQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class SupportController extends Controller
 {
@@ -19,6 +21,8 @@ class SupportController extends Controller
         private readonly SupportChatQueryService $chatQueryService,
         private readonly StoreSupportMessageAction $storeSupportMessageAction,
         private readonly MarkSupportMessagesSeenAction $markSupportMessagesSeenAction,
+        private readonly UpdateSupportMessageAction $updateSupportMessageAction,
+        private readonly DeleteSupportMessageAction $deleteSupportMessageAction,
     ) {
     }
 
@@ -74,14 +78,14 @@ class SupportController extends Controller
             'message' => ['required', 'string', 'max:1000'],
         ]);
 
-        $clean = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $validated['message'])) ?? '');
-        if ($clean === '') {
+        try {
+            $this->updateSupportMessageAction->execute($message, (string) $validated['message']);
+        } catch (ValidationException $exception) {
             return response()->json([
-                'message' => 'Message cannot be empty.',
+                'message' => 'Validation failed.',
+                'errors' => $exception->errors(),
             ], 422);
         }
-
-        $message->update(['message' => $clean]);
 
         return response()->json([
             'message' => 'Message updated.',
@@ -96,12 +100,7 @@ class SupportController extends Controller
         abort_unless((int) $message->sender_id === (int) $user->id, 403);
         abort_unless((int) $message->customer_id === (int) $user->id, 403);
 
-        if ($message->attachment_path) {
-            Storage::disk('public')->delete($message->attachment_path);
-        }
-
-        $deletedId = $message->id;
-        $message->delete();
+        $deletedId = $this->deleteSupportMessageAction->execute($message);
 
         return response()->json([
             'message' => 'Message deleted.',
