@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Actions\Orders\RefreshProductStockAction;
-use App\Actions\Orders\RestockOrderItemsAction;
+use App\Actions\Orders\TransitionOrderStatusAction;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\CartItem;
@@ -22,7 +22,7 @@ class OrderController extends Controller
 {
     public function __construct(
         private readonly RefreshProductStockAction $refreshProductStockAction,
-        private readonly RestockOrderItemsAction $restockOrderItemsAction,
+        private readonly TransitionOrderStatusAction $transitionOrderStatusAction,
     ) {
     }
 
@@ -405,36 +405,12 @@ class OrderController extends Controller
             ]);
         }
 
-        $order->update(['status' => $nextStatus]);
-
-        if (
-            in_array($nextStatus, ['cancelled', 'refunded', 'returned'], true)
-            && !in_array($previousStatus, ['cancelled', 'refunded', 'returned'], true)
-        ) {
-            $this->restockOrderItems($order);
-        }
-
-        if ($nextStatus === 'refund_requested') {
-            $order->update(['refund_requested_at' => now()]);
-        }
-        if ($nextStatus === 'refunded') {
-            $order->update(['refunded_at' => now()]);
-        }
-        if ($nextStatus === 'return_requested') {
-            $order->update(['return_requested_at' => now()]);
-        }
-        if ($nextStatus === 'returned') {
-            $order->update(['returned_at' => now()]);
-        }
-        if ($nextStatus === 'delivered') {
-            $order->update(['delivered_at' => now()]);
-        }
-        if ($nextStatus === 'cancelled') {
-            $order->update([
-                'cancelled_at' => now(),
-                'cancel_reason' => $request->input('cancel_reason'),
-            ]);
-        }
+        $this->transitionOrderStatusAction->execute(
+            order: $order,
+            nextStatus: $nextStatus,
+            actorId: $user?->id,
+            extra: ['cancel_reason' => $request->input('cancel_reason')],
+        );
 
         event(new \App\Events\OrderStatusUpdated($order));
 
@@ -455,12 +431,12 @@ class OrderController extends Controller
             'cancel_reason' => 'required|string|min:5|max:500',
         ]);
 
-        $order->update([
-            'status' => 'cancelled',
-            'cancel_reason' => $validated['cancel_reason'],
-            'cancelled_at' => now(),
-        ]);
-        $this->restockOrderItems($order);
+        $this->transitionOrderStatusAction->execute(
+            order: $order,
+            nextStatus: 'cancelled',
+            actorId: Auth::id(),
+            extra: ['cancel_reason' => $validated['cancel_reason']],
+        );
         event(new \App\Events\OrderStatusUpdated($order));
 
         return back()->with('success', 'Order cancelled.');
@@ -480,10 +456,11 @@ class OrderController extends Controller
             return back()->withErrors(['status' => 'Refund not available for this status.']);
         }
 
-        $order->update([
-            'status' => 'refund_requested',
-            'refund_requested_at' => now(),
-        ]);
+        $this->transitionOrderStatusAction->execute(
+            order: $order,
+            nextStatus: 'refund_requested',
+            actorId: Auth::id(),
+        );
 
         event(new \App\Events\OrderStatusUpdated($order));
 
@@ -511,11 +488,12 @@ class OrderController extends Controller
             'return_reason' => 'required|string|max:500',
         ]);
 
-        $order->update([
-            'status' => 'return_requested',
-            'return_requested_at' => now(),
-            'return_reason' => $request->return_reason,
-        ]);
+        $this->transitionOrderStatusAction->execute(
+            order: $order,
+            nextStatus: 'return_requested',
+            actorId: Auth::id(),
+            extra: ['return_reason' => $request->return_reason],
+        );
 
         event(new \App\Events\OrderStatusUpdated($order));
 
@@ -582,11 +560,6 @@ class OrderController extends Controller
         \App\Jobs\VerifyPaymentSlip::dispatchSync($order->id);
 
         return back()->with('success', 'Slip verification completed.');
-    }
-
-    private function restockOrderItems(Order $order): void
-    {
-        $this->restockOrderItemsAction->execute($order);
     }
 
     private function authorizeStaffOrderAccess($user, Order $order): void

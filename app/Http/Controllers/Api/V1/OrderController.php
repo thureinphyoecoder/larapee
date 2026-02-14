@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Orders\CreateOrderFromCartAction;
 use App\Actions\Orders\CreateOrderFromItemsAction;
-use App\Actions\Orders\RestockOrderItemsAction;
+use App\Actions\Orders\TransitionOrderStatusAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Orders\StoreOrderRequest;
 use App\Http\Requests\Api\V1\Orders\UpdateOrderStatusRequest;
@@ -21,7 +21,7 @@ class OrderController extends Controller
     public function __construct(
         private readonly CreateOrderFromCartAction $createOrderFromCartAction,
         private readonly CreateOrderFromItemsAction $createOrderFromItemsAction,
-        private readonly RestockOrderItemsAction $restockOrderItemsAction,
+        private readonly TransitionOrderStatusAction $transitionOrderStatusAction,
         private readonly AuditLogger $auditLogger,
     ) {
     }
@@ -141,13 +141,12 @@ class OrderController extends Controller
             'cancel_reason' => ['required', 'string', 'min:5', 'max:500'],
         ]);
 
-        $order->update([
-            'status' => 'cancelled',
-            'cancel_reason' => $validated['cancel_reason'],
-            'cancelled_at' => now(),
-        ]);
-
-        $this->restockOrderItemsAction->execute($order);
+        $this->transitionOrderStatusAction->execute(
+            order: $order,
+            nextStatus: 'cancelled',
+            actorId: (int) $user->id,
+            extra: ['cancel_reason' => $validated['cancel_reason']],
+        );
         event(new \App\Events\OrderStatusUpdated($order));
 
         return response()->json([
@@ -177,10 +176,11 @@ class OrderController extends Controller
             ], 422);
         }
 
-        $order->update([
-            'status' => 'refund_requested',
-            'refund_requested_at' => now(),
-        ]);
+        $this->transitionOrderStatusAction->execute(
+            order: $order,
+            nextStatus: 'refund_requested',
+            actorId: (int) $user->id,
+        );
 
         event(new \App\Events\OrderStatusUpdated($order));
 
@@ -215,11 +215,12 @@ class OrderController extends Controller
             'return_reason' => ['required', 'string', 'max:500'],
         ]);
 
-        $order->update([
-            'status' => 'return_requested',
-            'return_requested_at' => now(),
-            'return_reason' => $validated['return_reason'],
-        ]);
+        $this->transitionOrderStatusAction->execute(
+            order: $order,
+            nextStatus: 'return_requested',
+            actorId: (int) $user->id,
+            extra: ['return_reason' => $validated['return_reason']],
+        );
 
         event(new \App\Events\OrderStatusUpdated($order));
 
@@ -273,36 +274,12 @@ class OrderController extends Controller
             }
         }
 
-        $order->update(['status' => $nextStatus]);
-
-        if (
-            in_array($nextStatus, ['cancelled', 'refunded', 'returned'], true)
-            && ! in_array($previousStatus, ['cancelled', 'refunded', 'returned'], true)
-        ) {
-            $this->restockOrderItemsAction->execute($order);
-        }
-
-        if ($nextStatus === 'refund_requested') {
-            $order->update(['refund_requested_at' => now()]);
-        }
-        if ($nextStatus === 'refunded') {
-            $order->update(['refunded_at' => now()]);
-        }
-        if ($nextStatus === 'return_requested') {
-            $order->update(['return_requested_at' => now()]);
-        }
-        if ($nextStatus === 'returned') {
-            $order->update(['returned_at' => now()]);
-        }
-        if ($nextStatus === 'delivered') {
-            $order->update(['delivered_at' => now()]);
-        }
-        if ($nextStatus === 'cancelled') {
-            $order->update([
-                'cancelled_at' => now(),
-                'cancel_reason' => $request->input('cancel_reason'),
-            ]);
-        }
+        $this->transitionOrderStatusAction->execute(
+            order: $order,
+            nextStatus: $nextStatus,
+            actorId: $actor?->id,
+            extra: ['cancel_reason' => $request->input('cancel_reason')],
+        );
 
         $this->auditLogger->log(
             event: 'order.status_updated',
@@ -311,6 +288,8 @@ class OrderController extends Controller
             new: ['status' => $nextStatus],
             meta: ['approval_request_id' => $approvalRequestId],
             actor: $actor,
+            ipAddress: $request->ip(),
+            userAgent: $request->userAgent(),
         );
 
         event(new \App\Events\OrderStatusUpdated($order));

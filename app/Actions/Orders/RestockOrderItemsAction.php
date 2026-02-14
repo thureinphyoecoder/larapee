@@ -14,7 +14,7 @@ class RestockOrderItemsAction
     ) {
     }
 
-    public function execute(Order $order): void
+    public function execute(Order $order, ?int $actorId = null): void
     {
         DB::transaction(function () use ($order): void {
             $rows = $order->items()
@@ -52,7 +52,7 @@ class RestockOrderItemsAction
                     shopId: (int) $order->shop_id,
                     quantity: (int) $row->qty,
                     reference: $order,
-                    actorId: request()->user()?->id,
+                    actorId: $actorId,
                     note: 'Order restock adjustment',
                 );
             }

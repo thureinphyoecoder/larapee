@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Orders\RefreshProductStockAction;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -19,6 +20,7 @@ use Inertia\Inertia;
 class InventoryController extends Controller
 {
     public function __construct(
+        private readonly RefreshProductStockAction $refreshProductStockAction,
         private readonly StockMovementLogger $stockMovementLogger,
         private readonly AuditLogger $auditLogger,
     ) {
@@ -124,7 +126,7 @@ class InventoryController extends Controller
             };
 
             $variant->update(['stock_level' => $nextStock]);
-            $this->refreshProductStock($variant->product);
+            $this->refreshProductStockAction->execute([(int) $variant->product_id]);
 
             $delta = $nextStock - $currentStock;
             $this->stockMovementLogger->log(
@@ -242,8 +244,10 @@ class InventoryController extends Controller
             $lockedSource->decrement('stock_level', $qty);
             $destinationVariant->increment('stock_level', $qty);
 
-            $this->refreshProductStock($lockedSource->product);
-            $this->refreshProductStock($destinationProduct);
+            $this->refreshProductStockAction->execute([
+                (int) $lockedSource->product_id,
+                (int) $destinationProduct->id,
+            ]);
 
             StockTransfer::create([
                 'source_variant_id' => $lockedSource->id,
@@ -337,18 +341,6 @@ class InventoryController extends Controller
             ->where('to_shop_id', $toShopId)
             ->where('is_enabled', true)
             ->exists();
-    }
-
-    private function refreshProductStock(Product $product): void
-    {
-        $activeVariants = ProductVariant::where('product_id', $product->id)
-            ->where('is_active', true)
-            ->get(['price', 'stock_level']);
-
-        $product->update([
-            'price' => (float) ($activeVariants->min('price') ?? 0),
-            'stock_level' => (int) $activeVariants->sum('stock_level'),
-        ]);
     }
 
     private function nextAvailableVariantSku(string $sourceSku, int $toShopId): string
