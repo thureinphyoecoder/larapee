@@ -12,6 +12,7 @@ use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\ApprovalRequest;
 use App\Models\Order;
 use App\Services\Governance\AuditLogger;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -29,11 +30,10 @@ class OrderController extends Controller
     public function index(): JsonResponse
     {
         $user = request()->user();
-        $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']);
 
         $orders = Order::query()
             ->with($this->orderRelations())
-            ->when(! $isStaff, fn ($q) => $q->where('user_id', $user->id))
+            ->tap(fn (Builder $query) => $this->applyOrderScope($query, $user))
             ->latest('id')
             ->paginate((int) request('per_page', 20))
             ->withQueryString();
@@ -52,9 +52,7 @@ class OrderController extends Controller
     public function show(Order $order): JsonResponse
     {
         $user = request()->user();
-        $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']);
-
-        if (! $isStaff && (int) $order->user_id !== (int) $user->id) {
+        if (! $this->canViewOrder($user, $order)) {
             abort(403);
         }
 
@@ -433,5 +431,41 @@ class OrderController extends Controller
         if ($user->hasRole('manager')) {
             abort_if((int) $order->shop_id !== (int) $user->shop_id, 403);
         }
+    }
+
+    private function applyOrderScope(Builder $query, $user): void
+    {
+        if (! $user || ! method_exists($user, 'hasAnyRole')) {
+            $query->whereRaw('1=0');
+            return;
+        }
+
+        if ($user->hasRole('admin')) {
+            return;
+        }
+
+        if ($user->hasAnyRole(['manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician'])) {
+            $query->where('shop_id', (int) $user->shop_id);
+            return;
+        }
+
+        $query->where('user_id', $user->id);
+    }
+
+    private function canViewOrder($user, Order $order): bool
+    {
+        if (! $user || ! method_exists($user, 'hasAnyRole')) {
+            return false;
+        }
+
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        if ($user->hasAnyRole(['manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician'])) {
+            return (int) $order->shop_id === (int) $user->shop_id;
+        }
+
+        return (int) $order->user_id === (int) $user->id;
     }
 }
