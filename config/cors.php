@@ -12,9 +12,11 @@ $configuredOrigins = array_values(array_filter(array_map(
     explode(',', (string) env('CORS_ALLOWED_ORIGINS', ''))
 )));
 
+$isProduction = env('APP_ENV', 'production') === 'production';
+
 $allowedOrigins = !empty($configuredOrigins)
     ? $configuredOrigins
-    : (app()->environment('production') ? [] : $defaultLocalOrigins);
+    : ($isProduction ? [] : $defaultLocalOrigins);
 
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
