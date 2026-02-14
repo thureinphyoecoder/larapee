@@ -7,7 +7,6 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
     const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || null);
     const [quantity, setQuantity] = useState(1);
     const [processing, setProcessing] = useState(false);
-    const [localCartCount, setLocalCartCount] = useState(Number(auth?.cart_count || 0));
 
     const selectedEffectiveUnitPrice = Number(selectedVariant?.effective_price ?? selectedVariant?.price ?? 0);
     const selectedBaseUnitPrice = Number(selectedVariant?.base_price ?? selectedVariant?.price ?? 0);
@@ -74,12 +73,9 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                 onFinish: () => setProcessing(false),
                 onSuccess: () => {
                     if (type === "buy_now") {
-                        setLocalCartCount((count) => count + quantity);
                         router.visit(route("checkout.index"));
                         return;
                     }
-
-                    setLocalCartCount((count) => count + quantity);
 
                     Swal.fire({
                         icon: "success",
@@ -112,20 +108,15 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                 <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between text-sm gap-2 text-slate-500">
                     <div className="flex items-center gap-2 min-w-0">
                         <Link href="/" className="hover:text-orange-500 transition font-medium">
+                            Back
+                        </Link>
+                        <span className="text-slate-300">/</span>
+                        <Link href="/" className="hover:text-orange-500 transition font-medium">
                             Home
                         </Link>
                         <span className="text-slate-300">/</span>
                         <span className="text-slate-800 font-semibold truncate">{product.name}</span>
                     </div>
-                    <Link
-                        href={auth?.user ? route("cart.index") : route("login")}
-                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:border-orange-300 hover:text-orange-600"
-                    >
-                        <span>Cart</span>
-                        <span className="rounded-full bg-orange-600 px-2 py-0.5 text-xs font-black text-white">
-                            {localCartCount}
-                        </span>
-                    </Link>
                 </div>
             </nav>
 

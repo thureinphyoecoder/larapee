@@ -244,7 +244,7 @@ export default function Welcome({
                             </div>
                         </div>
 
-                        <div className="ml-auto flex w-auto items-center gap-3 text-xs font-semibold text-slate-600 sm:text-sm">
+                        <div className="ml-auto flex w-auto items-center gap-2 text-xs font-semibold text-slate-600 sm:text-sm">
                             {auth?.user ? (
                                 <>
                                     <Link
@@ -274,20 +274,22 @@ export default function Welcome({
                                             </span>
                                         )}
                                     </Link>
-                                    <Link href={route("dashboard")} className="flex items-center gap-2 text-slate-700">
+                                    <Link
+                                        href={route("dashboard")}
+                                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                                        aria-label={t("dashboard", "Dashboard")}
+                                    >
                                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 font-bold text-orange-700">
                                             {auth.user.name.charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="hidden md:inline">{t("hi", "Hi")}, {auth.user.name}</span>
                                     </Link>
-                                    <span className="h-4 w-px bg-slate-300" />
                                     <Link
                                         href={route("logout")}
                                         method="post"
                                         as="button"
-                                        className="transition hover:text-red-500"
+                                        className="inline-flex h-10 items-center rounded-full border border-slate-200 bg-white px-3 text-slate-600 transition hover:border-rose-300 hover:text-rose-600"
                                     >
-                                        {t("logout", "Logout")}
+                                        {t("logout", "Log out")}
                                     </Link>
                                 </>
                             ) : (
@@ -301,7 +303,6 @@ export default function Welcome({
                                     </Link>
                                 </>
                             )}
-                            <span className="hidden h-4 w-px bg-slate-300 md:block" />
                             <LocaleSwitcher />
                         </div>
                     </div>
