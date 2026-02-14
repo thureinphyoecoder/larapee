@@ -144,10 +144,12 @@ export default function Index({
                         />
                         <input
                             type="password"
-                            placeholder="Password (optional)"
+                            placeholder="Password (min 8 chars)"
                             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                             value={form.password}
                             onChange={(e) => setForm({ ...form, password: e.target.value })}
+                            minLength={8}
+                            required
                         />
                         <select
                             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"

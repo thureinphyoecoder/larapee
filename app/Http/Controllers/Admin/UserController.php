@@ -114,7 +114,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'nullable|string|min:6',
+            'password' => 'required|string|min:8',
             'role' => 'required|in:' . implode(',', $roles),
             'shop_id' => 'nullable|exists:shops,id',
         ]);
@@ -127,7 +127,7 @@ class UserController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make($validated['password'] ?? 'password'),
+            'password' => Hash::make($validated['password']),
             'shop_id' => in_array($validated['role'], $staffRoles, true) ? $validated['shop_id'] : null,
             'email_verified_at' => now(),
         ]);
