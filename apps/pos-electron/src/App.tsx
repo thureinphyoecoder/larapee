@@ -40,6 +40,8 @@ const LAST_RECEIPT_KEY = "larapee.pos.last_receipt";
 const DEVICE_SIM_MODE_KEY = "larapee.pos.device_sim_mode";
 const NOTIFICATION_SOUND_KEY = "larapee.pos.notification_sound";
 const SEARCH_DEBOUNCE_MS = 280;
+const AUTO_SYNC_BASE_MS = 12000;
+const AUTO_SYNC_MAX_MS = 180000;
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -89,6 +91,9 @@ export default function App() {
   const toastTimersRef = useRef(new Map<number, number>());
   const toastMetaRef = useRef(new Map<number, { startAt: number; remainingMs: number }>());
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const autoSyncTimerRef = useRef<number | null>(null);
+  const autoSyncBackoffMsRef = useRef(AUTO_SYNC_BASE_MS);
+  const syncInFlightRef = useRef(false);
 
   const cartTotal = useMemo(() => cart.reduce((sum, line) => sum + line.price * line.qty, 0), [cart]);
 
@@ -121,6 +126,10 @@ export default function App() {
       if (audioCtxRef.current) {
         void audioCtxRef.current.close();
         audioCtxRef.current = null;
+      }
+      if (autoSyncTimerRef.current) {
+        window.clearTimeout(autoSyncTimerRef.current);
+        autoSyncTimerRef.current = null;
       }
     };
   }, []);
@@ -280,15 +289,25 @@ export default function App() {
     }
   };
 
-  const runSync = async (): Promise<void> => {
+  const runSync = async (options?: { silentSuccess?: boolean }): Promise<{ synced: number; failed: number; pending: number }> => {
+    if (syncInFlightRef.current) {
+      const status = await window.desktopBridge.offlineStatus().catch(() => null);
+      return {
+        synced: 0,
+        failed: 0,
+        pending: status?.pending ?? 0,
+      };
+    }
+
     const token = sessionStore.getToken();
     if (!token) {
       setError("Session token missing. Please log in again.");
-      return;
+      return { synced: 0, failed: 1, pending: offlineStatus.pending };
     }
 
     const startedAt = Date.now();
     try {
+      syncInFlightRef.current = true;
       setSyncBusy(true);
       setError("");
       const result = await orderService.syncQueuedOrders(token);
@@ -296,14 +315,21 @@ export default function App() {
         setError(
           `Sync completed with issues: ${result.synced} synced, ${result.failed} failed, ${result.pending} pending.`,
         );
-      } else {
+      } else if (!options?.silentSuccess) {
         setNotice(`Sync finished: ${result.synced} synced, ${result.pending} pending.`);
       }
 
       await refreshDashboard({ trackBusy: false });
       await refreshOfflineStatus();
+      return result;
     } catch (err) {
       setError(parseApiError(err));
+      const status = await window.desktopBridge.offlineStatus().catch(() => null);
+      return {
+        synced: 0,
+        failed: 1,
+        pending: status?.pending ?? 0,
+      };
     } finally {
       const elapsed = Date.now() - startedAt;
       const minVisibleMs = 700;
@@ -311,8 +337,82 @@ export default function App() {
         await new Promise((resolve) => window.setTimeout(resolve, minVisibleMs - elapsed));
       }
       setSyncBusy(false);
+      syncInFlightRef.current = false;
     }
   };
+
+  useEffect(() => {
+    if (!user) {
+      if (autoSyncTimerRef.current) {
+        window.clearTimeout(autoSyncTimerRef.current);
+        autoSyncTimerRef.current = null;
+      }
+      return;
+    }
+
+    let cancelled = false;
+
+    const scheduleNext = (baseMs: number): void => {
+      if (cancelled) return;
+      if (autoSyncTimerRef.current) {
+        window.clearTimeout(autoSyncTimerRef.current);
+      }
+      const jitter = Math.floor(Math.random() * 3000);
+      autoSyncTimerRef.current = window.setTimeout(() => {
+        void tick();
+      }, baseMs + jitter);
+    };
+
+    const tick = async (): Promise<void> => {
+      if (cancelled) return;
+
+      try {
+        const status = await window.desktopBridge.offlineStatus();
+        if (cancelled) return;
+        setOfflineStatus(status);
+
+        if (!status.online || status.pending <= 0 || syncInFlightRef.current) {
+          autoSyncBackoffMsRef.current = AUTO_SYNC_BASE_MS;
+          scheduleNext(AUTO_SYNC_BASE_MS);
+          return;
+        }
+
+        const result = await runSync({ silentSuccess: true });
+        if (cancelled) return;
+
+        if (result.failed > 0) {
+          autoSyncBackoffMsRef.current = Math.min(autoSyncBackoffMsRef.current * 2, AUTO_SYNC_MAX_MS);
+        } else if (result.pending > 0) {
+          autoSyncBackoffMsRef.current = AUTO_SYNC_BASE_MS;
+        } else {
+          autoSyncBackoffMsRef.current = AUTO_SYNC_BASE_MS;
+        }
+
+        scheduleNext(autoSyncBackoffMsRef.current);
+      } catch {
+        autoSyncBackoffMsRef.current = Math.min(autoSyncBackoffMsRef.current * 2, AUTO_SYNC_MAX_MS);
+        scheduleNext(autoSyncBackoffMsRef.current);
+      }
+    };
+
+    const onOnline = () => {
+      autoSyncBackoffMsRef.current = AUTO_SYNC_BASE_MS;
+      void tick();
+    };
+
+    window.addEventListener("online", onOnline);
+    autoSyncBackoffMsRef.current = AUTO_SYNC_BASE_MS;
+    scheduleNext(2000);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", onOnline);
+      if (autoSyncTimerRef.current) {
+        window.clearTimeout(autoSyncTimerRef.current);
+        autoSyncTimerRef.current = null;
+      }
+    };
+  }, [user]);
 
   const loadProducts = async (
     searchKeyword = keyword,

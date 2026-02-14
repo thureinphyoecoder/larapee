@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -43,6 +44,8 @@ type OutboxRow = {
   id: number;
   event_type: string;
   payload_json: string;
+  payload_hash: string | null;
+  client_ref: string | null;
   retries: number;
 };
 
@@ -158,14 +161,41 @@ export class OfflineStore {
 
   queueOrder(payload: OrderPayload): CachedOrder {
     const now = new Date().toISOString();
+    const normalized = this.normalizeOrderPayload(payload);
+    const payloadHash = this.computePayloadHash(normalized);
+    const existing = this.select<Array<{ id: number; payload_json: string; created_at: string }>>(`
+      SELECT id, payload_json, created_at
+      FROM outbox
+      WHERE event_type = 'order.create'
+        AND status = 'pending'
+        AND payload_hash = ${this.q(payloadHash)}
+      ORDER BY id DESC
+      LIMIT 1
+    `) ?? [];
+
+    if (existing.length > 0) {
+      const existingPayload = JSON.parse(existing[0].payload_json) as OrderPayload;
+      return {
+        id: Number(existing[0].id) * -1,
+        status: "pending_sync",
+        total_amount: this.computeTotal(existingPayload),
+        phone: existingPayload.phone ?? null,
+        address: existingPayload.address ?? null,
+        created_at: existing[0].created_at,
+      };
+    }
+
     const clientRef = this.generateClientRef();
-    const total = this.computeTotal(payload);
+    const payloadForOutbox = { ...normalized, client_ref: clientRef };
+    const total = this.computeTotal(normalized);
 
     const inserted = this.select<Array<{ id: number }>>(`
-      INSERT INTO outbox (event_type, payload_json, status, retries, created_at, updated_at)
+      INSERT INTO outbox (event_type, payload_json, payload_hash, client_ref, status, retries, created_at, updated_at)
       VALUES (
         'order.create',
-        ${this.q(JSON.stringify({ ...payload, client_ref: clientRef }))},
+        ${this.q(JSON.stringify(payloadForOutbox))},
+        ${this.q(payloadHash)},
+        ${this.q(clientRef)},
         'pending',
         0,
         ${this.q(now)},
@@ -178,8 +208,8 @@ export class OfflineStore {
       id: Number(inserted[0].id) * -1,
       status: "pending_sync",
       total_amount: total,
-      phone: payload.phone ?? null,
-      address: payload.address ?? null,
+      phone: normalized.phone ?? null,
+      address: normalized.address ?? null,
       created_at: now,
     };
   }
@@ -219,7 +249,7 @@ export class OfflineStore {
 
   async sync(apiBaseUrl: string, token: string | null): Promise<SyncResult> {
     const queue = this.select<OutboxRow[]>(`
-      SELECT id, event_type, payload_json, retries
+      SELECT id, event_type, payload_json, payload_hash, client_ref, retries
       FROM outbox
       WHERE status = 'pending'
       ORDER BY id ASC
@@ -237,13 +267,26 @@ export class OfflineStore {
           continue;
         }
 
-        const payload = JSON.parse(row.payload_json) as OrderPayload & { client_ref?: string };
+        const payload = this.normalizeOrderPayload(JSON.parse(row.payload_json) as OrderPayload & { client_ref?: string });
+        const payloadHash = this.computePayloadHash(payload);
+        const clientRef = row.client_ref || payload.client_ref || this.generateClientRef();
+
+        // Backfill newer schema fields for existing rows before send.
+        this.run(`
+          UPDATE outbox
+          SET payload_json = ${this.q(JSON.stringify({ ...payload, client_ref: clientRef }))},
+              payload_hash = ${this.q(payloadHash)},
+              client_ref = ${this.q(clientRef)},
+              updated_at = ${this.q(new Date().toISOString())}
+          WHERE id = ${Number(row.id)}
+        `);
+
         const response = await fetch(`${apiBaseUrl}/orders`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...(payload.client_ref ? { "X-Idempotency-Key": payload.client_ref } : {}),
+            "X-Idempotency-Key": clientRef,
           },
           body: JSON.stringify({
             phone: payload.phone ?? null,
@@ -323,6 +366,8 @@ export class OfflineStore {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         event_type TEXT NOT NULL,
         payload_json TEXT NOT NULL,
+        payload_hash TEXT,
+        client_ref TEXT,
         status TEXT NOT NULL DEFAULT 'pending',
         retries INTEGER NOT NULL DEFAULT 0,
         last_error TEXT,
@@ -337,8 +382,12 @@ export class OfflineStore {
       );
 
       CREATE INDEX IF NOT EXISTS idx_outbox_status_created_at ON outbox(status, created_at);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_outbox_client_ref_unique ON outbox(client_ref);
+      CREATE INDEX IF NOT EXISTS idx_outbox_event_hash_status ON outbox(event_type, payload_hash, status);
       CREATE INDEX IF NOT EXISTS idx_products_cache_name ON products_cache(name);
     `);
+
+    this.ensureOutboxColumns();
   }
 
   private markFailed(id: number, error: string): void {
@@ -403,10 +452,53 @@ export class OfflineStore {
   }
 
   private generateClientRef(): string {
-    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-      return crypto.randomUUID();
+    return randomUUID();
+  }
+
+  private ensureOutboxColumns(): void {
+    const columns = this.select<Array<{ name: string }>>("PRAGMA table_info('outbox')") ?? [];
+    const names = new Set(columns.map((column) => String(column.name)));
+
+    if (!names.has("payload_hash")) {
+      this.run("ALTER TABLE outbox ADD COLUMN payload_hash TEXT");
+    }
+    if (!names.has("client_ref")) {
+      this.run("ALTER TABLE outbox ADD COLUMN client_ref TEXT");
+    }
+  }
+
+  private normalizeOrderPayload(payload: OrderPayload & { client_ref?: string }): OrderPayload & { client_ref?: string } {
+    const consolidated = new Map<number, number>();
+    for (const item of payload.items ?? []) {
+      const variantId = Number(item.variant_id);
+      const qty = Number(item.quantity);
+      if (!Number.isFinite(variantId) || variantId <= 0 || !Number.isFinite(qty) || qty <= 0) {
+        continue;
+      }
+      consolidated.set(variantId, (consolidated.get(variantId) ?? 0) + Math.floor(qty));
     }
 
-    return `offline-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    const items = Array.from(consolidated.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([variant_id, quantity]) => ({ variant_id, quantity }));
+
+    return {
+      phone: payload.phone ?? null,
+      address: payload.address ?? null,
+      shop_id: payload.shop_id,
+      items,
+      ...(payload.client_ref ? { client_ref: payload.client_ref } : {}),
+    };
+  }
+
+  private computePayloadHash(payload: OrderPayload): string {
+    const normalized = this.normalizeOrderPayload(payload);
+    const canonical = JSON.stringify({
+      phone: normalized.phone ?? null,
+      address: normalized.address ?? null,
+      shop_id: normalized.shop_id,
+      items: normalized.items,
+    });
+    return createHash("sha256").update(canonical).digest("hex");
   }
 }
