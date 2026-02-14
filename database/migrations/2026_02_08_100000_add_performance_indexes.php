@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -10,98 +9,60 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $this->addIndexIfMissing('orders', ['shop_id', 'status']);
-            $this->addIndexIfMissing('orders', ['shop_id', 'created_at']);
-            $this->addIndexIfMissing('orders', ['user_id', 'created_at']);
-            $this->addIndexIfMissing('orders', ['delivered_at']);
+            $table->index(['shop_id', 'status'], 'orders_shop_id_status_index');
+            $table->index(['shop_id', 'created_at'], 'orders_shop_id_created_at_index');
+            $table->index(['user_id', 'created_at'], 'orders_user_id_created_at_index');
+            $table->index(['delivered_at'], 'orders_delivered_at_index');
         });
 
         Schema::table('product_variants', function (Blueprint $table) {
-            $this->addIndexIfMissing('product_variants', ['product_id', 'is_active']);
-            $this->addIndexIfMissing('product_variants', ['product_id', 'price']);
+            $table->index(['product_id', 'is_active'], 'product_variants_product_id_is_active_index');
+            $table->index(['product_id', 'price'], 'product_variants_product_id_price_index');
         });
 
         Schema::table('support_messages', function (Blueprint $table) {
-            $this->addIndexIfMissing('support_messages', ['customer_id', 'id']);
-            $this->addIndexIfMissing('support_messages', ['staff_id', 'id']);
-            $this->addIndexIfMissing('support_messages', ['customer_id', 'seen_at']);
-            $this->addIndexIfMissing('support_messages', ['sender_id', 'seen_at']);
+            $table->index(['customer_id', 'id'], 'support_messages_customer_id_id_index');
+            $table->index(['staff_id', 'id'], 'support_messages_staff_id_id_index');
+            $table->index(['customer_id', 'seen_at'], 'support_messages_customer_id_seen_at_index');
+            $table->index(['sender_id', 'seen_at'], 'support_messages_sender_id_seen_at_index');
         });
 
         Schema::table('cart_items', function (Blueprint $table) {
-            $this->addIndexIfMissing('cart_items', ['user_id', 'variant_id']);
+            $table->index(['user_id', 'variant_id'], 'cart_items_user_id_variant_id_index');
         });
 
         Schema::table('order_items', function (Blueprint $table) {
-            $this->addIndexIfMissing('order_items', ['order_id', 'product_variant_id']);
+            $table->index(['order_id', 'product_variant_id'], 'order_items_order_id_product_variant_id_index');
         });
     }
 
     public function down(): void
     {
         Schema::table('order_items', function (Blueprint $table) {
-            $this->dropIndexIfExists('order_items', ['order_id', 'product_variant_id']);
+            $table->dropIndex('order_items_order_id_product_variant_id_index');
         });
 
         Schema::table('cart_items', function (Blueprint $table) {
-            $this->dropIndexIfExists('cart_items', ['user_id', 'variant_id']);
+            $table->dropIndex('cart_items_user_id_variant_id_index');
         });
 
         Schema::table('support_messages', function (Blueprint $table) {
-            $this->dropIndexIfExists('support_messages', ['customer_id', 'id']);
-            $this->dropIndexIfExists('support_messages', ['staff_id', 'id']);
-            $this->dropIndexIfExists('support_messages', ['customer_id', 'seen_at']);
-            $this->dropIndexIfExists('support_messages', ['sender_id', 'seen_at']);
+            $table->dropIndex('support_messages_customer_id_id_index');
+            $table->dropIndex('support_messages_staff_id_id_index');
+            $table->dropIndex('support_messages_customer_id_seen_at_index');
+            $table->dropIndex('support_messages_sender_id_seen_at_index');
         });
 
         Schema::table('product_variants', function (Blueprint $table) {
-            $this->dropIndexIfExists('product_variants', ['product_id', 'is_active']);
-            $this->dropIndexIfExists('product_variants', ['product_id', 'price']);
+            $table->dropIndex('product_variants_product_id_is_active_index');
+            $table->dropIndex('product_variants_product_id_price_index');
         });
 
         Schema::table('orders', function (Blueprint $table) {
-            $this->dropIndexIfExists('orders', ['shop_id', 'status']);
-            $this->dropIndexIfExists('orders', ['shop_id', 'created_at']);
-            $this->dropIndexIfExists('orders', ['user_id', 'created_at']);
-            $this->dropIndexIfExists('orders', ['delivered_at']);
+            $table->dropIndex('orders_shop_id_status_index');
+            $table->dropIndex('orders_shop_id_created_at_index');
+            $table->dropIndex('orders_user_id_created_at_index');
+            $table->dropIndex('orders_delivered_at_index');
         });
-    }
-
-    private function addIndexIfMissing(string $table, array $columns): void
-    {
-        $indexName = $this->buildIndexName($table, $columns);
-
-        if ($this->indexExists($table, $indexName)) {
-            return;
-        }
-
-        $columnSql = implode(', ', array_map(fn ($column) => "`{$column}`", $columns));
-        DB::statement("ALTER TABLE `{$table}` ADD INDEX `{$indexName}` ({$columnSql})");
-    }
-
-    private function dropIndexIfExists(string $table, array $columns): void
-    {
-        $indexName = $this->buildIndexName($table, $columns);
-
-        if (!$this->indexExists($table, $indexName)) {
-            return;
-        }
-
-        DB::statement("ALTER TABLE `{$table}` DROP INDEX `{$indexName}`");
-    }
-
-    private function indexExists(string $table, string $indexName): bool
-    {
-        $result = DB::select(
-            'SHOW INDEX FROM `' . $table . '` WHERE Key_name = ?',
-            [$indexName]
-        );
-
-        return !empty($result);
-    }
-
-    private function buildIndexName(string $table, array $columns): string
-    {
-        return $table . '_' . implode('_', $columns) . '_index';
     }
 };
