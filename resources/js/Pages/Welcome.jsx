@@ -1,6 +1,5 @@
 import { Link, router, usePage } from "@inertiajs/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import LocaleSwitcher from "@/Components/LocaleSwitcher";
 
 function priceMeta(product) {
     const variants = product?.variants || [];
@@ -283,14 +282,6 @@ export default function Welcome({
                                             {auth.user.name.charAt(0).toUpperCase()}
                                         </div>
                                     </Link>
-                                    <Link
-                                        href={route("logout")}
-                                        method="post"
-                                        as="button"
-                                        className="inline-flex h-10 items-center rounded-full border border-slate-200 bg-white px-3 text-slate-600 transition hover:border-rose-300 hover:text-rose-600"
-                                    >
-                                        {t("logout", "Log out")}
-                                    </Link>
                                 </>
                             ) : (
                                 <>
@@ -303,7 +294,6 @@ export default function Welcome({
                                     </Link>
                                 </>
                             )}
-                            <LocaleSwitcher />
                         </div>
                     </div>
                 </div>

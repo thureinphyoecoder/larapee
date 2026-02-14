@@ -1,33 +1,3 @@
-import { router, usePage } from "@inertiajs/react";
-
-export default function LocaleSwitcher({ compact = false }) {
-    const props = usePage().props || {};
-    const locale = props.locale || "en";
-    const i18n = props.i18n || {};
-    const label = i18n.language || "Language";
-
-    const onChangeLocale = (nextLocale) => {
-        if (!nextLocale || nextLocale === locale) return;
-        router.visit(route("locale.switch", { locale: nextLocale }), {
-            method: "get",
-            preserveScroll: true,
-        });
-    };
-
-    return (
-        <div className={`flex items-center ${compact ? "gap-2" : "gap-1"}`}>
-            {!compact && <span className="hidden text-xs text-slate-500 sm:inline">{label}:</span>}
-            <div className="relative">
-                <select
-                    value={locale}
-                    onChange={(e) => onChangeLocale(e.target.value)}
-                    className="h-8 rounded-md border border-slate-300 bg-white pl-2 pr-8 text-xs font-semibold text-slate-700 shadow-sm outline-none transition focus:border-slate-400 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
-                    aria-label={label}
-                >
-                    <option value="en">English</option>
-                    <option value="mm">မြန်မာ</option>
-                </select>
-            </div>
-        </div>
-    );
+export default function LocaleSwitcher() {
+    return null;
 }
