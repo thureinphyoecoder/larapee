@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, usePage } from "@inertiajs/react";
 import {
@@ -57,9 +57,13 @@ export default function Dashboard({
     const [closeStatusSeries, setCloseStatusSeries] = useState(managerCloseStatus || []);
     const [refreshing, setRefreshing] = useState(false);
     const [lastSyncAt, setLastSyncAt] = useState(() => new Date());
+    const [syncStatus, setSyncStatus] = useState("idle");
+    const [syncMessage, setSyncMessage] = useState("Auto sync is ready.");
+    const [syncErrorReason, setSyncErrorReason] = useState("");
     const [period, setPeriod] = useState("daily");
     const [attendancePage, setAttendancePage] = useState(1);
     const [closeStatusPage, setCloseStatusPage] = useState(1);
+    const syncInFlightRef = useRef(false);
     const pageSize = 6;
 
     useEffect(() => {
@@ -74,6 +78,9 @@ export default function Dashboard({
         setAttendancePage(1);
         setCloseStatusPage(1);
         setLastSyncAt(new Date());
+        setSyncStatus("success");
+        setSyncMessage("Dashboard synced successfully.");
+        setSyncErrorReason("");
     }, [recentOrders, stats, dailySales, salesTrends, teamAttendance, stockByShop, transferTrend, managerCloseStatus]);
 
     useEffect(() => {
@@ -103,28 +110,68 @@ export default function Dashboard({
         };
     }, [role, user?.shop_id]);
 
+    const triggerSync = useCallback((mode = "auto") => {
+        if (syncInFlightRef.current) return;
+
+        if (typeof navigator !== "undefined" && navigator.onLine === false) {
+            setSyncStatus("error");
+            setSyncMessage(mode === "manual" ? "Manual sync failed." : "Auto sync failed.");
+            setSyncErrorReason("Device is offline. Reconnect internet and retry.");
+            return;
+        }
+
+        syncInFlightRef.current = true;
+        router.reload({
+            only: [
+                "stats",
+                "recentOrders",
+                "dailySales",
+                "salesTrends",
+                "teamAttendance",
+                "stockByShop",
+                "transferTrend",
+                "managerCloseStatus",
+            ],
+            preserveState: true,
+            preserveScroll: true,
+            onStart: () => {
+                setRefreshing(true);
+                setSyncStatus("syncing");
+                setSyncMessage(mode === "manual" ? "Manual sync in progress..." : "Auto sync in progress...");
+                setSyncErrorReason("");
+            },
+            onSuccess: () => {
+                const now = new Date();
+                setLastSyncAt(now);
+                setSyncStatus("success");
+                setSyncMessage(mode === "manual"
+                    ? `Manual sync succeeded at ${now.toLocaleTimeString()}.`
+                    : `Auto sync succeeded at ${now.toLocaleTimeString()}.`);
+                setSyncErrorReason("");
+            },
+            onError: (errors) => {
+                const firstError = Object.values(errors || {})[0];
+                const reason = Array.isArray(firstError)
+                    ? firstError[0]
+                    : (typeof firstError === "string" ? firstError : "Server rejected the sync request.");
+                setSyncStatus("error");
+                setSyncMessage(mode === "manual" ? "Manual sync failed." : "Auto sync failed.");
+                setSyncErrorReason(reason);
+            },
+            onFinish: () => {
+                setRefreshing(false);
+                syncInFlightRef.current = false;
+            },
+        });
+    }, []);
+
     useEffect(() => {
         const intervalId = window.setInterval(() => {
-            router.reload({
-                only: [
-                    "stats",
-                    "recentOrders",
-                    "dailySales",
-                    "salesTrends",
-                    "teamAttendance",
-                    "stockByShop",
-                    "transferTrend",
-                    "managerCloseStatus",
-                ],
-                preserveState: true,
-                preserveScroll: true,
-                onStart: () => setRefreshing(true),
-                onFinish: () => setRefreshing(false),
-            });
+            triggerSync("auto");
         }, 20000);
 
         return () => window.clearInterval(intervalId);
-    }, []);
+    }, [triggerSync]);
 
     const stockSummary = useMemo(() => {
         const grouped = stockSeries.reduce((acc, item) => {
@@ -257,6 +304,30 @@ export default function Dashboard({
 
                             <div className="hidden xl:block justify-self-end text-xs uppercase tracking-widest text-slate-300 font-bold">
                                 Realtime Chart
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="text-xs text-slate-100">
+                                    <p className="font-bold uppercase tracking-wider">
+                                        {syncStatus === "syncing" ? "Syncing" : syncStatus === "success" ? "Synced" : syncStatus === "error" ? "Sync Failed" : "Sync Idle"}
+                                    </p>
+                                    <p className="mt-1 text-slate-200">{syncMessage}</p>
+                                    {syncStatus === "error" && (
+                                        <p className="mt-1 text-rose-200">
+                                            Reason: {syncErrorReason || "Unknown error."} Action: Check internet/queue worker and retry manual sync.
+                                        </p>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => triggerSync("manual")}
+                                    disabled={refreshing}
+                                    className="rounded-xl border border-white/40 bg-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {refreshing ? "Syncing..." : "Retry Now"}
+                                </button>
                             </div>
                         </div>
 
