@@ -249,12 +249,30 @@ export default function Welcome({
                                 <>
                                     <Link
                                         href={route("cart.index")}
-                                        className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                                        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                                        aria-label={t("cart", "Cart")}
                                     >
-                                        <span>Cart</span>
-                                        <span className="rounded-full bg-orange-600 px-2 py-0.5 text-xs font-black text-white">
-                                            {cartCount}
-                                        </span>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-5 w-5"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={1.9}
+                                                d="M3 4h2l2.2 10.5a1 1 0 00.98.8h8.92a1 1 0 00.98-.8L21 7H8"
+                                            />
+                                            <circle cx="10" cy="19" r="1.5" />
+                                            <circle cx="18" cy="19" r="1.5" />
+                                        </svg>
+                                        {cartCount > 0 && (
+                                            <span className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] font-black leading-none text-white">
+                                                {cartCount > 99 ? "99+" : cartCount}
+                                            </span>
+                                        )}
                                     </Link>
                                     <Link href={route("dashboard")} className="flex items-center gap-2 text-slate-700">
                                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 font-bold text-orange-700">
